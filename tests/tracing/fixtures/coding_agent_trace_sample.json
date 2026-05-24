@@ -1,0 +1,40 @@
+{
+  "run_id": "run_coding_fixture",
+  "name": "Coding Agent Trace Sample",
+  "status": "success",
+  "started_at": "2026-05-24T13:00:00Z",
+  "ended_at": "2026-05-24T13:00:10Z",
+  "input": {"task": "Fix the login button label."},
+  "output": {"summary": "Updated label and ran tests."},
+  "metadata": {"scenario": "coding_agent"},
+  "root_spans": [
+    {
+      "span_id": "span_coding_agent",
+      "run_id": "run_coding_fixture",
+      "parent_span_id": null,
+      "name": "Coding workflow",
+      "kind": "agent",
+      "status": "success",
+      "started_at": "2026-05-24T13:00:00Z",
+      "ended_at": "2026-05-24T13:00:10Z",
+      "input": null,
+      "output": null,
+      "metadata": {},
+      "events": [],
+      "artifacts": [],
+      "children": [
+        {"span_id": "span_file_search", "run_id": "run_coding_fixture", "parent_span_id": "span_coding_agent", "name": "Search files", "kind": "tool", "status": "success", "started_at": "2026-05-24T13:00:01Z", "ended_at": "2026-05-24T13:00:02Z", "input": {"pattern": "login"}, "output": {"files": ["src/auth/LoginButton.tsx"]}, "metadata": {"operation": "file_search"}, "events": [], "artifacts": [], "children": []},
+        {"span_id": "span_file_read", "run_id": "run_coding_fixture", "parent_span_id": "span_coding_agent", "name": "Read file", "kind": "tool", "status": "success", "started_at": "2026-05-24T13:00:02Z", "ended_at": "2026-05-24T13:00:03Z", "input": {"path": "src/auth/LoginButton.tsx"}, "output": {"lines": 80}, "metadata": {"operation": "file_read"}, "events": [], "artifacts": [], "children": []},
+        {"span_id": "span_code_edit", "run_id": "run_coding_fixture", "parent_span_id": "span_coding_agent", "name": "Edit code", "kind": "tool", "status": "success", "started_at": "2026-05-24T13:00:03Z", "ended_at": "2026-05-24T13:00:05Z", "input": {"path": "src/auth/LoginButton.tsx"}, "output": {"changed_lines": 1}, "metadata": {"operation": "code_edit"}, "events": [], "artifacts": [{"artifact_id": "artifact_code_diff", "name": "code diff", "kind": "code_diff", "uri": null, "content": "- Sign in\n+ Log in", "metadata": {}}], "children": []},
+        {"span_id": "span_shell_command", "run_id": "run_coding_fixture", "parent_span_id": "span_coding_agent", "name": "Run typecheck", "kind": "tool", "status": "success", "started_at": "2026-05-24T13:00:05Z", "ended_at": "2026-05-24T13:00:08Z", "input": {"command": "npm run typecheck"}, "output": {"exit_code": 0}, "metadata": {"operation": "shell_command"}, "events": [], "artifacts": [], "children": []},
+        {"span_id": "span_test_run", "run_id": "run_coding_fixture", "parent_span_id": "span_coding_agent", "name": "Run tests", "kind": "tool", "status": "success", "started_at": "2026-05-24T13:00:08Z", "ended_at": "2026-05-24T13:00:10Z", "input": {"command": "npm test"}, "output": {"exit_code": 0}, "metadata": {"operation": "test_run"}, "events": [], "artifacts": [{"artifact_id": "artifact_test_output", "name": "test output", "kind": "test_output", "uri": null, "content": "3 passed", "metadata": {}}], "children": []}
+      ]
+    }
+  ],
+  "evaluations": [
+    {"evaluation_id": "eval_verification", "target_type": "run", "target_id": "run_coding_fixture", "name": "verification_sufficiency", "score": 1.0, "label": "pass", "reason": "The agent ran typecheck and tests after editing code.", "evidence_span_ids": ["span_shell_command", "span_test_run"], "metadata": {}}
+  ],
+  "diagnoses": [
+    {"diagnosis_id": "diag_coding", "target_type": "run", "target_id": "run_coding_fixture", "failure_type": "unknown", "severity": "low", "summary": "The workflow includes context gathering, editing, and verification.", "evidence_span_ids": ["span_file_read", "span_code_edit", "span_test_run"], "suggested_fix": "No action needed.", "metadata": {}}
+  ]
+}

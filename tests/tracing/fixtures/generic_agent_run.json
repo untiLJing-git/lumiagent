@@ -1,0 +1,111 @@
+{
+  "run_id": "run_generic_fixture",
+  "name": "Generic Agent Run",
+  "status": "success",
+  "started_at": "2026-05-24T12:00:00Z",
+  "ended_at": "2026-05-24T12:00:06Z",
+  "input": {"question": "How does provider fallback work?"},
+  "output": {"answer": "The router switches to a fallback provider and records the failure."},
+  "metadata": {"scenario": "generic_agent"},
+  "root_spans": [
+    {
+      "span_id": "span_generic_agent",
+      "run_id": "run_generic_fixture",
+      "parent_span_id": null,
+      "name": "Agent workflow",
+      "kind": "agent",
+      "status": "success",
+      "started_at": "2026-05-24T12:00:00Z",
+      "ended_at": "2026-05-24T12:00:06Z",
+      "input": null,
+      "output": null,
+      "metadata": {},
+      "events": [],
+      "artifacts": [],
+      "children": [
+        {
+          "span_id": "span_generic_rag",
+          "run_id": "run_generic_fixture",
+          "parent_span_id": "span_generic_agent",
+          "name": "Retrieve docs",
+          "kind": "rag",
+          "status": "success",
+          "started_at": "2026-05-24T12:00:01Z",
+          "ended_at": "2026-05-24T12:00:02Z",
+          "input": {"query": "provider fallback"},
+          "output": {"top_k": 2},
+          "metadata": {},
+          "events": [],
+          "artifacts": [
+            {
+              "artifact_id": "artifact_retrieved_chunks",
+              "name": "retrieved chunks",
+              "kind": "retrieved_chunks",
+              "uri": null,
+              "content": [{"chunk_id": "doc_1", "score": 0.92, "text": "Fallback providers are tried after primary failure."}],
+              "metadata": {}
+            }
+          ],
+          "children": []
+        },
+        {
+          "span_id": "span_generic_llm",
+          "run_id": "run_generic_fixture",
+          "parent_span_id": "span_generic_agent",
+          "name": "Generate answer",
+          "kind": "llm",
+          "status": "success",
+          "started_at": "2026-05-24T12:00:02Z",
+          "ended_at": "2026-05-24T12:00:04Z",
+          "input": {"model": "demo-model"},
+          "output": {"text": "Fallback is recorded in trace metadata."},
+          "metadata": {"token_usage": {"prompt": 120, "completion": 30}},
+          "events": [],
+          "artifacts": [
+            {"artifact_id": "artifact_prompt", "name": "prompt", "kind": "prompt", "uri": null, "content": "Explain provider fallback.", "metadata": {}},
+            {"artifact_id": "artifact_completion", "name": "completion", "kind": "completion", "uri": null, "content": "Fallback is recorded in trace metadata.", "metadata": {}}
+          ],
+          "children": []
+        },
+        {
+          "span_id": "span_generic_tool",
+          "run_id": "run_generic_fixture",
+          "parent_span_id": "span_generic_agent",
+          "name": "Inspect router config",
+          "kind": "tool",
+          "status": "success",
+          "started_at": "2026-05-24T12:00:04Z",
+          "ended_at": "2026-05-24T12:00:05Z",
+          "input": {"tool": "read_config"},
+          "output": {"fallback": "enabled"},
+          "metadata": {},
+          "events": [],
+          "artifacts": [{"artifact_id": "artifact_tool_result", "name": "tool result", "kind": "tool_result", "uri": null, "content": {"fallback": "enabled"}, "metadata": {}}],
+          "children": []
+        },
+        {
+          "span_id": "span_generic_evaluator",
+          "run_id": "run_generic_fixture",
+          "parent_span_id": "span_generic_agent",
+          "name": "Evaluate answer",
+          "kind": "evaluator",
+          "status": "success",
+          "started_at": "2026-05-24T12:00:05Z",
+          "ended_at": "2026-05-24T12:00:06Z",
+          "input": {"metric": "groundedness"},
+          "output": {"score": 0.9},
+          "metadata": {},
+          "events": [],
+          "artifacts": [],
+          "children": []
+        }
+      ]
+    }
+  ],
+  "evaluations": [
+    {"evaluation_id": "eval_generic_quality", "target_type": "run", "target_id": "run_generic_fixture", "name": "answer_quality", "score": 0.9, "label": "pass", "reason": "The answer uses retrieved context.", "evidence_span_ids": ["span_generic_rag", "span_generic_llm"], "metadata": {}}
+  ],
+  "diagnoses": [
+    {"diagnosis_id": "diag_generic", "target_type": "run", "target_id": "run_generic_fixture", "failure_type": "unknown", "severity": "low", "summary": "No blocking issue found.", "evidence_span_ids": ["span_generic_evaluator"], "suggested_fix": "No action needed.", "metadata": {}}
+  ]
+}
