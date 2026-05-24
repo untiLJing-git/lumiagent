@@ -1,4 +1,5 @@
 """Trace / Eval Core public API."""
+from lumiagent.tracing.builder import TraceBuilder
 from lumiagent.tracing.enums import (
     ArtifactKind,
     EventLevel,
@@ -26,6 +27,7 @@ __all__ = [
     "SpanKind",
     "SpanStatus",
     "TargetType",
+    "TraceBuilder",
     "TraceValidationError",
     "from_dict",
     "from_json",
