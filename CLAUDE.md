@@ -54,6 +54,11 @@ All implementation work must follow these rules:
    - Do not claim completion without running the relevant checks.
    - Prefer realistic usage tests over purely superficial checks.
 
+5. Technical report after implementation
+   - After each implementation batch, write a Chinese technical report into the repository.
+   - The report should cover technology choices, syntax/style rules, design patterns, implementation highlights, validation results, risks, trade-offs, and follow-up suggestions.
+   - Use a path that matches the implemented stage, such as `docs/reports/trace-core-mvp-technical-report.zh-CN.md`.
+
 ## Architecture Principles
 
 - Treat traces as first-class product data.
