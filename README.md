@@ -1,136 +1,160 @@
 # LumiAgent
 
-Multi-platform AI Agent framework with ReAct reasoning, RAG knowledge retrieval, MCP tool integration, and systematic evaluation.
+[简体中文](README.zh-CN.md)
+
+LumiAgent is an Agent Trace / Eval Core for recording, replaying, evaluating, and diagnosing agent runs.
+
+The current MVP focuses on a framework-agnostic trace data foundation: an agent run is represented as a nested Span Tree with events, artifacts, evaluations, and diagnoses. The first application direction is observability and diagnosis for Coding Agents and MCP Tool Chains.
+
+## Why LumiAgent
+
+Agent systems are becoming more tool-heavy and workflow-heavy, but many failures are still hard to explain:
+
+- Was the right context retrieved?
+- Did the agent call the right tool?
+- Were tool arguments generated correctly?
+- Did the agent misread the tool result?
+- Was the verification step sufficient?
+- Which span provides evidence for an evaluation or diagnosis?
+
+LumiAgent starts from the data foundation for answering these questions: a structured, replayable, evaluable, and diagnosable trace model.
+
+## Current Status
+
+**Stage 1: Trace Core MVP — completed**
+
+Implemented capabilities:
+
+- Agent run model with nested Span Tree
+- Span events and artifacts
+- Evaluation and diagnosis records with evidence span references
+- Stable enum values for run, span, event, artifact, target, and severity types
+- JSON/dict serialization and round-trip loading
+- Structural validation for span IDs, parent-child links, target references, and evidence spans
+- Convenience `TraceBuilder` API
+- Generic Agent and Coding Agent trace fixtures
+
+Implementation report:
+
+- [`docs/reports/trace-core-mvp-technical-report.zh-CN.md`](docs/reports/trace-core-mvp-technical-report.zh-CN.md)
+
+## Quick Example
+
+```python
+from lumiagent.tracing import SpanKind, TraceBuilder, to_json
+
+builder = TraceBuilder(name="coding agent run", input_value={"task": "fix failing test"})
+
+agent_span = builder.start_span("Coding Agent", kind=SpanKind.AGENT)
+search_span = builder.start_span(
+    "Search files",
+    kind=SpanKind.TOOL,
+    parent_span_id=agent_span,
+    metadata={"operation": "file_search"},
+)
+builder.end_span(search_span, output={"matches": ["src/lumiagent/tracing/models.py"]})
+builder.end_span(agent_span, output={"result": "trace captured"})
+
+run = builder.build(output={"status": "done"})
+print(to_json(run))
+```
 
 ## Architecture
 
-```
-┌─────────────────────────────────────────────────┐
-│           Platform Layer (多平台适配)             │
-│     CMD │ Web │ WeChat │ Feishu │ DingTalk      │
-├─────────────────────────────────────────────────┤
-│              Message Bus (消息总线)               │
-├─────────────────────────────────────────────────┤
-│           Agent Core (ReAct 核心引擎)             │
-│    Context Builder │ Memory │ Sub-Agents        │
-├───────────────────┬─────────────────────────────┤
-│    Tool Layer     │       LLM Layer             │
-│  Built-in + MCP   │  OpenAI/Claude/DeepSeek     │
-├───────────────────┴─────────────────────────────┤
-│              RAG Layer (知识检索)                 │
-├─────────────────────────────────────────────────┤
-│          Evaluation Layer (评估体系)              │
-└─────────────────────────────────────────────────┘
+```text
+AgentRun
+├── root_spans[]
+│   └── Span
+│       ├── events[]
+│       ├── artifacts[]
+│       └── children[]
+├── evaluations[]
+└── diagnoses[]
 ```
 
-## Features
+The trace core is intentionally independent from any single agent framework. Coding Agent support, MCP Tool Chain capture, SDK hooks, CLI wrappers, and transcript importers should be built as adapters on top of the core model.
 
-- **Multi-Platform**: CMD, Web (REST + WebSocket), WeChat, Feishu, DingTalk
-- **ReAct Engine**: Reasoning + Acting loop with configurable max iterations
-- **Memory System**: Short-term (conversation), Long-term (SQLite + vector), Proactive recall, Auto-compression
-- **LLM Routing**: Primary/fallback/round-robin strategies across OpenAI, Anthropic, DeepSeek, etc.
-- **Tool System**: Built-in tools (bash, file I/O, web, Python, cron) + MCP hot-plug support
-- **RAG Pipeline**: Document loading → Chunking → Embedding → Vector search → Reranking
-- **Evaluation Suite**: Response quality, tool usage, RAG accuracy, safety, latency metrics
+## Roadmap
 
-## Quick Start
+- [x] Trace Schema / Span Tree Core
+- [ ] MCP Tool Chain capture model
+- [ ] Coding Agent trace model
+- [ ] Trace Replay data flow
+- [ ] Evaluation and diagnosis engine
+- [ ] Minimal runnable examples and tests
 
-```bash
-# Install
-pip install -e ".[dev]"
+Non-goals for the current MVP:
 
-# Configure
-cp .env.example .env
-# Edit .env with your API keys
-
-# Interactive chat
-lumi chat
-
-# Web server
-lumi serve --port 8000
-
-# Ingest knowledge
-lumi ingest ./docs --collection my-knowledge
-
-# Run evaluation
-lumi eval sample_eval
-
-# List tools
-lumi tools
-```
+- Generic LangSmith/Langfuse clone
+- Prompt management platform
+- Generic RAG evaluation platform
+- Full multi-agent orchestration framework
 
 ## Project Structure
 
-```
+```text
 src/lumiagent/
-├── __init__.py              # Package version
-├── agent.py                 # Agent assembly & wiring
-├── cli.py                   # CLI commands (typer)
-├── config.py                # Pydantic Settings
-├── logging.py               # Structured logging (structlog)
-├── models/                  # Data models (Pydantic v2)
-│   ├── message.py           # UnifiedMessage, Platform, MessageContent
-│   ├── llm.py               # LLMRequest, LLMResponse, ChatMessage
-│   ├── tool.py              # ToolResult, MCPServerConfig
-│   └── memory.py            # MemoryEntry, ConversationTurn
-├── platform/                # Multi-platform adapters
-│   ├── base.py              # PlatformAdapter ABC
-│   ├── manager.py           # PlatformManager
-│   ├── cmd_adapter.py       # Terminal/CLI adapter
-│   ├── web_adapter.py       # FastAPI REST + WebSocket
-│   ├── feishu_adapter.py    # Feishu/Lark adapter
-│   ├── dingtalk_adapter.py  # DingTalk adapter
-│   └── wechat_adapter.py    # WeChat adapter
-├── llm/                     # LLM provider layer
-│   ├── base.py              # LLMProvider ABC
-│   ├── openai_provider.py   # OpenAI-compatible (+ DeepSeek, Qwen)
-│   ├── anthropic_provider.py # Claude
-│   └── router.py            # LLMRouter with strategies
-├── core/                    # Agent core engine
-│   ├── engine.py            # ReAct loop
-│   ├── context.py           # Context builder
-│   ├── memory.py            # 4-tier memory system
-│   └── sub_agent.py         # Sub-agent manager
-├── tools/                   # Tool system
-│   ├── base.py              # BaseTool ABC
-│   ├── registry.py          # ToolRegistry
-│   ├── mcp_bridge.py        # MCP protocol bridge
-│   └── builtin/             # Built-in tools
-│       ├── bash_tool.py
-│       ├── file_tools.py
-│       ├── web_tools.py
-│       ├── python_exec.py
-│       └── cron_tool.py
-├── rag/                     # RAG pipeline
-│   ├── pipeline.py          # End-to-end RAG
-│   ├── loader.py            # Document loaders
-│   ├── splitter.py          # Text splitters
-│   ├── embedder.py          # Embedding providers
-│   ├── vector_store.py      # Vector DB (ChromaDB)
-│   └── reranker.py          # Result reranking
-└── evaluation/              # Evaluation framework
-    ├── suite.py             # EvaluationSuite
-    ├── evaluators.py        # Dimension evaluators
-    └── metrics.py           # Score, EvalCase, EvalReport
+└── tracing/
+    ├── __init__.py
+    ├── builder.py
+    ├── enums.py
+    ├── models.py
+    ├── serializer.py
+    └── validator.py
+
+tests/tracing/
+├── fixtures/
+├── test_builder.py
+├── test_models.py
+├── test_serializer.py
+└── test_validator.py
+
+docs/reports/
+└── trace-core-mvp-technical-report.zh-CN.md
 ```
 
-## Configuration
+## Installation
 
-All configuration via `.env` file or environment variables. See [.env.example](.env.example).
+```bash
+pip install -e ".[dev]"
+```
+
+Python 3.11+ is required.
+
+## Verification
+
+```bash
+python -m pytest -v
+python -m ruff check src/lumiagent/tracing tests/tracing
+python -m mypy src/lumiagent/tracing
+```
+
+If the package is not installed in editable mode, run the checks with the local source path:
+
+```powershell
+$env:PYTHONPATH = "src"
+python -m pytest -v
+python -m ruff check src/lumiagent/tracing tests/tracing
+python -m mypy src/lumiagent/tracing
+```
+
+Current Trace Core MVP validation result:
+
+```text
+18 passed
+All checks passed
+Success: no issues found in 6 source files
+```
 
 ## Tech Stack
 
-| Component | Technology |
-|-----------|-----------|
+| Area | Technology |
+| --- | --- |
 | Language | Python 3.11+ |
-| Web Framework | FastAPI + uvicorn |
-| CLI | Typer + Rich |
-| LLM | OpenAI SDK, Anthropic SDK |
-| Vector DB | ChromaDB |
-| Database | SQLite (aiosqlite) |
-| Logging | structlog |
-| Config | Pydantic Settings |
-| MCP | Official MCP Python SDK |
+| Data Model | Pydantic v2 |
+| Testing | pytest |
+| Linting | ruff |
+| Type Checking | mypy |
 
 ## License
 
