@@ -9,6 +9,7 @@ from lumiagent.tracing.enums import (
     TargetType,
 )
 from lumiagent.tracing.models import AgentRun, Artifact, Diagnosis, Event, Evaluation, Span
+from lumiagent.tracing.serializer import from_dict, from_json, to_dict, to_json
 
 __all__ = [
     "AgentRun",
@@ -24,4 +25,8 @@ __all__ = [
     "SpanKind",
     "SpanStatus",
     "TargetType",
+    "from_dict",
+    "from_json",
+    "to_dict",
+    "to_json",
 ]
