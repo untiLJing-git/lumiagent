@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 from .models import AgentRun
@@ -10,7 +10,7 @@ from .models import AgentRun
 
 def _to_jsonable(value: Any) -> Any:
     if isinstance(value, datetime):
-        normalized = value.astimezone(timezone.utc)
+        normalized = value.astimezone(UTC)
         return normalized.isoformat().replace("+00:00", "Z")
     if isinstance(value, dict):
         return {key: _to_jsonable(item) for key, item in value.items()}
@@ -20,7 +20,10 @@ def _to_jsonable(value: Any) -> Any:
 
 
 def to_dict(run: AgentRun) -> dict[str, Any]:
-    return _to_jsonable(run.model_dump(mode="json"))
+    data = _to_jsonable(run.model_dump(mode="json"))
+    if not isinstance(data, dict):
+        raise TypeError("AgentRun serialization must produce a dictionary")
+    return data
 
 
 def to_json(run: AgentRun, *, indent: int = 2) -> str:

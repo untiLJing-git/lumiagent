@@ -2,8 +2,8 @@
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timezone
-from typing import Any, Optional
+from datetime import UTC, datetime
+from typing import Any
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 
@@ -21,7 +21,7 @@ TraceValue = dict[str, Any] | list[Any] | str | int | float | bool | None
 
 
 def utc_now() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 def new_id(prefix: str) -> str:
@@ -30,7 +30,7 @@ def new_id(prefix: str) -> str:
 
 class TimeRangeModel(BaseModel):
     started_at: datetime = Field(default_factory=utc_now)
-    ended_at: Optional[datetime] = None
+    ended_at: datetime | None = None
 
     @model_validator(mode="after")
     def validate_time_range(self) -> TimeRangeModel:
@@ -59,7 +59,7 @@ class Artifact(BaseModel):
     artifact_id: str = Field(default_factory=lambda: new_id("artifact"))
     name: str
     kind: ArtifactKind = ArtifactKind.CUSTOM
-    uri: Optional[str] = None
+    uri: str | None = None
     content: TraceValue = None
     metadata: dict[str, Any] = Field(default_factory=dict)
 
@@ -80,7 +80,7 @@ class Artifact(BaseModel):
 class Span(TimeRangeModel):
     span_id: str = Field(default_factory=lambda: new_id("span"))
     run_id: str
-    parent_span_id: Optional[str] = None
+    parent_span_id: str | None = None
     name: str
     kind: SpanKind = SpanKind.CUSTOM
     status: SpanStatus = SpanStatus.PENDING
@@ -104,8 +104,8 @@ class Evaluation(BaseModel):
     target_type: TargetType
     target_id: str
     name: str
-    score: Optional[float] = None
-    label: Optional[str] = None
+    score: float | None = None
+    label: str | None = None
     reason: str = ""
     evidence_span_ids: list[str] = Field(default_factory=list)
     metadata: dict[str, Any] = Field(default_factory=dict)
@@ -119,7 +119,7 @@ class Evaluation(BaseModel):
 
     @field_validator("score")
     @classmethod
-    def validate_score(cls, value: Optional[float]) -> Optional[float]:
+    def validate_score(cls, value: float | None) -> float | None:
         if value is not None and not 0.0 <= value <= 1.0:
             raise ValueError("score must be between 0.0 and 1.0")
         return value

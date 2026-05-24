@@ -4,11 +4,21 @@ from lumiagent.tracing.validator import validate_run
 
 
 def test_builder_creates_nested_trace() -> None:
-    builder = TraceBuilder(run_id="run_builder", name="builder demo", input={"task": "demo"})
+    builder = TraceBuilder(run_id="run_builder", name="builder demo", input_value={"task": "demo"})
     agent_id = builder.start_span("Agent", kind=SpanKind.AGENT)
-    llm_id = builder.start_span("LLM", kind=SpanKind.LLM, parent_span_id=agent_id, input={"prompt": "Hi"})
+    llm_id = builder.start_span(
+        "LLM",
+        kind=SpanKind.LLM,
+        parent_span_id=agent_id,
+        input_value={"prompt": "Hi"},
+    )
     builder.add_artifact(llm_id, name="prompt", kind=ArtifactKind.PROMPT, content="Hi")
-    builder.add_event(llm_id, name="token_budget_warning", level=EventLevel.WARNING, message="Budget is high.")
+    builder.add_event(
+        llm_id,
+        name="token_budget_warning",
+        level=EventLevel.WARNING,
+        message="Budget is high.",
+    )
     builder.end_span(llm_id, status=SpanStatus.SUCCESS, output={"text": "Hello"})
     builder.end_span(agent_id, status=SpanStatus.SUCCESS)
     builder.add_evaluation(

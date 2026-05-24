@@ -1,10 +1,10 @@
 """Enums for LumiAgent trace models."""
 from __future__ import annotations
 
-from enum import Enum
+from enum import StrEnum
 
 
-class RunStatus(str, Enum):
+class RunStatus(StrEnum):
     PENDING = "pending"
     RUNNING = "running"
     SUCCESS = "success"
@@ -12,7 +12,7 @@ class RunStatus(str, Enum):
     CANCELLED = "cancelled"
 
 
-class SpanStatus(str, Enum):
+class SpanStatus(StrEnum):
     PENDING = "pending"
     RUNNING = "running"
     SUCCESS = "success"
@@ -21,7 +21,7 @@ class SpanStatus(str, Enum):
     CANCELLED = "cancelled"
 
 
-class SpanKind(str, Enum):
+class SpanKind(StrEnum):
     AGENT = "agent"
     LLM = "llm"
     TOOL = "tool"
@@ -33,14 +33,14 @@ class SpanKind(str, Enum):
     CUSTOM = "custom"
 
 
-class EventLevel(str, Enum):
+class EventLevel(StrEnum):
     DEBUG = "debug"
     INFO = "info"
     WARNING = "warning"
     ERROR = "error"
 
 
-class ArtifactKind(str, Enum):
+class ArtifactKind(StrEnum):
     PROMPT = "prompt"
     COMPLETION = "completion"
     RETRIEVED_CHUNKS = "retrieved_chunks"
@@ -51,12 +51,12 @@ class ArtifactKind(str, Enum):
     CUSTOM = "custom"
 
 
-class TargetType(str, Enum):
+class TargetType(StrEnum):
     RUN = "run"
     SPAN = "span"
 
 
-class Severity(str, Enum):
+class Severity(StrEnum):
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"

@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import pytest
 
@@ -19,7 +19,7 @@ from lumiagent.tracing.validator import TraceValidationError, validate_run
 
 
 def utc_now() -> datetime:
-    return datetime(2026, 5, 24, 12, 0, 0, tzinfo=timezone.utc)
+    return datetime(2026, 5, 24, 12, 0, 0, tzinfo=UTC)
 
 
 def valid_run() -> AgentRun:
@@ -32,7 +32,14 @@ def valid_run() -> AgentRun:
         status=SpanStatus.SUCCESS,
         started_at=utc_now(),
         ended_at=utc_now(),
-        artifacts=[Artifact(artifact_id="artifact_prompt", name="prompt", kind=ArtifactKind.PROMPT, content="Hi")],
+        artifacts=[
+            Artifact(
+                artifact_id="artifact_prompt",
+                name="prompt",
+                kind=ArtifactKind.PROMPT,
+                content="Hi",
+            )
+        ],
     )
     agent = Span(
         run_id="run_valid",

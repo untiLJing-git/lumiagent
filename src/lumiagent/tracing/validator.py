@@ -1,8 +1,12 @@
 """Structural validation for Agent traces."""
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from .enums import TargetType
-from .models import AgentRun, Span
+
+if TYPE_CHECKING:
+    from .models import AgentRun, Span
 
 
 class TraceValidationError(ValueError):
@@ -27,10 +31,17 @@ def _validate_child_parent_links(span: Span) -> None:
         _validate_child_parent_links(child)
 
 
-def _validate_target(target_type: TargetType, target_id: str, run: AgentRun, span_ids: set[str]) -> None:
+def _validate_target(
+    target_type: TargetType,
+    target_id: str,
+    run: AgentRun,
+    span_ids: set[str],
+) -> None:
     if target_type is TargetType.RUN:
         if target_id != run.run_id:
-            raise TraceValidationError(f"target_id {target_id} does not match run_id {run.run_id}")
+            raise TraceValidationError(
+                f"target_id {target_id} does not match run_id {run.run_id}"
+            )
         return
     if target_id not in span_ids:
         raise TraceValidationError(f"target_id {target_id} does not reference an existing span")
@@ -52,7 +63,9 @@ def validate_run(run: AgentRun) -> None:
 
     for span in spans:
         if span.run_id != run.run_id:
-            raise TraceValidationError(f"Span {span.span_id} run_id does not match AgentRun {run.run_id}")
+            raise TraceValidationError(
+                f"Span {span.span_id} run_id does not match AgentRun {run.run_id}"
+            )
         if span.span_id in span_ids:
             raise TraceValidationError(f"Duplicate span_id {span.span_id}")
         span_ids.add(span.span_id)

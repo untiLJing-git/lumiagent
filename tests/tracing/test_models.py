@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import pytest
 from pydantic import ValidationError
@@ -8,9 +8,9 @@ from lumiagent.tracing import (
     Artifact,
     ArtifactKind,
     Diagnosis,
+    Evaluation,
     Event,
     EventLevel,
-    Evaluation,
     RunStatus,
     Severity,
     Span,
@@ -21,7 +21,7 @@ from lumiagent.tracing import (
 
 
 def utc_now() -> datetime:
-    return datetime(2026, 5, 24, 12, 0, 0, tzinfo=timezone.utc)
+    return datetime(2026, 5, 24, 12, 0, 0, tzinfo=UTC)
 
 
 def test_create_agent_run_with_nested_span() -> None:
@@ -132,6 +132,6 @@ def test_ended_at_cannot_precede_started_at() -> None:
             name="Bad timing",
             kind=SpanKind.CUSTOM,
             status=SpanStatus.ERROR,
-            started_at=datetime(2026, 5, 24, 12, 1, 0, tzinfo=timezone.utc),
-            ended_at=datetime(2026, 5, 24, 12, 0, 0, tzinfo=timezone.utc),
+            started_at=datetime(2026, 5, 24, 12, 1, 0, tzinfo=UTC),
+            ended_at=datetime(2026, 5, 24, 12, 0, 0, tzinfo=UTC),
         )

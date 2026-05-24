@@ -9,7 +9,7 @@ from lumiagent.tracing.enums import (
     SpanStatus,
     TargetType,
 )
-from lumiagent.tracing.models import AgentRun, Artifact, Diagnosis, Event, Evaluation, Span
+from lumiagent.tracing.models import AgentRun, Artifact, Diagnosis, Evaluation, Event, Span
 from lumiagent.tracing.serializer import from_dict, from_json, to_dict, to_json
 from lumiagent.tracing.validator import TraceValidationError, validate_run
 

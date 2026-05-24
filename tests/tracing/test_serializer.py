@@ -1,16 +1,15 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 from lumiagent.tracing import AgentRun, RunStatus, Span, SpanKind, SpanStatus
 from lumiagent.tracing.serializer import from_dict, from_json, to_dict, to_json
 from lumiagent.tracing.validator import validate_run
 
-
 FIXTURES = Path(__file__).parent / "fixtures"
 
 
 def utc_now() -> datetime:
-    return datetime(2026, 5, 24, 12, 0, 0, tzinfo=timezone.utc)
+    return datetime(2026, 5, 24, 12, 0, 0, tzinfo=UTC)
 
 
 def make_run() -> AgentRun:

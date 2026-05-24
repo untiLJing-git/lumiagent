@@ -1,20 +1,36 @@
 """Convenience builder for Agent traces."""
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Any
 
 from .enums import ArtifactKind, EventLevel, RunStatus, Severity, SpanKind, SpanStatus, TargetType
-from .models import AgentRun, Artifact, Diagnosis, Event, Evaluation, Span, TraceValue, new_id, utc_now
+from .models import (
+    AgentRun,
+    Artifact,
+    Diagnosis,
+    Evaluation,
+    Event,
+    Span,
+    TraceValue,
+    new_id,
+    utc_now,
+)
 from .validator import validate_run
 
 
 class TraceBuilder:
-    def __init__(self, *, run_id: Optional[str] = None, name: str, input: TraceValue = None) -> None:
+    def __init__(
+        self,
+        *,
+        run_id: str | None = None,
+        name: str,
+        input_value: TraceValue = None,
+    ) -> None:
         self.run = AgentRun(
             run_id=run_id or new_id("run"),
             name=name,
             status=RunStatus.RUNNING,
-            input=input,
+            input=input_value,
         )
         self._spans: dict[str, Span] = {}
 
@@ -23,9 +39,9 @@ class TraceBuilder:
         name: str,
         *,
         kind: SpanKind = SpanKind.CUSTOM,
-        parent_span_id: Optional[str] = None,
-        input: TraceValue = None,
-        metadata: Optional[dict[str, Any]] = None,
+        parent_span_id: str | None = None,
+        input_value: TraceValue = None,
+        metadata: dict[str, Any] | None = None,
     ) -> str:
         if parent_span_id is not None and parent_span_id not in self._spans:
             raise ValueError(f"parent_span_id {parent_span_id} does not exist")
@@ -36,7 +52,7 @@ class TraceBuilder:
             name=name,
             kind=kind,
             status=SpanStatus.RUNNING,
-            input=input,
+            input=input_value,
             metadata=metadata or {},
         )
         self._spans[span.span_id] = span
@@ -67,7 +83,7 @@ class TraceBuilder:
         name: str,
         level: EventLevel = EventLevel.INFO,
         message: str = "",
-        metadata: Optional[dict[str, Any]] = None,
+        metadata: dict[str, Any] | None = None,
     ) -> str:
         span = self._get_span(span_id)
         event = Event(name=name, level=level, message=message, metadata=metadata or {})
@@ -81,11 +97,17 @@ class TraceBuilder:
         name: str,
         kind: ArtifactKind = ArtifactKind.CUSTOM,
         content: TraceValue = None,
-        uri: Optional[str] = None,
-        metadata: Optional[dict[str, Any]] = None,
+        uri: str | None = None,
+        metadata: dict[str, Any] | None = None,
     ) -> str:
         span = self._get_span(span_id)
-        artifact = Artifact(name=name, kind=kind, content=content, uri=uri, metadata=metadata or {})
+        artifact = Artifact(
+            name=name,
+            kind=kind,
+            content=content,
+            uri=uri,
+            metadata=metadata or {},
+        )
         span.artifacts.append(artifact)
         return artifact.artifact_id
 
@@ -95,11 +117,11 @@ class TraceBuilder:
         target_type: TargetType,
         target_id: str,
         name: str,
-        score: Optional[float] = None,
-        label: Optional[str] = None,
+        score: float | None = None,
+        label: str | None = None,
         reason: str = "",
-        evidence_span_ids: Optional[list[str]] = None,
-        metadata: Optional[dict[str, Any]] = None,
+        evidence_span_ids: list[str] | None = None,
+        metadata: dict[str, Any] | None = None,
     ) -> str:
         evaluation = Evaluation(
             target_type=target_type,
@@ -121,10 +143,10 @@ class TraceBuilder:
         target_id: str,
         failure_type: str,
         summary: str,
-        evidence_span_ids: Optional[list[str]] = None,
+        evidence_span_ids: list[str] | None = None,
         suggested_fix: str,
         severity: Severity = Severity.MEDIUM,
-        metadata: Optional[dict[str, Any]] = None,
+        metadata: dict[str, Any] | None = None,
     ) -> str:
         diagnosis = Diagnosis(
             target_type=target_type,
@@ -139,7 +161,12 @@ class TraceBuilder:
         self.run.diagnoses.append(diagnosis)
         return diagnosis.diagnosis_id
 
-    def build(self, *, status: RunStatus = RunStatus.SUCCESS, output: TraceValue = None) -> AgentRun:
+    def build(
+        self,
+        *,
+        status: RunStatus = RunStatus.SUCCESS,
+        output: TraceValue = None,
+    ) -> AgentRun:
         self.run.status = status
         self.run.output = output
         self.run.ended_at = utc_now()
