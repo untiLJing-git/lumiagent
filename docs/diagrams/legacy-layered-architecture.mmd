@@ -1,0 +1,19 @@
+flowchart TB
+    Platform["Platform Layer<br/>CMD / Web / WeChat / Feishu / DingTalk"]
+    MessageBus["Message Bus Layer<br/>Unified Protocol / Routing / Queue"]
+    AgentCore["Agent Core Layer<br/>ReAct Engine / Context / Memory / Sub-Agents"]
+
+    subgraph Execution["Execution Capabilities"]
+        ToolLayer["Tool Layer<br/>Built-in Tools / MCP"]
+        LLMLayer["LLM Layer<br/>OpenAI / Claude / Qwen / Local"]
+    end
+
+    RAG["RAG Layer<br/>Document Loader / Vectorizer / Retriever"]
+    Evaluation["Evaluation Layer<br/>Accuracy / Tool Use / Response Quality"]
+
+    Platform --> MessageBus
+    MessageBus --> AgentCore
+    AgentCore --> ToolLayer
+    AgentCore --> LLMLayer
+    AgentCore --> RAG
+    AgentCore --> Evaluation

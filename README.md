@@ -61,16 +61,9 @@ print(to_json(run))
 
 ## Architecture
 
-```text
-AgentRun
-├── root_spans[]
-│   └── Span
-│       ├── events[]
-│       ├── artifacts[]
-│       └── children[]
-├── evaluations[]
-└── diagnoses[]
-```
+![Trace Core Model](docs/assets/trace-core-model.svg)
+
+Mermaid source: [`docs/diagrams/trace-core-model.mmd`](docs/diagrams/trace-core-model.mmd)
 
 The trace core is intentionally independent from any single agent framework. Coding Agent support, MCP Tool Chain capture, SDK hooks, CLI wrappers, and transcript importers should be built as adapters on top of the core model.
 

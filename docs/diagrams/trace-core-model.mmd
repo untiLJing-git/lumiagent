@@ -1,0 +1,26 @@
+flowchart TB
+    AgentRun["AgentRun"]
+
+    subgraph SpanTree["Span Tree"]
+        RootSpans["root_spans[]"]
+        Span["Span"]
+        ChildSpans["children[]"]
+        Events["events[]"]
+        Artifacts["artifacts[]"]
+    end
+
+    Evaluations["evaluations[]"]
+    Diagnoses["diagnoses[]"]
+    Evidence["evidence_span_ids"]
+
+    AgentRun --> RootSpans
+    RootSpans --> Span
+    Span --> ChildSpans
+    ChildSpans --> Span
+    Span --> Events
+    Span --> Artifacts
+    AgentRun --> Evaluations
+    AgentRun --> Diagnoses
+    Evaluations -. reference .-> Evidence
+    Diagnoses -. reference .-> Evidence
+    Evidence -. points to .-> Span

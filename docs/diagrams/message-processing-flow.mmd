@@ -1,0 +1,41 @@
+flowchart TB
+    NativeMessage["User Message<br/>(Platform Native)"]
+    PlatformIn["Platform Adapter"]
+    UnifiedMessage["UnifiedMessage"]
+    MessageBus["Message Bus"]
+    AgentDispatch["Dispatch to Agent"]
+    ContextBuilder["Context Builder"]
+
+    subgraph ContextSources["Context Sources"]
+        SystemPrompt["System Prompt"]
+        LongTermMemory["Long-term Memory<br/>(Vector Retrieval)"]
+        RAGResults["RAG Results"]
+        ShortTermMemory["Short-term Memory<br/>(Conversation History)"]
+        CurrentMessage["Current Message"]
+    end
+
+    ReactEngine["ReAct Engine"]
+    LLMLayer["LLM Layer"]
+    ToolExec["Tool Execution"]
+    AgentResponse["AgentResponse"]
+    MemoryUpdate["Memory Update"]
+    PlatformOut["Platform Adapter"]
+    OutboundMessage["Outbound Message<br/>(Platform Native)"]
+
+    NativeMessage --> PlatformIn
+    PlatformIn --> UnifiedMessage
+    UnifiedMessage --> MessageBus
+    MessageBus --> AgentDispatch
+    AgentDispatch --> ContextBuilder
+    SystemPrompt --> ContextBuilder
+    LongTermMemory --> ContextBuilder
+    RAGResults --> ContextBuilder
+    ShortTermMemory --> ContextBuilder
+    CurrentMessage --> ContextBuilder
+    ContextBuilder --> ReactEngine
+    ReactEngine <--> LLMLayer
+    ReactEngine <--> ToolExec
+    ReactEngine --> AgentResponse
+    AgentResponse --> MemoryUpdate
+    MemoryUpdate --> PlatformOut
+    PlatformOut --> OutboundMessage

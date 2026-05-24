@@ -1,0 +1,12 @@
+flowchart LR
+    MemoryManager["Memory Manager"]
+
+    ShortTerm["Short-Term Memory<br/>Redis / In-memory Queue"]
+    LongTerm["Long-Term Memory<br/>SQLite + Vector Retrieval"]
+    Proactive["Proactive Memory<br/>Scheduled Trigger + Pattern Recognition"]
+    Compression["Compression Engine<br/>LLM Summary + Importance Score"]
+
+    MemoryManager --> ShortTerm
+    MemoryManager --> LongTerm
+    MemoryManager --> Proactive
+    MemoryManager --> Compression

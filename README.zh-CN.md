@@ -61,16 +61,9 @@ print(to_json(run))
 
 ## 架构
 
-```text
-AgentRun
-├── root_spans[]
-│   └── Span
-│       ├── events[]
-│       ├── artifacts[]
-│       └── children[]
-├── evaluations[]
-└── diagnoses[]
-```
+![Trace Core Model](docs/assets/trace-core-model.svg)
+
+Mermaid 源文件：[`docs/diagrams/trace-core-model.mmd`](docs/diagrams/trace-core-model.mmd)
 
 Trace Core 刻意保持与具体 Agent 框架解耦。Coding Agent 支持、MCP Tool Chain 捕获、SDK hooks、CLI wrappers 和 transcript importers 都应作为核心模型之上的适配层实现。
 

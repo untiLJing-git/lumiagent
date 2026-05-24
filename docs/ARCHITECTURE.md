@@ -6,27 +6,9 @@
 
 LumiAgent 采用 **分层解耦 + 插件化** 架构，将系统分为 6 个独立层次：
 
-```
-┌─────────────────────────────────────────────────────────┐
-│                    Platform Layer                        │
-│         (CMD / WeChat / Feishu / DingTalk / Web)        │
-├─────────────────────────────────────────────────────────┤
-│                   Message Bus Layer                      │
-│        (统一消息协议 / 消息路由 / 消息队列)               │
-├─────────────────────────────────────────────────────────┤
-│                  Agent Core Layer                        │
-│    (ReAct Engine / Context / Memory / Sub-Agents)       │
-├──────────────────┬──────────────────────────────────────┤
-│   Tool Layer     │           LLM Layer                   │
-│ (Built-in/MCP)   │  (OpenAI/Claude/Qwen/Local)          │
-├──────────────────┴──────────────────────────────────────┤
-│                    RAG Layer                              │
-│      (Document Loader / Vectorizer / Retriever)          │
-├─────────────────────────────────────────────────────────┤
-│                  Evaluation Layer                         │
-│      (Accuracy / Tool Use / Response Quality)            │
-└─────────────────────────────────────────────────────────┘
-```
+![Legacy Layered Architecture](assets/legacy-layered-architecture.svg)
+
+Mermaid 源文件：[`docs/diagrams/legacy-layered-architecture.mmd`](diagrams/legacy-layered-architecture.mmd)
 
 ### 1.2 设计原则
 
@@ -261,17 +243,9 @@ class ContextBuilder:
 
 #### 2.4.3 记忆系统
 
-```
-┌──────────────────────────────────────────────────────┐
-│                    Memory Manager                     │
-├────────────┬────────────┬──────────┬─────────────────┤
-│ Short-Term │ Long-Term  │ Proactive│   Compression   │
-│   Memory   │  Memory    │  Memory  │     Engine      │
-├────────────┼────────────┼──────────┼─────────────────┤
-│ Redis/     │ SQLite +   │ 定时触发 │ LLM 摘要 +      │
-│ 内存队列   │ 向量检索   │ 模式识别 │ 重要度评分       │
-└────────────┴────────────┴──────────┴─────────────────┘
-```
+![Memory Manager](assets/memory-manager.svg)
+
+Mermaid 源文件：[`docs/diagrams/memory-manager.mmd`](diagrams/memory-manager.mmd)
 
 | 记忆类型 | 存储方式 | 生命周期 | 用途 |
 |---------|---------|---------|------|
@@ -515,51 +489,9 @@ class EvaluationSuite:
 
 ### 4.1 消息处理主流程
 
-```
-用户消息 (平台原生)
-    │
-    ▼
-┌─────────────────┐
-│ Platform Adapter │ ── 协议转换 ──▶ UnifiedMessage
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│   Message Bus    │ ── 路由/过滤 ──▶ 分发到对应 Agent
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│ Context Builder  │ ── 组装上下文:
-│                  │    ├─ System Prompt
-│                  │    ├─ Long-term Memory (向量检索)
-│                  │    ├─ RAG Results (知识检索)
-│                  │    ├─ Short-term Memory (对话历史)
-│                  │    └─ Current Message
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐     ┌──────────┐
-│  ReAct Engine    │◄───▶│ LLM Layer│
-│                  │     └──────────┘
-│  Loop:           │     ┌──────────┐
-│   Thought ──────▶│────▶│ Tool Exec│
-│   Action  ◀──────│◀────│          │
-│   Observe ──────▶│     └──────────┘
-│   ...            │
-│   Answer ────────│──▶ AgentResponse
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│  Memory Update   │ ── 存储对话 + 评估重要度 → 长期记忆
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│ Platform Adapter │ ── 格式转换 ──▶ 平台原生消息发出
-└─────────────────┘
-```
+![Message Processing Flow](assets/message-processing-flow.svg)
+
+Mermaid 源文件：[`docs/diagrams/message-processing-flow.mmd`](diagrams/message-processing-flow.mmd)
 
 ---
 
