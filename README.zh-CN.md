@@ -93,12 +93,21 @@ MCP Tool Chain 层是 adapter evidence layer：它记录工具发现、schema sn
 
 ## 路线图
 
+### MVP 阶段（近期）
+
 - [x] Trace Schema / Span Tree Core
 - [x] MCP Tool Chain evidence model
-- [ ] Coding Agent trace model
-- [ ] Trace Replay data flow
-- [ ] Evaluation and diagnosis engine
-- [ ] Minimal runnable examples and tests
+- [ ] MCP 采集 + 展示链（统一 `CaptureStrategy` 入口）
+- [ ] Coding Agent trace model + Claude Code hooks 采集 + CLI Viewer
+- [ ] Evaluation / Diagnosis Agent（基于 LumiAgent 自身 Agent 基础设施）
+- [ ] Replay / Visualization 数据准备
+
+### 未来阶段
+
+- [ ] 采集 SDK + MCP Proxy
+- [ ] Web UI
+- [ ] 专家知识库 + 高级诊断
+- [ ] 多 Agent 可视化 + 性能优化
 
 当前 MVP 的非目标：
 

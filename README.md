@@ -93,12 +93,21 @@ The MCP Tool Chain layer is an adapter evidence layer: it records tool discovery
 
 ## Roadmap
 
+### MVP Phases (Near-term)
+
 - [x] Trace Schema / Span Tree Core
 - [x] MCP Tool Chain evidence model
-- [ ] Coding Agent trace model
-- [ ] Trace Replay data flow
-- [ ] Evaluation and diagnosis engine
-- [ ] Minimal runnable examples and tests
+- [ ] MCP Capture + Display chain (unified `CaptureStrategy` entry point)
+- [ ] Coding Agent trace model + Claude Code hooks capture + CLI viewer
+- [ ] Evaluation / Diagnosis Agent (built on LumiAgent's own agent infrastructure)
+- [ ] Replay / Visualization data preparation
+
+### Future Phases
+
+- [ ] Capture SDK + MCP Proxy
+- [ ] Web UI
+- [ ] Expert Knowledge Base + Advanced Diagnosis
+- [ ] Multi-Agent Visualization + Performance
 
 Non-goals for the current MVP:
 
