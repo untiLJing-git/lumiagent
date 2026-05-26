@@ -2,22 +2,30 @@
 
 [English](README.md)
 
-LumiAgent 是一个 Agent Trace / Eval Core，用于记录、回放、评估和诊断 Agent Run。
+**Agent 评测与优化闭环**
 
-当前 MVP 聚焦于框架无关的 Trace 数据底座：一次 Agent Run 会被表达为包含事件、产物、评估和诊断结果的嵌套 Span Tree。第一阶段应用方向是 Coding Agent 与 MCP Tool Chain 的可观测性和失败诊断。
+LumiAgent 将 Agent 评测从一个分数，推进为一条可执行的改进路径。
+
+Benchmark 能回答 Agent 是否成功，LumiAgent 进一步回答：执行过程如何展开，失败在哪一步形成，诊断依据来自哪些证据，以及下一轮最值得优化什么。
+
+```text
+运行任务 → 采集轨迹 → 诊断失败 → 审阅证据 → 应用改进 → 对比复跑
+```
+
+首个产品方向聚焦 Coding Agent 与 MCP Tool Chain：LumiAgent 记录真实 Agent 执行轨迹，分析工具链与工作流失败，辅助人工审阅证据，并支持优化后的复跑对比。
 
 ## 为什么需要 LumiAgent
 
-Agent 系统正在变得越来越依赖工具和工作流，但很多失败仍然很难解释：
+Agent 系统正在变得越来越依赖工具和工作流，但评测经常被压缩成最终的 pass/fail 分数。这个分数是必要的，但它无法解释：
 
-- Agent 是否检索到了正确上下文？
-- Agent 是否调用了正确工具？
-- 工具参数是否生成正确？
-- Agent 是否误读了工具返回结果？
-- 验证步骤是否充分？
-- 某个评估或诊断结论的证据来自哪些 span？
+- Agent 如何收集上下文
+- Agent 为什么选择某个工具
+- 工具参数是否符合 schema
+- Agent 如何使用工具返回结果
+- 验证步骤是否充分
+- 诊断结论具体由哪些 span 提供证据
 
-LumiAgent 从回答这些问题所需的数据底座开始：建立结构化、可回放、可评估、可诊断的 Agent Trace 模型。
+LumiAgent 从结构化、可回放、可评测、可诊断的 trace 模型出发，在此之上构建 Agent 优化闭环。
 
 ## 当前状态
 

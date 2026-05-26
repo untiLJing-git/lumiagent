@@ -2,7 +2,15 @@
 
 ## 1. 核心定位
 
-LumiAgent 是一个通用 Agent Trace / Eval Core，将 LLM、Tool、RAG、Memory、Evaluator、Fallback、Error 等执行节点统一建模为可嵌套的 Span Tree，使 Agent Run 可以被结构化记录、逐步回放、指标评测和失败归因。
+LumiAgent 是一个 Agent 评测与优化闭环，将 Agent 评测从一个分数，推进为一条可执行的改进路径。Benchmark 能回答 Agent 是否成功，LumiAgent 进一步回答：执行过程如何展开，失败在哪一步形成，诊断依据来自哪些证据，以及下一轮最值得优化什么。
+
+产品闭环是：
+
+```text
+运行任务 → 采集轨迹 → 诊断失败 → 审阅证据 → 应用改进 → 对比复跑
+```
+
+在这个闭环下，LumiAgent 提供通用 Agent Trace / Eval Core，将 LLM、Tool、RAG、Memory、Evaluator、Fallback、Error 等执行节点统一建模为可嵌套的 Span Tree，使 Agent Run 可以被结构化记录、逐步回放、指标评测和失败归因。
 
 首个落地场景聚焦 Coding Agent 与 MCP Tool Chain，通过采集文件检索、代码读取、代码修改、命令执行、测试验证、MCP 工具发现、工具调用、参数生成和工具结果等轨迹，诊断 Agent 在上下文收集、工具选择、参数正确性、结果使用、验证充分性、失败恢复和风险控制中的问题，从而优化 Coding Agent 的整体工作流。
 

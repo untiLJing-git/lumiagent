@@ -2,22 +2,30 @@
 
 [简体中文](README.zh-CN.md)
 
-LumiAgent is an Agent Trace / Eval Core for recording, replaying, evaluating, and diagnosing agent runs.
+**Agent Evaluation & Optimization Loop**
 
-The current MVP focuses on a framework-agnostic trace data foundation: an agent run is represented as a nested Span Tree with events, artifacts, evaluations, and diagnoses. The first application direction is observability and diagnosis for Coding Agents and MCP Tool Chains.
+LumiAgent turns agent evaluation from a score into a path to improvement.
+
+Benchmark scores tell whether an agent succeeded. LumiAgent shows how the run unfolded, where failure emerged, what evidence supports the diagnosis, and which changes are most likely to improve the next run.
+
+```text
+run tasks → capture traces → diagnose failures → review evidence → apply improvements → compare reruns
+```
+
+The first product direction focuses on Coding Agents and MCP Tool Chains: LumiAgent records real agent execution traces, analyzes tool and workflow failures, helps humans review the evidence, and supports rerun comparison after improvements.
 
 ## Why LumiAgent
 
-Agent systems are becoming more tool-heavy and workflow-heavy, but many failures are still hard to explain:
+Agent systems are becoming more tool-heavy and workflow-heavy, but evaluation is often reduced to a final pass/fail score. That score is necessary, but it does not explain:
 
-- Was the right context retrieved?
-- Did the agent call the right tool?
-- Were tool arguments generated correctly?
-- Did the agent misread the tool result?
-- Was the verification step sufficient?
-- Which span provides evidence for an evaluation or diagnosis?
+- how the agent gathered context
+- why it selected a tool
+- whether tool arguments matched the schema
+- how it consumed tool results
+- whether verification was sufficient
+- which concrete spans support a diagnosis
 
-LumiAgent starts from the data foundation for answering these questions: a structured, replayable, evaluable, and diagnosable trace model.
+LumiAgent starts from a structured, replayable, evaluable, and diagnosable trace model, then builds an optimization loop around it.
 
 ## Current Status
 

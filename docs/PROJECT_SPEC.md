@@ -2,7 +2,15 @@
 
 ## 1. Core Positioning
 
-LumiAgent is a general Agent Trace / Eval Core that models LLM, Tool, RAG, Memory, Evaluator, Fallback, and Error steps as a nested Span Tree. It makes each Agent Run structured, replayable, evaluable, and diagnosable.
+LumiAgent is an Agent Evaluation & Optimization Loop that turns evaluation from a score into a path to improvement. Benchmark scores tell whether an agent succeeded. LumiAgent explains how the run unfolded, where failure emerged, what evidence supports the diagnosis, and which changes are most likely to improve the next run.
+
+Its product loop is:
+
+```text
+run tasks → capture traces → diagnose failures → review evidence → apply improvements → compare reruns
+```
+
+Under this loop, LumiAgent provides a general Agent Trace / Eval Core that models LLM, Tool, RAG, Memory, Evaluator, Fallback, and Error steps as a nested Span Tree. It makes each Agent Run structured, replayable, evaluable, and diagnosable.
 
 Its first application focuses on Coding Agents and MCP Tool Chains. LumiAgent captures file search, code reading, code edits, command execution, test verification, MCP tool discovery, tool calls, argument generation, and tool results to diagnose context gaps, tool misuse, argument errors, result misinterpretation, insufficient verification, failure recovery issues, and risk-control problems. The goal is to optimize the overall Coding Agent workflow.
 
