@@ -123,6 +123,8 @@ LumiAgent 当前主线由四部分组成：
 
 目标：建立 LumiAgent 的核心数据模型。
 
+正式规格：`docs/specs/trace-core-mvp.md`。
+
 交付物：
 
 - Run / Span / Event / Artifact / Evaluation / Diagnosis 模型

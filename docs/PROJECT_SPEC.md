@@ -123,6 +123,8 @@ Evaluation output should include:
 
 Goal: establish LumiAgent's core data model.
 
+Formal specification: `docs/specs/trace-core-mvp.md`.
+
 Deliverables:
 
 - Run / Span / Event / Artifact / Evaluation / Diagnosis models

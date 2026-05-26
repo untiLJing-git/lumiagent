@@ -59,6 +59,20 @@ All implementation work must follow these rules:
    - The report should cover technology choices, syntax/style rules, design patterns, implementation highlights, validation results, risks, trade-offs, and follow-up suggestions.
    - Use a path that matches the implemented stage, such as `docs/reports/trace-core-mvp-technical-report.zh-CN.md`.
 
+## Verification Commands
+
+```powershell
+python -m pytest -v
+python -m ruff check src/lumiagent/tracing src/lumiagent/adapters tests/tracing tests/adapters
+python -m mypy src/lumiagent/tracing src/lumiagent/adapters
+```
+
+If the package is not installed in editable mode, set the local source path first:
+
+```powershell
+$env:PYTHONPATH = "src"
+```
+
 ## Architecture Principles
 
 - Treat traces as first-class product data.
