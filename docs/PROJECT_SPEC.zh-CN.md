@@ -138,14 +138,17 @@ LumiAgent 当前主线由四部分组成：
 
 ### Phase 2: MCP Tool Chain Model
 
-目标：建立 MCP 工具链观测模型。
+目标：建立 MCP 工具链观测模型，并作为后续 Coding Agent Trace 与 Evaluation / Diagnosis 的结构化证据层。
+
+正式规格：`docs/specs/mcp-tool-chain-model.md`。
 
 交付物：
 
 - MCP server / tool discovery / tool call / tool result span
 - tool schema 与 argument 记录结构
+- MCP failure taxonomy 与 evidence fields
 - error / latency / permission 字段
-- 示例 MCP tool chain trace
+- 成功与失败示例 MCP tool chain trace
 
 验收标准：
 

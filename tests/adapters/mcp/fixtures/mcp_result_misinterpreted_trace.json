@@ -1,0 +1,217 @@
+{
+  "started_at": "2026-05-26T00:00:00Z",
+  "ended_at": "2026-05-26T00:00:01Z",
+  "run_id": "run_mcp_result_misinterpreted_fixture",
+  "name": "mcp_result_misinterpreted_trace",
+  "status": "error",
+  "input": null,
+  "output": null,
+  "metadata": {},
+  "root_spans": [
+    {
+      "started_at": "2026-05-26T00:00:00Z",
+      "ended_at": "2026-05-26T00:00:01Z",
+      "span_id": "span_result_misinterpreted_chain",
+      "run_id": "run_mcp_result_misinterpreted_fixture",
+      "parent_span_id": null,
+      "name": "MCP Tool Chain",
+      "kind": "custom",
+      "status": "error",
+      "input": null,
+      "output": null,
+      "metadata": {
+        "type": "mcp_tool_chain",
+        "server_name": "filesystem"
+      },
+      "events": [],
+      "artifacts": [],
+      "children": [
+        {
+          "started_at": "2026-05-26T00:00:00Z",
+          "ended_at": "2026-05-26T00:00:01Z",
+          "span_id": "span_result_misinterpreted_chain_discovery",
+          "run_id": "run_mcp_result_misinterpreted_fixture",
+          "parent_span_id": "span_result_misinterpreted_chain",
+          "name": "MCP Tool Discovery",
+          "kind": "custom",
+          "status": "success",
+          "input": null,
+          "output": {
+            "tool_count": 1
+          },
+          "metadata": {
+            "type": "mcp_discovery",
+            "server_name": "filesystem"
+          },
+          "events": [],
+          "artifacts": [
+            {
+              "artifact_id": "artifact_schema_result_misinterpreted",
+              "name": "MCP Tool Schema Snapshot",
+              "kind": "custom",
+              "uri": null,
+              "content": {
+                "server_name": "filesystem",
+                "captured_at": "2026-05-26T00:00:00Z",
+                "schema_version": "2026-05-26",
+                "tools": [
+                  {
+                    "name": "read_file",
+                    "description": "Read a file from the workspace.",
+                    "input_schema": {
+                      "type": "object",
+                      "required": [
+                        "path"
+                      ],
+                      "properties": {
+                        "path": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                ]
+              },
+              "metadata": {
+                "type": "mcp_tool_schema_snapshot",
+                "server_name": "filesystem"
+              }
+            }
+          ],
+          "children": []
+        },
+        {
+          "started_at": "2026-05-26T00:00:00Z",
+          "ended_at": "2026-05-26T00:00:01Z",
+          "span_id": "span_result_misinterpreted_execution",
+          "run_id": "run_mcp_result_misinterpreted_fixture",
+          "parent_span_id": "span_result_misinterpreted_chain",
+          "name": "MCP Tool Execution: read_file",
+          "kind": "tool",
+          "status": "error",
+          "input": {
+            "server_name": "filesystem",
+            "tool_name": "read_file",
+            "schema_artifact_id": "artifact_schema_result_misinterpreted",
+            "arguments": {
+              "path": "src/app.py"
+            },
+            "validation": {
+              "status": "valid",
+              "errors": []
+            }
+          },
+          "output": {
+            "status": "error"
+          },
+          "metadata": {
+            "type": "mcp_tool_execution",
+            "server_name": "filesystem",
+            "tool_name": "read_file"
+          },
+          "events": [
+            {
+              "event_id": "event_span_result_misinterpreted_execution_failure",
+              "name": "mcp_failure_evidence",
+              "timestamp": "2026-05-26T00:00:00Z",
+              "level": "error",
+              "message": "",
+              "metadata": {
+                "failure_type": "result_misinterpreted",
+                "failure_stage": "result_consumption",
+                "server_name": "filesystem",
+                "tool_name": "read_file",
+                "schema_artifact_id": "artifact_schema_result_misinterpreted",
+                "call_span_id": "span_result_misinterpreted_execution",
+                "result_artifact_id": "artifact_result_misinterpreted",
+                "evidence_span_ids": [
+                  "span_result_misinterpreted_consumption"
+                ],
+                "expected": {
+                  "content.files[0].path": "src/app.py"
+                },
+                "actual": {
+                  "claimed_path": "README.md"
+                },
+                "validation_errors": [],
+                "error_code": null,
+                "error_message": null,
+                "latency_ms": null,
+                "permission_status": null,
+                "consumed_artifact_ids": [
+                  "artifact_result_misinterpreted"
+                ],
+                "contradicted_fields": [
+                  "content.files[0].path"
+                ],
+                "ignored_key_fields": [
+                  "content.files"
+                ],
+                "notes": "Agent ignored the returned files list and contradicted the path."
+              }
+            }
+          ],
+          "artifacts": [
+            {
+              "artifact_id": "artifact_result_misinterpreted",
+              "name": "MCP Tool Result",
+              "kind": "tool_result",
+              "uri": null,
+              "content": {
+                "content": {
+                  "files": [
+                    {
+                      "path": "src/app.py"
+                    }
+                  ]
+                }
+              },
+              "metadata": {
+                "type": "mcp_tool_result"
+              }
+            }
+          ],
+          "children": []
+        },
+        {
+          "started_at": "2026-05-26T00:00:00Z",
+          "ended_at": "2026-05-26T00:00:01Z",
+          "span_id": "span_result_misinterpreted_consumption",
+          "run_id": "run_mcp_result_misinterpreted_fixture",
+          "parent_span_id": "span_result_misinterpreted_chain",
+          "name": "MCP Result Consumption",
+          "kind": "custom",
+          "status": "error",
+          "input": {
+            "consumed_artifact_ids": [
+              "artifact_result_misinterpreted"
+            ],
+            "consumption_summary": "Agent claimed the returned file path was README.md.",
+            "claimed_facts": [
+              "The result file path is README.md."
+            ],
+            "contradicted_fields": [
+              "content.files[0].path"
+            ],
+            "ignored_key_fields": [
+              "content.files"
+            ],
+            "confidence": 0.2,
+            "notes": "The actual result path was src/app.py."
+          },
+          "output": {
+            "status": "misinterpreted"
+          },
+          "metadata": {
+            "type": "mcp_result_consumption"
+          },
+          "events": [],
+          "artifacts": [],
+          "children": []
+        }
+      ]
+    }
+  ],
+  "evaluations": [],
+  "diagnoses": []
+}

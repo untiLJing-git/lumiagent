@@ -34,9 +34,27 @@ Implemented capabilities:
 - Convenience `TraceBuilder` API
 - Generic Agent and Coding Agent trace fixtures
 
-Implementation report:
+**Stage 2: MCP Tool Chain Model — completed**
 
+Implemented capabilities:
+
+- MCP adapter/convention layer under `src/lumiagent/adapters/mcp/`
+- Stable MCP span and artifact `metadata.type` conventions
+- `McpFailureType` taxonomy outside the generic Trace Core
+- Lightweight MCP evidence schemas for schema snapshots, tool calls, execution summaries, failures, and result consumption
+- Builder helpers for MCP tool-chain spans, artifacts, results, and failure evidence
+- Successful and failed MCP trace fixtures covering `argument_invalid`, `tool_execution_failed`, and `result_misinterpreted`
+
+Product value:
+
+- Preserves structured evidence for how an Agent discovers tools, sees schemas, generates arguments, executes MCP tools, and consumes results.
+- Keeps MCP as an adapter evidence layer so Phase 3 Coding Agent Trace and Phase 4 Evaluation / Diagnosis can consume stable evidence without polluting the Core model.
+
+Specifications and reports:
+
+- [`docs/specs/mcp-tool-chain-model.md`](docs/specs/mcp-tool-chain-model.md)
 - [`docs/reports/trace-core-mvp-technical-report.zh-CN.md`](docs/reports/trace-core-mvp-technical-report.zh-CN.md)
+- [`docs/reports/mcp-tool-chain-model-technical-report.zh-CN.md`](docs/reports/mcp-tool-chain-model-technical-report.zh-CN.md)
 
 ## Quick Example
 
@@ -65,12 +83,18 @@ print(to_json(run))
 
 Mermaid source: [`docs/diagrams/trace-core-model.mmd`](docs/diagrams/trace-core-model.mmd)
 
+![MCP Tool Chain Evidence Layer](docs/assets/mcp-tool-chain-evidence-layer.svg)
+
+Mermaid source: [`docs/diagrams/mcp-tool-chain-evidence-layer.mmd`](docs/diagrams/mcp-tool-chain-evidence-layer.mmd)
+
 The trace core is intentionally independent from any single agent framework. Coding Agent support, MCP Tool Chain capture, SDK hooks, CLI wrappers, and transcript importers should be built as adapters on top of the core model.
+
+The MCP Tool Chain layer is an adapter evidence layer: it records tool discovery, schema snapshots, argument generation, permission, execution results, failure evidence, and result consumption without adding MCP-specific fields to the Trace Core.
 
 ## Roadmap
 
 - [x] Trace Schema / Span Tree Core
-- [ ] MCP Tool Chain capture model
+- [x] MCP Tool Chain evidence model
 - [ ] Coding Agent trace model
 - [ ] Trace Replay data flow
 - [ ] Evaluation and diagnosis engine
@@ -87,6 +111,13 @@ Non-goals for the current MVP:
 
 ```text
 src/lumiagent/
+├── adapters/
+│   └── mcp/
+│       ├── __init__.py
+│       ├── builder.py
+│       ├── conventions.py
+│       ├── schemas.py
+│       └── taxonomy.py
 └── tracing/
     ├── __init__.py
     ├── builder.py
@@ -95,15 +126,26 @@ src/lumiagent/
     ├── serializer.py
     └── validator.py
 
-tests/tracing/
-├── fixtures/
-├── test_builder.py
-├── test_models.py
-├── test_serializer.py
-└── test_validator.py
+tests/
+├── adapters/mcp/
+│   ├── fixtures/
+│   ├── test_fixtures.py
+│   ├── test_mcp_builder.py
+│   ├── test_schemas.py
+│   └── test_taxonomy.py
+└── tracing/
+    ├── fixtures/
+    ├── test_builder.py
+    ├── test_models.py
+    ├── test_serializer.py
+    └── test_validator.py
 
-docs/reports/
-└── trace-core-mvp-technical-report.zh-CN.md
+docs/
+├── reports/
+│   ├── trace-core-mvp-technical-report.zh-CN.md
+│   └── mcp-tool-chain-model-technical-report.zh-CN.md
+└── specs/
+    └── mcp-tool-chain-model.md
 ```
 
 ## Installation
@@ -118,8 +160,8 @@ Python 3.11+ is required.
 
 ```bash
 python -m pytest -v
-python -m ruff check src/lumiagent/tracing tests/tracing
-python -m mypy src/lumiagent/tracing
+python -m ruff check src/lumiagent/tracing src/lumiagent/adapters tests/tracing tests/adapters
+python -m mypy src/lumiagent/tracing src/lumiagent/adapters
 ```
 
 If the package is not installed in editable mode, run the checks with the local source path:
@@ -127,16 +169,8 @@ If the package is not installed in editable mode, run the checks with the local 
 ```powershell
 $env:PYTHONPATH = "src"
 python -m pytest -v
-python -m ruff check src/lumiagent/tracing tests/tracing
-python -m mypy src/lumiagent/tracing
-```
-
-Current Trace Core MVP validation result:
-
-```text
-18 passed
-All checks passed
-Success: no issues found in 6 source files
+python -m ruff check src/lumiagent/tracing src/lumiagent/adapters tests/tracing tests/adapters
+python -m mypy src/lumiagent/tracing src/lumiagent/adapters
 ```
 
 ## Tech Stack

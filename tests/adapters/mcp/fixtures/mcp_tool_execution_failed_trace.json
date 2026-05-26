@@ -1,0 +1,154 @@
+{
+  "started_at": "2026-05-26T00:00:00Z",
+  "ended_at": "2026-05-26T00:00:01Z",
+  "run_id": "run_mcp_execution_failed_fixture",
+  "name": "mcp_tool_execution_failed_trace",
+  "status": "error",
+  "input": null,
+  "output": null,
+  "metadata": {},
+  "root_spans": [
+    {
+      "started_at": "2026-05-26T00:00:00Z",
+      "ended_at": "2026-05-26T00:00:01Z",
+      "span_id": "span_execution_failed_chain",
+      "run_id": "run_mcp_execution_failed_fixture",
+      "parent_span_id": null,
+      "name": "MCP Tool Chain",
+      "kind": "custom",
+      "status": "error",
+      "input": null,
+      "output": null,
+      "metadata": {
+        "type": "mcp_tool_chain",
+        "server_name": "filesystem"
+      },
+      "events": [],
+      "artifacts": [],
+      "children": [
+        {
+          "started_at": "2026-05-26T00:00:00Z",
+          "ended_at": "2026-05-26T00:00:01Z",
+          "span_id": "span_execution_failed_chain_discovery",
+          "run_id": "run_mcp_execution_failed_fixture",
+          "parent_span_id": "span_execution_failed_chain",
+          "name": "MCP Tool Discovery",
+          "kind": "custom",
+          "status": "success",
+          "input": null,
+          "output": {
+            "tool_count": 1
+          },
+          "metadata": {
+            "type": "mcp_discovery",
+            "server_name": "filesystem"
+          },
+          "events": [],
+          "artifacts": [
+            {
+              "artifact_id": "artifact_schema_execution_failed",
+              "name": "MCP Tool Schema Snapshot",
+              "kind": "custom",
+              "uri": null,
+              "content": {
+                "server_name": "filesystem",
+                "captured_at": "2026-05-26T00:00:00Z",
+                "schema_version": "2026-05-26",
+                "tools": [
+                  {
+                    "name": "read_file",
+                    "description": "Read a file from the workspace.",
+                    "input_schema": {
+                      "type": "object",
+                      "required": [
+                        "path"
+                      ],
+                      "properties": {
+                        "path": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                ]
+              },
+              "metadata": {
+                "type": "mcp_tool_schema_snapshot",
+                "server_name": "filesystem"
+              }
+            }
+          ],
+          "children": []
+        },
+        {
+          "started_at": "2026-05-26T00:00:00Z",
+          "ended_at": "2026-05-26T00:00:01Z",
+          "span_id": "span_execution_failed_execution",
+          "run_id": "run_mcp_execution_failed_fixture",
+          "parent_span_id": "span_execution_failed_chain",
+          "name": "MCP Tool Execution: read_file",
+          "kind": "tool",
+          "status": "error",
+          "input": {
+            "server_name": "filesystem",
+            "tool_name": "read_file",
+            "schema_artifact_id": "artifact_schema_execution_failed",
+            "arguments": {
+              "path": "missing.md"
+            },
+            "validation": {
+              "status": "valid",
+              "errors": []
+            }
+          },
+          "output": {
+            "status": "error"
+          },
+          "metadata": {
+            "type": "mcp_tool_execution",
+            "server_name": "filesystem",
+            "tool_name": "read_file"
+          },
+          "events": [
+            {
+              "event_id": "event_span_execution_failed_execution_failure",
+              "name": "mcp_failure_evidence",
+              "timestamp": "2026-05-26T00:00:00Z",
+              "level": "error",
+              "message": "",
+              "metadata": {
+                "failure_type": "tool_execution_failed",
+                "failure_stage": "tool_execution",
+                "server_name": "filesystem",
+                "tool_name": "read_file",
+                "schema_artifact_id": "artifact_schema_execution_failed",
+                "call_span_id": "span_execution_failed_execution",
+                "result_artifact_id": null,
+                "evidence_span_ids": [],
+                "expected": {
+                  "status": "success"
+                },
+                "actual": {
+                  "status": "error"
+                },
+                "validation_errors": [],
+                "error_code": "EIO",
+                "error_message": "I/O error while reading file.",
+                "latency_ms": 350,
+                "permission_status": null,
+                "consumed_artifact_ids": [],
+                "contradicted_fields": [],
+                "ignored_key_fields": [],
+                "notes": "Tool process returned an I/O failure."
+              }
+            }
+          ],
+          "artifacts": [],
+          "children": []
+        }
+      ]
+    }
+  ],
+  "evaluations": [],
+  "diagnoses": []
+}

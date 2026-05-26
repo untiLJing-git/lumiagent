@@ -138,14 +138,17 @@ Acceptance criteria:
 
 ### Phase 2: MCP Tool Chain Model
 
-Goal: establish the MCP tool-chain observability model.
+Goal: establish the MCP tool-chain observability model as a structured evidence layer for later Coding Agent Trace and Evaluation / Diagnosis work.
+
+Formal specification: `docs/specs/mcp-tool-chain-model.md`.
 
 Deliverables:
 
 - MCP server / tool discovery / tool call / tool result spans
 - tool schema and argument record structures
+- MCP failure taxonomy and evidence fields
 - error / latency / permission fields
-- example MCP tool-chain trace
+- successful and failed example MCP tool-chain traces
 
 Acceptance criteria:
 

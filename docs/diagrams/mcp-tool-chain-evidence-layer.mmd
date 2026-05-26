@@ -1,0 +1,62 @@
+flowchart TB
+    subgraph Agents[Agent scenarios]
+        CodingAgent[Coding Agent]
+        GeneralAgent[General Agent]
+    end
+
+    subgraph MCPAdapter[MCP Adapter Evidence Layer]
+        Chain[MCP tool-chain span\nmetadata.type = mcp_tool_chain]
+        Discovery[Connection / discovery\nschema snapshot artifact]
+        Selection[Tool selection\noptional span or metadata]
+        Arguments[Argument generation\ntool call input + validation]
+        Permission[Permission / approval\noptional span or event]
+        Execution[Tool execution span\nSpanKind.TOOL]
+        Result[Tool result artifact\nmetadata.type = mcp_tool_result]
+        Consumption[Result consumption span\nclaimed facts / ignored fields]
+        Failure[McpFailureType + evidence fields]
+    end
+
+    subgraph TraceCore[Trace Core]
+        Run[AgentRun]
+        Span[Span]
+        Event[Event]
+        Artifact[Artifact]
+        Eval[Evaluation]
+        Diagnosis[Diagnosis]
+    end
+
+    subgraph Future[Later phases]
+        Phase3[Phase 3\nCoding Agent Trace]
+        Phase4[Phase 4\nEvaluation / Diagnosis]
+    end
+
+    CodingAgent --> Chain
+    GeneralAgent --> Chain
+    Chain --> Discovery --> Selection --> Arguments --> Permission --> Execution --> Result --> Consumption
+    Execution --> Failure
+    Consumption --> Failure
+
+    Chain --> Span
+    Discovery --> Artifact
+    Execution --> Span
+    Result --> Artifact
+    Failure --> Event
+    Span --> Run
+    Artifact --> Run
+    Event --> Run
+    Eval --> Run
+    Diagnosis --> Run
+
+    TraceCore --> Phase3
+    TraceCore --> Phase4
+    Failure --> Phase4
+
+    classDef agent fill:#eef6ff,stroke:#4f83cc,color:#102a43
+    classDef adapter fill:#fff7e6,stroke:#d48806,color:#3f2600
+    classDef core fill:#f6ffed,stroke:#52c41a,color:#1f3d1f
+    classDef future fill:#f9f0ff,stroke:#9254de,color:#2f174f
+
+    class CodingAgent,GeneralAgent agent
+    class Chain,Discovery,Selection,Arguments,Permission,Execution,Result,Consumption,Failure adapter
+    class Run,Span,Event,Artifact,Eval,Diagnosis core
+    class Phase3,Phase4 future

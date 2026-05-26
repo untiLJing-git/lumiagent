@@ -1,0 +1,180 @@
+{
+  "started_at": "2026-05-26T00:00:00Z",
+  "ended_at": "2026-05-26T00:00:01Z",
+  "run_id": "run_mcp_success_fixture",
+  "name": "MCP success fixture",
+  "status": "success",
+  "input": null,
+  "output": null,
+  "metadata": {},
+  "root_spans": [
+    {
+      "started_at": "2026-05-26T00:00:00Z",
+      "ended_at": "2026-05-26T00:00:01Z",
+      "span_id": "span_success_chain",
+      "run_id": "run_mcp_success_fixture",
+      "parent_span_id": null,
+      "name": "MCP Tool Chain",
+      "kind": "custom",
+      "status": "success",
+      "input": null,
+      "output": null,
+      "metadata": {
+        "type": "mcp_tool_chain",
+        "server_name": "filesystem"
+      },
+      "events": [],
+      "artifacts": [],
+      "children": [
+        {
+          "started_at": "2026-05-26T00:00:00Z",
+          "ended_at": "2026-05-26T00:00:01Z",
+          "span_id": "span_success_discovery",
+          "run_id": "run_mcp_success_fixture",
+          "parent_span_id": "span_success_chain",
+          "name": "MCP Tool Discovery",
+          "kind": "custom",
+          "status": "success",
+          "input": null,
+          "output": {
+            "tool_count": 1
+          },
+          "metadata": {
+            "type": "mcp_discovery",
+            "server_name": "filesystem"
+          },
+          "events": [],
+          "artifacts": [
+            {
+              "artifact_id": "artifact_schema_success",
+              "name": "MCP Tool Schema Snapshot",
+              "kind": "custom",
+              "uri": null,
+              "content": {
+                "server_name": "filesystem",
+                "captured_at": "2026-05-26T00:00:00Z",
+                "schema_version": "2026-05-26",
+                "tools": [
+                  {
+                    "name": "read_file",
+                    "description": "Read a file from the workspace.",
+                    "input_schema": {
+                      "type": "object",
+                      "required": [
+                        "path"
+                      ],
+                      "properties": {
+                        "path": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                ]
+              },
+              "metadata": {
+                "type": "mcp_tool_schema_snapshot",
+                "server_name": "filesystem"
+              }
+            }
+          ],
+          "children": []
+        },
+        {
+          "started_at": "2026-05-26T00:00:00Z",
+          "ended_at": "2026-05-26T00:00:01Z",
+          "span_id": "span_success_execution",
+          "run_id": "run_mcp_success_fixture",
+          "parent_span_id": "span_success_chain",
+          "name": "MCP Tool Execution: read_file",
+          "kind": "tool",
+          "status": "success",
+          "input": {
+            "server_name": "filesystem",
+            "tool_name": "read_file",
+            "schema_artifact_id": "artifact_schema_success",
+            "arguments": {
+              "path": "README.md"
+            },
+            "validation": {
+              "status": "valid",
+              "errors": []
+            }
+          },
+          "output": {
+            "status": "success"
+          },
+          "metadata": {
+            "type": "mcp_tool_execution",
+            "server_name": "filesystem",
+            "tool_name": "read_file"
+          },
+          "events": [
+            {
+              "event_id": "event_success_result_recorded",
+              "name": "mcp_tool_result_recorded",
+              "timestamp": "2026-05-26T00:00:00Z",
+              "level": "info",
+              "message": "",
+              "metadata": {
+                "status": "success",
+                "latency_ms": 25,
+                "result_artifact_id": "artifact_result_success",
+                "failure_type": null
+              }
+            }
+          ],
+          "artifacts": [
+            {
+              "artifact_id": "artifact_result_success",
+              "name": "MCP Tool Result",
+              "kind": "tool_result",
+              "uri": null,
+              "content": {
+                "text": "# LumiAgent"
+              },
+              "metadata": {
+                "type": "mcp_tool_result"
+              }
+            }
+          ],
+          "children": []
+        },
+        {
+          "started_at": "2026-05-26T00:00:00Z",
+          "ended_at": "2026-05-26T00:00:01Z",
+          "span_id": "span_success_consumption",
+          "run_id": "run_mcp_success_fixture",
+          "parent_span_id": "span_success_chain",
+          "name": "MCP Result Consumption",
+          "kind": "custom",
+          "status": "success",
+          "input": {
+            "consumed_artifact_ids": [
+              "artifact_result_success"
+            ],
+            "consumption_summary": "Agent read the README heading.",
+            "claimed_facts": [
+              "README starts with LumiAgent."
+            ],
+            "contradicted_fields": [],
+            "ignored_key_fields": [],
+            "confidence": 1.0,
+            "notes": ""
+          },
+          "output": {
+            "status": "consumed"
+          },
+          "metadata": {
+            "type": "mcp_result_consumption"
+          },
+          "events": [],
+          "artifacts": [],
+          "children": []
+        }
+      ]
+    }
+  ],
+  "evaluations": [],
+  "diagnoses": []
+}

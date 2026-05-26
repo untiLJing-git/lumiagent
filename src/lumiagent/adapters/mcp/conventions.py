@@ -1,0 +1,13 @@
+"""MCP trace convention constants."""
+
+MCP_SPAN_TOOL_CHAIN = "mcp_tool_chain"
+MCP_SPAN_CONNECTION = "mcp_connection"
+MCP_SPAN_DISCOVERY = "mcp_discovery"
+MCP_SPAN_TOOL_SELECTION = "mcp_tool_selection"
+MCP_SPAN_ARGUMENT_GENERATION = "mcp_argument_generation"
+MCP_SPAN_PERMISSION = "mcp_permission"
+MCP_SPAN_TOOL_EXECUTION = "mcp_tool_execution"
+MCP_SPAN_RESULT_CONSUMPTION = "mcp_result_consumption"
+
+MCP_ARTIFACT_TOOL_SCHEMA_SNAPSHOT = "mcp_tool_schema_snapshot"
+MCP_ARTIFACT_TOOL_RESULT = "mcp_tool_result"

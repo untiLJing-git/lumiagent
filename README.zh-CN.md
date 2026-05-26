@@ -34,9 +34,27 @@ LumiAgent 从回答这些问题所需的数据底座开始：建立结构化、�
 - 便捷构造 API：`TraceBuilder`
 - 通用 Agent 与 Coding Agent trace fixture
 
-实现报告：
+**第二阶段：MCP Tool Chain Model — 已完成**
 
+已实现能力：
+
+- `src/lumiagent/adapters/mcp/` 下的 MCP adapter/convention 层
+- 稳定的 MCP span 与 artifact `metadata.type` 约定
+- 位于通用 Trace Core 之外的 `McpFailureType` taxonomy
+- 面向 schema snapshot、tool call、execution summary、failure evidence、result consumption 的轻量 MCP evidence schema
+- 用于 MCP tool-chain span、artifact、result 和 failure evidence 的 builder helpers
+- 成功和失败 MCP trace fixtures，覆盖 `argument_invalid`、`tool_execution_failed`、`result_misinterpreted`
+
+产品价值：
+
+- 保留 Agent 如何发现工具、看到 schema、生成参数、执行 MCP 工具、消费结果的结构化证据。
+- 将 MCP 保持为 adapter evidence layer，使 Phase 3 Coding Agent Trace 与 Phase 4 Evaluation / Diagnosis 可以消费稳定证据，同时不污染 Core 模型。
+
+规格与报告：
+
+- [`docs/specs/mcp-tool-chain-model.md`](docs/specs/mcp-tool-chain-model.md)
 - [`docs/reports/trace-core-mvp-technical-report.zh-CN.md`](docs/reports/trace-core-mvp-technical-report.zh-CN.md)
+- [`docs/reports/mcp-tool-chain-model-technical-report.zh-CN.md`](docs/reports/mcp-tool-chain-model-technical-report.zh-CN.md)
 
 ## 快速示例
 
@@ -65,12 +83,18 @@ print(to_json(run))
 
 Mermaid 源文件：[`docs/diagrams/trace-core-model.mmd`](docs/diagrams/trace-core-model.mmd)
 
+![MCP Tool Chain Evidence Layer](docs/assets/mcp-tool-chain-evidence-layer.svg)
+
+Mermaid 源文件：[`docs/diagrams/mcp-tool-chain-evidence-layer.mmd`](docs/diagrams/mcp-tool-chain-evidence-layer.mmd)
+
 Trace Core 刻意保持与具体 Agent 框架解耦。Coding Agent 支持、MCP Tool Chain 捕获、SDK hooks、CLI wrappers 和 transcript importers 都应作为核心模型之上的适配层实现。
+
+MCP Tool Chain 层是 adapter evidence layer：它记录工具发现、schema snapshot、参数生成、权限、执行结果、失败证据和结果消费，同时不向 Trace Core 添加 MCP 专用字段。
 
 ## 路线图
 
 - [x] Trace Schema / Span Tree Core
-- [ ] MCP Tool Chain capture model
+- [x] MCP Tool Chain evidence model
 - [ ] Coding Agent trace model
 - [ ] Trace Replay data flow
 - [ ] Evaluation and diagnosis engine
@@ -87,6 +111,13 @@ Trace Core 刻意保持与具体 Agent 框架解耦。Coding Agent 支持、MCP 
 
 ```text
 src/lumiagent/
+├── adapters/
+│   └── mcp/
+│       ├── __init__.py
+│       ├── builder.py
+│       ├── conventions.py
+│       ├── schemas.py
+│       └── taxonomy.py
 └── tracing/
     ├── __init__.py
     ├── builder.py
@@ -95,15 +126,26 @@ src/lumiagent/
     ├── serializer.py
     └── validator.py
 
-tests/tracing/
-├── fixtures/
-├── test_builder.py
-├── test_models.py
-├── test_serializer.py
-└── test_validator.py
+tests/
+├── adapters/mcp/
+│   ├── fixtures/
+│   ├── test_fixtures.py
+│   ├── test_mcp_builder.py
+│   ├── test_schemas.py
+│   └── test_taxonomy.py
+└── tracing/
+    ├── fixtures/
+    ├── test_builder.py
+    ├── test_models.py
+    ├── test_serializer.py
+    └── test_validator.py
 
-docs/reports/
-└── trace-core-mvp-technical-report.zh-CN.md
+docs/
+├── reports/
+│   ├── trace-core-mvp-technical-report.zh-CN.md
+│   └── mcp-tool-chain-model-technical-report.zh-CN.md
+└── specs/
+    └── mcp-tool-chain-model.md
 ```
 
 ## 安装
@@ -118,8 +160,8 @@ pip install -e ".[dev]"
 
 ```bash
 python -m pytest -v
-python -m ruff check src/lumiagent/tracing tests/tracing
-python -m mypy src/lumiagent/tracing
+python -m ruff check src/lumiagent/tracing src/lumiagent/adapters tests/tracing tests/adapters
+python -m mypy src/lumiagent/tracing src/lumiagent/adapters
 ```
 
 如果当前环境没有以 editable mode 安装本项目，可以使用本地源码路径运行：
@@ -127,16 +169,8 @@ python -m mypy src/lumiagent/tracing
 ```powershell
 $env:PYTHONPATH = "src"
 python -m pytest -v
-python -m ruff check src/lumiagent/tracing tests/tracing
-python -m mypy src/lumiagent/tracing
-```
-
-当前 Trace Core MVP 验证结果：
-
-```text
-18 passed
-All checks passed
-Success: no issues found in 6 source files
+python -m ruff check src/lumiagent/tracing src/lumiagent/adapters tests/tracing tests/adapters
+python -m mypy src/lumiagent/tracing src/lumiagent/adapters
 ```
 
 ## 技术栈
