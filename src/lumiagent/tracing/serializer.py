@@ -5,7 +5,7 @@ import json
 from datetime import UTC, datetime
 from typing import Any
 
-from .models import AgentRun
+from .models import AgentRun, Span
 
 
 def _to_jsonable(value: Any) -> Any:
@@ -36,3 +36,22 @@ def from_dict(data: dict[str, Any]) -> AgentRun:
 
 def from_json(data: str) -> AgentRun:
     return from_dict(json.loads(data))
+
+
+def span_to_dict(span: Span) -> dict[str, Any]:
+    data = _to_jsonable(span.model_dump(mode="json"))
+    if not isinstance(data, dict):
+        raise TypeError("Span serialization must produce a dictionary")
+    return data
+
+
+def span_to_json(span: Span, *, indent: int = 2) -> str:
+    return json.dumps(span_to_dict(span), ensure_ascii=False, indent=indent)
+
+
+def span_from_dict(data: dict[str, Any]) -> Span:
+    return Span.model_validate(data)
+
+
+def span_from_json(data: str) -> Span:
+    return span_from_dict(json.loads(data))

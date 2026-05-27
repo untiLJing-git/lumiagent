@@ -31,6 +31,7 @@ Event
 Artifact
 Evaluation
 Diagnosis
+Annotation
 ```
 
 It also defines:
@@ -45,7 +46,7 @@ TargetType
 Severity
 ```
 
-The implementation includes JSON/dict serialization, deserialization, structural validation, example fixtures, unit tests, and a convenience `TraceBuilder` API.
+The implementation includes JSON/dict serialization, deserialization, structural validation, example fixtures, unit tests, and a convenience `TraceBuilder` API. The current compatibility amendment also adds run-linking fields, span-level serialization helpers, and a `TraceWriter` protocol so later capture strategies can depend on stable Core interfaces without changing existing trace shapes.
 
 ## 4. Non-goals
 
@@ -58,6 +59,7 @@ Phase 1 does not include:
 - UI, dashboard, timeline, or replay rendering.
 - Automatic evaluator or diagnosis engine logic.
 - Persistent storage or object storage.
+- `Experiment` container implementation; it is a future Core-adjacent model deferred to Phase 5, where trace diff and comparison view model requirements define its schema.
 - A large all-purpose Agent framework.
 
 Coding Agent and MCP scenarios may appear only as sample trace data.
@@ -75,8 +77,12 @@ Required capabilities:
 - Lifecycle status via `RunStatus`.
 - `started_at` and optional `ended_at`.
 - Generic `input`, `output`, and `metadata` fields.
+- Optional `parent_run_id` for linking a run to the run that triggered it.
+- Optional `triggered_by_span_id` for linking a child run to the triggering span in the current serialized context.
 - Root spans through `root_spans`.
-- Run- or span-level `evaluations` and `diagnoses`.
+- Run- or span-level `evaluations`, `diagnoses`, and human-authored `annotations`.
+
+The run-linking fields are optional and additive. Existing Phase 1 traces remain valid without them.
 
 ### 5.2 Span
 
@@ -154,6 +160,19 @@ Required capabilities:
 - String `failure_type` so later phases can define adapter-specific taxonomies.
 - Severity, summary, evidence span references, suggested fix, and metadata.
 
+### 5.7 Annotation
+
+Represents human-authored feedback on a run or span. It is separate from automated `Evaluation` records so LumiAgent can distinguish reviewer feedback from evaluator output.
+
+Required capabilities:
+
+- Unique `annotation_id`.
+- Target reference through `target_type` and `target_id`.
+- Human-readable `author` and `note`.
+- Optional label, evidence span references, and metadata.
+
+Annotations support the future feedback flywheel and expert knowledge base without turning the Core into a prompt management or generic review platform.
+
 ## 6. Serialization
 
 The Trace Core supports:
@@ -162,6 +181,9 @@ The Trace Core supports:
 AgentRun -> dict
 AgentRun -> JSON
 JSON -> AgentRun
+Span -> dict
+Span -> JSON
+JSON -> Span
 ```
 
 Requirements:
@@ -171,6 +193,7 @@ Requirements:
 - Datetimes serialize as ISO 8601 values.
 - `None` serializes as `null`.
 - Deserialized traces remain semantically equivalent to the original model.
+- Span-level helpers use the same serialization rules as run-level helpers, enabling future streaming writers and incremental append flows.
 
 ## 7. Validation
 
@@ -181,9 +204,12 @@ The Trace Core validates structural correctness:
 - Child span `parent_span_id` must match the parent span.
 - Non-root parent references must point to an existing span in the same run.
 - Span `run_id` must match the owning `AgentRun`.
-- Evaluation and diagnosis targets must reference an existing run or span.
+- `triggered_by_span_id`, when present, must reference an existing span in the same serialized run.
+- Evaluation, diagnosis, and annotation targets must reference an existing run or span.
 - Evidence span IDs must reference existing spans.
 - Time ranges must satisfy `started_at <= ended_at` when `ended_at` exists.
+
+`parent_run_id` is intentionally not resolved during single-run validation because the parent run may be stored separately.
 
 ## 8. Fixtures and Tests
 
@@ -198,11 +224,14 @@ Test coverage includes:
 
 - Model creation.
 - Span nesting.
-- Event, artifact, evaluation, and diagnosis creation.
+- Event, artifact, evaluation, diagnosis, and annotation creation.
 - Serialization to dict and JSON.
 - Deserialization from dict and JSON.
+- Span-level serialization round trip.
+- Run-linking field round trip and validation.
 - Structural validation success and failure cases.
 - Convenience `TraceBuilder` behavior.
+- `TraceWriter` protocol importability.
 
 ## 9. Visualization Intent
 
@@ -255,11 +284,12 @@ Evidence Jump Links:
   navigation from evaluations or diagnoses to the spans that support them
 ```
 
-Future Core extension points that visualization will consume (designed in the project spec, implemented later):
+Future Core extension points that visualization will consume:
 
 ```text
 Annotation: human feedback shown alongside evaluations and diagnoses
 Run linking: parent_run_id and triggered_by_span_id for multi-run and experiment views
+Experiment: deferred multi-run comparison container defined in Phase 5
 ```
 
 Extension and sequencing principle:
@@ -277,7 +307,32 @@ docs/diagrams/trace-core-visualization-intent.mmd
 docs/assets/trace-core-visualization-intent.svg
 ```
 
-## 10. Acceptance Criteria
+## 10. Trace Capture Extension Interfaces
+
+Phase 1 does not implement real capture, but it defines stable Core-facing interfaces needed by later capture strategies.
+
+### 10.1 TraceWriter Protocol
+
+`TraceWriter` is a protocol for append-oriented trace writers. Future hook, SDK, proxy, and importer strategies can target this protocol without depending on `TraceBuilder` internals.
+
+Required methods:
+
+```text
+start_run(name, input_value, metadata) -> str
+start_span(name, kind, parent_span_id, input_value, metadata) -> str
+end_span(span_id, status, output) -> None
+add_event(span_id, name, level, message, metadata) -> str
+add_artifact(span_id, name, kind, content, uri, metadata) -> str
+flush() -> AgentRun
+```
+
+The protocol is intentionally minimal. Concrete writers may support streaming storage, file append, in-memory construction, or future sanitization, but Core only requires the protocol shape.
+
+### 10.2 Privacy Sanitization Hook Point
+
+Real traces may contain code, credentials, command output, or proprietary context. Sanitization belongs in the capture pipeline before persistence or sharing, not in Core model validation. Phase 2b and later capture strategies may define optional sanitizers that transform `input`, `output`, `metadata`, event messages, and artifact content before writing traces.
+
+## 11. Acceptance Criteria
 
 Phase 1 is complete when:
 
@@ -288,7 +343,7 @@ Phase 1 is complete when:
 - The implementation remains framework-agnostic.
 - Coding Agent and MCP support remain outside Core except as sample data.
 
-## 11. Relationship to Later Phases
+## 12. Relationship to Later Phases
 
 Phase 1 is the foundation for all later work:
 

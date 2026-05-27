@@ -1,8 +1,25 @@
 from datetime import UTC, datetime
 from pathlib import Path
 
-from lumiagent.tracing import AgentRun, RunStatus, Span, SpanKind, SpanStatus
-from lumiagent.tracing.serializer import from_dict, from_json, to_dict, to_json
+from lumiagent.tracing import (
+    AgentRun,
+    Annotation,
+    RunStatus,
+    Span,
+    SpanKind,
+    SpanStatus,
+    TargetType,
+)
+from lumiagent.tracing.serializer import (
+    from_dict,
+    from_json,
+    span_from_dict,
+    span_from_json,
+    span_to_dict,
+    span_to_json,
+    to_dict,
+    to_json,
+)
 from lumiagent.tracing.validator import validate_run
 
 FIXTURES = Path(__file__).parent / "fixtures"
@@ -49,6 +66,38 @@ def test_json_round_trip_preserves_semantics() -> None:
     assert decoded.status is RunStatus.SUCCESS
     assert decoded.root_spans[0].kind is SpanKind.AGENT
     assert decoded.root_spans[0].started_at == original.root_spans[0].started_at
+
+
+def test_agent_run_linking_and_annotations_round_trip() -> None:
+    original = make_run()
+    original.parent_run_id = "run_parent"
+    original.triggered_by_span_id = "span_agent"
+    original.annotations.append(
+        Annotation(
+            annotation_id="annotation_serialize",
+            target_type=TargetType.SPAN,
+            target_id="span_agent",
+            author="reviewer",
+            note="Evidence looks correct.",
+            evidence_span_ids=["span_agent"],
+        )
+    )
+
+    decoded = from_json(to_json(original))
+
+    assert decoded.parent_run_id == "run_parent"
+    assert decoded.triggered_by_span_id == "span_agent"
+    assert decoded.annotations[0].author == "reviewer"
+
+
+def test_span_json_round_trip_preserves_semantics() -> None:
+    original = make_run().root_spans[0]
+    encoded = span_to_json(original)
+    decoded = span_from_json(encoded)
+
+    assert decoded.span_id == "span_agent"
+    assert decoded.kind is SpanKind.AGENT
+    assert span_from_dict(span_to_dict(original)).started_at == original.started_at
 
 
 def test_from_dict_loads_agent_run() -> None:

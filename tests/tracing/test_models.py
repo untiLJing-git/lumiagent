@@ -5,6 +5,7 @@ from pydantic import ValidationError
 
 from lumiagent.tracing import (
     AgentRun,
+    Annotation,
     Artifact,
     ArtifactKind,
     Diagnosis,
@@ -101,6 +102,30 @@ def test_event_artifact_evaluation_and_diagnosis_models() -> None:
     assert artifact.kind is ArtifactKind.PROMPT
     assert evaluation.score == 0.8
     assert diagnosis.severity is Severity.MEDIUM
+
+
+def test_annotation_and_run_linking_models() -> None:
+    annotation = Annotation(
+        annotation_id="annotation_1",
+        target_type=TargetType.SPAN,
+        target_id="span_llm",
+        author="reviewer",
+        note="This span contains the important evidence.",
+        label="useful",
+        evidence_span_ids=["span_llm"],
+    )
+    run = AgentRun(
+        run_id="run_child",
+        name="child run",
+        status=RunStatus.SUCCESS,
+        parent_run_id="run_parent",
+        triggered_by_span_id="span_llm",
+        annotations=[annotation],
+    )
+
+    assert run.parent_run_id == "run_parent"
+    assert run.triggered_by_span_id == "span_llm"
+    assert run.annotations[0].label == "useful"
 
 
 def test_score_must_be_between_zero_and_one() -> None:

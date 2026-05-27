@@ -16,9 +16,10 @@ Create these files:
 
 - `src/lumiagent/tracing/__init__.py` — public exports for the tracing package.
 - `src/lumiagent/tracing/enums.py` — string enums for run/span/event/artifact/target/severity values.
-- `src/lumiagent/tracing/models.py` — Pydantic models for `AgentRun`, `Span`, `Event`, `Artifact`, `Evaluation`, and `Diagnosis`.
-- `src/lumiagent/tracing/serializer.py` — JSON/dict round-trip helpers.
+- `src/lumiagent/tracing/models.py` — Pydantic models for `AgentRun`, `Span`, `Event`, `Artifact`, `Evaluation`, `Diagnosis`, and compatibility `Annotation` records.
+- `src/lumiagent/tracing/serializer.py` — JSON/dict round-trip helpers for runs and individual spans.
 - `src/lumiagent/tracing/validator.py` — structural validation with a custom `TraceValidationError`.
+- `src/lumiagent/tracing/writer.py` — `TraceWriter` protocol for future append-oriented capture strategies.
 - `src/lumiagent/tracing/builder.py` — minimal ergonomic `TraceBuilder` for constructing traces.
 - `tests/tracing/test_models.py` — model creation and field behavior tests.
 - `tests/tracing/test_serializer.py` — JSON round-trip tests.
@@ -28,6 +29,20 @@ Create these files:
 - `tests/tracing/fixtures/coding_agent_trace_sample.json` — Coding Agent workflow fixture using generic/custom span kinds and metadata.
 
 Do not modify existing runtime modules in this MVP unless import/export wiring requires it.
+
+---
+
+## Compatibility Amendment: Project Spec Extension Points
+
+The current project specification adds several Trace Core extension points after the original MVP plan. Apply these as an additive amendment without changing existing field names or behavior:
+
+- Add `Annotation` to `src/lumiagent/tracing/models.py` with `annotation_id`, `target_type`, `target_id`, `author`, `note`, optional `label`, `evidence_span_ids`, and `metadata`.
+- Add optional `parent_run_id` and `triggered_by_span_id` fields plus `annotations` to `AgentRun`; old traces remain valid because all fields have defaults.
+- Add span-level serializer helpers in `src/lumiagent/tracing/serializer.py`: `span_to_dict`, `span_to_json`, `span_from_dict`, and `span_from_json`.
+- Add `src/lumiagent/tracing/writer.py` with a minimal `TraceWriter` protocol for future capture strategies.
+- Extend validation so annotations follow evaluation-style target/evidence checks and `triggered_by_span_id` references an existing span when present.
+- Add tests before implementation for model creation, round trips, validation failures, and public imports.
+- Do not add real capture logic, storage, UI, or adapter-specific fields in this amendment.
 
 ---
 

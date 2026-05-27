@@ -144,6 +144,24 @@ class Diagnosis(BaseModel):
         return value
 
 
+class Annotation(BaseModel):
+    annotation_id: str = Field(default_factory=lambda: new_id("annotation"))
+    target_type: TargetType
+    target_id: str
+    author: str
+    note: str
+    label: str | None = None
+    evidence_span_ids: list[str] = Field(default_factory=list)
+    metadata: dict[str, Any] = Field(default_factory=dict)
+
+    @field_validator("annotation_id", "target_id", "author", "note")
+    @classmethod
+    def require_non_empty(cls, value: str) -> str:
+        if not value:
+            raise ValueError("value must not be empty")
+        return value
+
+
 class AgentRun(TimeRangeModel):
     run_id: str = Field(default_factory=lambda: new_id("run"))
     name: str
@@ -151,13 +169,23 @@ class AgentRun(TimeRangeModel):
     input: TraceValue = None
     output: TraceValue = None
     metadata: dict[str, Any] = Field(default_factory=dict)
+    parent_run_id: str | None = None
+    triggered_by_span_id: str | None = None
     root_spans: list[Span] = Field(default_factory=list)
     evaluations: list[Evaluation] = Field(default_factory=list)
     diagnoses: list[Diagnosis] = Field(default_factory=list)
+    annotations: list[Annotation] = Field(default_factory=list)
 
     @field_validator("run_id", "name")
     @classmethod
     def require_non_empty(cls, value: str) -> str:
         if not value:
+            raise ValueError("value must not be empty")
+        return value
+
+    @field_validator("parent_run_id", "triggered_by_span_id")
+    @classmethod
+    def require_non_empty_optional(cls, value: str | None) -> str | None:
+        if value == "":
             raise ValueError("value must not be empty")
         return value

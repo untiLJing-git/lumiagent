@@ -9,12 +9,31 @@ from lumiagent.tracing.enums import (
     SpanStatus,
     TargetType,
 )
-from lumiagent.tracing.models import AgentRun, Artifact, Diagnosis, Evaluation, Event, Span
-from lumiagent.tracing.serializer import from_dict, from_json, to_dict, to_json
+from lumiagent.tracing.models import (
+    AgentRun,
+    Annotation,
+    Artifact,
+    Diagnosis,
+    Evaluation,
+    Event,
+    Span,
+)
+from lumiagent.tracing.serializer import (
+    from_dict,
+    from_json,
+    span_from_dict,
+    span_from_json,
+    span_to_dict,
+    span_to_json,
+    to_dict,
+    to_json,
+)
 from lumiagent.tracing.validator import TraceValidationError, validate_run
+from lumiagent.tracing.writer import TraceWriter
 
 __all__ = [
     "AgentRun",
+    "Annotation",
     "Artifact",
     "ArtifactKind",
     "Diagnosis",
@@ -29,8 +48,13 @@ __all__ = [
     "TargetType",
     "TraceBuilder",
     "TraceValidationError",
+    "TraceWriter",
     "from_dict",
     "from_json",
+    "span_from_dict",
+    "span_from_json",
+    "span_to_dict",
+    "span_to_json",
     "to_dict",
     "to_json",
     "validate_run",

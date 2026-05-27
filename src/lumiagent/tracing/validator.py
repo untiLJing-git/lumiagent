@@ -79,6 +79,11 @@ def validate_run(run: AgentRun) -> None:
                 f"Span {span.span_id} parent_span_id {span.parent_span_id} does not exist"
             )
 
+    if run.triggered_by_span_id is not None and run.triggered_by_span_id not in span_ids:
+        raise TraceValidationError(
+            f"triggered_by_span_id {run.triggered_by_span_id} does not reference an existing span"
+        )
+
     for evaluation in run.evaluations:
         _validate_target(evaluation.target_type, evaluation.target_id, run, span_ids)
         _validate_evidence(evaluation.evidence_span_ids, span_ids)
@@ -86,3 +91,7 @@ def validate_run(run: AgentRun) -> None:
     for diagnosis in run.diagnoses:
         _validate_target(diagnosis.target_type, diagnosis.target_id, run, span_ids)
         _validate_evidence(diagnosis.evidence_span_ids, span_ids)
+
+    for annotation in run.annotations:
+        _validate_target(annotation.target_type, annotation.target_id, run, span_ids)
+        _validate_evidence(annotation.evidence_span_ids, span_ids)

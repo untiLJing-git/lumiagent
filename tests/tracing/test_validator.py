@@ -4,6 +4,7 @@ import pytest
 
 from lumiagent.tracing import (
     AgentRun,
+    Annotation,
     Artifact,
     ArtifactKind,
     Diagnosis,
@@ -140,4 +141,30 @@ def test_diagnosis_target_must_exist() -> None:
     run.diagnoses[0].target_type = TargetType.SPAN
 
     with pytest.raises(TraceValidationError, match="target_id"):
+        validate_run(run)
+
+
+def test_annotation_target_and_evidence_must_exist() -> None:
+    run = valid_run()
+    run.annotations.append(
+        Annotation(
+            annotation_id="annotation_valid",
+            target_type=TargetType.SPAN,
+            target_id="span_missing",
+            author="reviewer",
+            note="Missing target.",
+            evidence_span_ids=["span_missing"],
+        )
+    )
+
+    with pytest.raises(TraceValidationError, match="target_id"):
+        validate_run(run)
+
+
+def test_triggered_by_span_id_must_exist_when_present() -> None:
+    run = valid_run()
+    run.parent_run_id = "run_parent"
+    run.triggered_by_span_id = "span_missing"
+
+    with pytest.raises(TraceValidationError, match="triggered_by_span_id"):
         validate_run(run)
