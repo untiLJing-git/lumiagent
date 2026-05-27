@@ -1,0 +1,82 @@
+flowchart TB
+    subgraph Capture[Capture layer]
+        Strategy[CaptureStrategy\nMCP / hooks / SDK / proxy / import]
+    end
+
+    subgraph TraceCore[Trace Core data]
+        Run[AgentRun\nstatus / timing / metadata]
+        SpanTree[Span Tree]
+        Events[Events]
+        Artifacts[Artifacts]
+        Evaluations[Evaluations]
+        Diagnoses[Diagnoses]
+        Evidence[Evidence span links]
+        Annotation[Annotation\nfuture human feedback]
+        RunLink[Run linking\nparent_run_id / triggered_by_span_id]
+    end
+
+    subgraph ViewModels[View models - Phase 5]
+        SummaryVM[Run summary view model]
+        TimelineVM[Timeline view model]
+        TreeVM[Span tree view model]
+        DetailVM[Span detail view model]
+        DiagnosisVM[Diagnosis summary view model]
+        DiffVM[Trace diff view model]
+        ExperimentVM[Experiment comparison view model]
+    end
+
+    subgraph Surfaces[Visualization surfaces]
+        CliViewer[CLI Viewer\nPhase 2b / 3]
+        WebUI[Web UI\nPhase 7\ntimeline / tree / detail / diagnosis]
+        DiffView[Trace diff view\nPhase 5]
+        ExperimentView[Experiment comparison\nPhase 5]
+    end
+
+    subgraph Principle[Extension principle]
+        Metadata[metadata / artifacts / adapter conventions]
+        Promote[Promote to Core only when\ngeneric, stable, repeated]
+        DataFirst[Data models before UI\nstable data then friendly UI]
+    end
+
+    Strategy --> Run
+
+    Run --> SummaryVM
+    Run --> TimelineVM
+    SpanTree --> TimelineVM
+    SpanTree --> TreeVM
+    SpanTree --> DetailVM
+    Events --> DetailVM
+    Artifacts --> DetailVM
+    Evaluations --> DiagnosisVM
+    Diagnoses --> DiagnosisVM
+    Evidence --> DetailVM
+    RunLink --> ExperimentVM
+    Annotation --> DiagnosisVM
+
+    SummaryVM --> CliViewer
+    TimelineVM --> CliViewer
+    TreeVM --> CliViewer
+    DiagnosisVM --> CliViewer
+    SummaryVM --> WebUI
+    TimelineVM --> WebUI
+    TreeVM --> WebUI
+    DetailVM --> WebUI
+    DiagnosisVM --> WebUI
+    DiffVM --> DiffView
+    ExperimentVM --> ExperimentView
+
+    Metadata --> ViewModels
+    ViewModels --> Promote
+    Promote --> DataFirst
+
+    classDef capture fill:#f0f5ff,stroke:#2f54eb,color:#10239e
+    classDef core fill:#f6ffed,stroke:#52c41a,color:#1f3d1f
+    classDef vm fill:#fff7e6,stroke:#d48806,color:#3f2600
+    classDef surface fill:#eef6ff,stroke:#4f83cc,color:#102a43
+    classDef principle fill:#f9f0ff,stroke:#9254de,color:#2f174f
+
+    class Strategy capture
+    class Run,SpanTree,Events,Artifacts,Evaluations,Diagnoses,Evidence,Annotation,RunLink core
+    class SummaryVM,TimelineVM,TreeVM,DetailVM,DiagnosisVM,DiffVM,ExperimentVM vm
+    class CliViewer,WebUI,DiffView,ExperimentView surface
+    class Metadata,Promote,DataFirst principle

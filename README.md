@@ -60,6 +60,7 @@ Product value:
 
 Specifications and reports:
 
+- [`docs/specs/trace-core-mvp.md`](docs/specs/trace-core-mvp.md)
 - [`docs/specs/mcp-tool-chain-model.md`](docs/specs/mcp-tool-chain-model.md)
 - [`docs/reports/trace-core-mvp-technical-report.zh-CN.md`](docs/reports/trace-core-mvp-technical-report.zh-CN.md)
 - [`docs/reports/mcp-tool-chain-model-technical-report.zh-CN.md`](docs/reports/mcp-tool-chain-model-technical-report.zh-CN.md)
@@ -91,11 +92,17 @@ print(to_json(run))
 
 Mermaid source: [`docs/diagrams/trace-core-model.mmd`](docs/diagrams/trace-core-model.mmd)
 
+![Trace Core Visualization Intent](docs/assets/trace-core-visualization-intent.svg)
+
+Mermaid source: [`docs/diagrams/trace-core-visualization-intent.mmd`](docs/diagrams/trace-core-visualization-intent.mmd)
+
 ![MCP Tool Chain Evidence Layer](docs/assets/mcp-tool-chain-evidence-layer.svg)
 
 Mermaid source: [`docs/diagrams/mcp-tool-chain-evidence-layer.mmd`](docs/diagrams/mcp-tool-chain-evidence-layer.mmd)
 
 The trace core is intentionally independent from any single agent framework. Coding Agent support, MCP Tool Chain capture, SDK hooks, CLI wrappers, and transcript importers should be built as adapters on top of the core model.
+
+Trace Core data is also designed for future visualization through a clean layering: `CaptureStrategy → Trace Core → view models (Phase 5) → visualization surfaces`. The CLI viewer already consumes this data from Phase 2b, the Web UI follows in Phase 7, and run summary, timeline, span tree, span detail, artifact viewer, evaluation/diagnosis panel, trace diff, and experiment comparison should be derived from stable core primitives or view models before adding new Core fields.
 
 The MCP Tool Chain layer is an adapter evidence layer: it records tool discovery, schema snapshots, argument generation, permission, execution results, failure evidence, and result consumption without adding MCP-specific fields to the Trace Core.
 

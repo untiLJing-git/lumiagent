@@ -204,7 +204,80 @@ Test coverage includes:
 - Structural validation success and failure cases.
 - Convenience `TraceBuilder` behavior.
 
-## 9. Acceptance Criteria
+## 9. Visualization Intent
+
+Trace Core should be designed so that capture, data model, view models, and visualization surfaces stay cleanly layered. The same Core data should drive multiple views without changing the Core model.
+
+The layering is:
+
+```text
+CaptureStrategy -> Trace Core -> View Models (Phase 5) -> Visualization Surfaces
+```
+
+Visualization surfaces on the current roadmap:
+
+```text
+CLI Viewer (Phase 2b / Phase 3):
+  lumiagent show <trace.json> prints span tree, failure types, evidence, and diagnosis summary
+
+Web UI (Phase 7):
+  browser-based timeline, span tree, span detail, and diagnosis reports
+
+Trace Diff View (Phase 5):
+  lumiagent diff trace1.json trace2.json highlights divergent spans
+
+Experiment Comparison (Phase 5):
+  groups multiple runs for comparative evaluation
+```
+
+Phase 1 Core data must be able to feed these view models:
+
+```text
+Run Summary:
+  status, duration, high-level input/output, evaluation and diagnosis counts
+
+Timeline View:
+  ordered spans and events based on timestamps
+
+Span Tree View:
+  nested workflow structure from root spans to child spans
+
+Span Detail Panel:
+  span input, output, metadata, events, artifacts, status, and timing
+
+Artifact Viewer:
+  prompt, completion, retrieved chunks, tool result, code diff, test output, logs, and custom artifacts
+
+Evaluation / Diagnosis Panel:
+  score, label, reason, severity, failure type, suggested fix, and evidence links
+
+Evidence Jump Links:
+  navigation from evaluations or diagnoses to the spans that support them
+```
+
+Future Core extension points that visualization will consume (designed in the project spec, implemented later):
+
+```text
+Annotation: human feedback shown alongside evaluations and diagnoses
+Run linking: parent_run_id and triggered_by_span_id for multi-run and experiment views
+```
+
+Extension and sequencing principle:
+
+```text
+Use metadata, artifacts, adapter conventions, and view models before adding Core fields.
+Promote a field into Core only when it is generic, stable, and repeatedly needed across adapters and UI views.
+Prioritize data models before UI. When data models are stable, UI should be friendly and elegant.
+```
+
+Diagram:
+
+```text
+docs/diagrams/trace-core-visualization-intent.mmd
+docs/assets/trace-core-visualization-intent.svg
+```
+
+## 10. Acceptance Criteria
 
 Phase 1 is complete when:
 
@@ -215,7 +288,7 @@ Phase 1 is complete when:
 - The implementation remains framework-agnostic.
 - Coding Agent and MCP support remain outside Core except as sample data.
 
-## 10. Relationship to Later Phases
+## 11. Relationship to Later Phases
 
 Phase 1 is the foundation for all later work:
 

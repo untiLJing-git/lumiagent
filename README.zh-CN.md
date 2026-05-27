@@ -60,6 +60,7 @@ LumiAgent 从结构化、可回放、可评测、可诊断的 trace 模型出发
 
 规格与报告：
 
+- [`docs/specs/trace-core-mvp.md`](docs/specs/trace-core-mvp.md)
 - [`docs/specs/mcp-tool-chain-model.md`](docs/specs/mcp-tool-chain-model.md)
 - [`docs/reports/trace-core-mvp-technical-report.zh-CN.md`](docs/reports/trace-core-mvp-technical-report.zh-CN.md)
 - [`docs/reports/mcp-tool-chain-model-technical-report.zh-CN.md`](docs/reports/mcp-tool-chain-model-technical-report.zh-CN.md)
@@ -91,11 +92,17 @@ print(to_json(run))
 
 Mermaid 源文件：[`docs/diagrams/trace-core-model.mmd`](docs/diagrams/trace-core-model.mmd)
 
+![Trace Core Visualization Intent](docs/assets/trace-core-visualization-intent.svg)
+
+Mermaid 源文件：[`docs/diagrams/trace-core-visualization-intent.mmd`](docs/diagrams/trace-core-visualization-intent.mmd)
+
 ![MCP Tool Chain Evidence Layer](docs/assets/mcp-tool-chain-evidence-layer.svg)
 
 Mermaid 源文件：[`docs/diagrams/mcp-tool-chain-evidence-layer.mmd`](docs/diagrams/mcp-tool-chain-evidence-layer.mmd)
 
 Trace Core 刻意保持与具体 Agent 框架解耦。Coding Agent 支持、MCP Tool Chain 捕获、SDK hooks、CLI wrappers 和 transcript importers 都应作为核心模型之上的适配层实现。
+
+Trace Core 数据也通过清晰分层服务未来可视化：`CaptureStrategy → Trace Core → view models（Phase 5）→ 可视化界面`。CLI Viewer 从 Phase 2b 起就消费这层数据，Web UI 在 Phase 7 跟进；Run Summary、Timeline、Span Tree、Span Detail、Artifact Viewer、Evaluation/Diagnosis Panel、Trace Diff 和 Experiment 对比都应优先从稳定 Core primitives 或 view models 推导，只有通用、稳定、跨视图重复需要的字段才提升进 Core。
 
 MCP Tool Chain 层是 adapter evidence layer：它记录工具发现、schema snapshot、参数生成、权限、执行结果、失败证据和结果消费，同时不向 Trace Core 添加 MCP 专用字段。
 
