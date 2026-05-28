@@ -1,0 +1,24 @@
+flowchart LR
+    CLI["lumiagent capture mcp"] --> Config["McpCaptureConfig"]
+    Config --> Strategy["McpCaptureStrategy"]
+
+    subgraph Adapter["MCP Adapter Layer"]
+        Strategy --> Runtime["McpClientRuntime protocol"]
+        Runtime --> Stdio["StdioMcpClientRuntime"]
+        Strategy --> Selector["ExplicitToolSelector"]
+        Strategy --> Mapper["McpTraceMapper"]
+    end
+
+    Stdio --> Server["Third-party MCP Server"]
+    Server --> Discovery["tools + schemas"]
+    Discovery --> Selector
+    Selector --> Call["tool call result or failure"]
+    Call --> Mapper
+
+    Mapper --> Trace["AgentRun / Span Tree / Artifacts / Diagnosis"]
+    Trace --> Json["trace JSON"]
+    Json --> Show["lumiagent show"]
+    Show --> Summary["CLI evidence summary"]
+
+    TraceCore["Trace Core"] -. "framework-agnostic models" .-> Trace
+    Adapter -. "MCP semantics stay outside Core" .-> TraceCore

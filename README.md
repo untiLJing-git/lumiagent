@@ -42,7 +42,7 @@ Implemented capabilities:
 - Convenience `TraceBuilder` API
 - Generic Agent and Coding Agent trace fixtures
 
-**Stage 2: MCP Tool Chain Model — completed**
+**Stage 2a: MCP Tool Chain Evidence Model — completed**
 
 Implemented capabilities:
 
@@ -56,16 +56,39 @@ Implemented capabilities:
 Product value:
 
 - Preserves structured evidence for how an Agent discovers tools, sees schemas, generates arguments, executes MCP tools, and consumes results.
-- Keeps MCP as an adapter evidence layer so Phase 3 Coding Agent Trace and Phase 4 Evaluation / Diagnosis can consume stable evidence without polluting the Core model.
+- Keeps MCP as an adapter evidence layer so later Coding Agent Trace and Evaluation / Diagnosis phases can consume stable evidence without polluting the Core model.
+
+**Stage 2b: MCP Capture + Display Chain — completed**
+
+Implemented capabilities:
+
+- Generic `CaptureStrategy` protocol as the shared capture entry point
+- Transport-agnostic `McpClientRuntime` protocol and stdio `StdioMcpClientRuntime`
+- Explicit tool selection with success and `tool_not_found` evidence
+- `McpCaptureStrategy` orchestration for connection, initialization, discovery, selection, execution, and trace mapping
+- `McpTraceMapper` conversion from real MCP runtime outputs into valid `AgentRun` traces
+- CLI commands: `lumiagent capture mcp` and `lumiagent show`
+- CLI viewer summary for span tree, tool selection, arguments, result, failure, and evidence spans
+- Third-party filesystem MCP verification path using `@modelcontextprotocol/server-filesystem`
+
+Product value:
+
+- Closes the first real capture-model-display loop for third-party MCP Server interactions.
+- Records where an MCP tool-chain failure happened: connection, initialization, discovery, selection, argument generation, execution, timeout, transport, result shape, or result consumption.
+- Keeps stdio transport details in the adapter runtime while preserving a stable trace shape for future HTTP/SSE runtimes, Coding Agent hooks, replay, and diagnosis.
 
 Specifications and reports:
 
 - [`docs/specs/trace-core-mvp.md`](docs/specs/trace-core-mvp.md)
 - [`docs/specs/mcp-tool-chain-model.md`](docs/specs/mcp-tool-chain-model.md)
+- [`docs/specs/mcp-capture-display-chain.md`](docs/specs/mcp-capture-display-chain.md)
 - [`docs/reports/trace-core-mvp-technical-report.zh-CN.md`](docs/reports/trace-core-mvp-technical-report.zh-CN.md)
 - [`docs/reports/mcp-tool-chain-model-technical-report.zh-CN.md`](docs/reports/mcp-tool-chain-model-technical-report.zh-CN.md)
+- [`docs/reports/mcp-capture-display-chain-technical-report.zh-CN.md`](docs/reports/mcp-capture-display-chain-technical-report.zh-CN.md)
 
 ## Quick Example
+
+### Build a trace in code
 
 ```python
 from lumiagent.tracing import SpanKind, TraceBuilder, to_json
@@ -86,7 +109,7 @@ run = builder.build(output={"status": "done"})
 print(to_json(run))
 ```
 
-Capture and inspect an MCP tool call from the CLI:
+### Capture and inspect a real MCP tool call
 
 ```bash
 PYTHONPATH=src python -m lumiagent.cli capture mcp \
@@ -100,6 +123,37 @@ PYTHONPATH=src python -m lumiagent.cli capture mcp \
   -o ".lumiagent/traces/filesystem-read-success.json"
 
 PYTHONPATH=src python -m lumiagent.cli show ".lumiagent/traces/filesystem-read-success.json"
+```
+
+Example output shape:
+
+```text
+Run: MCP capture npx.read_file
+Status: success
+- MCP Tool Chain
+  - MCP Initialization
+  - MCP Tool Discovery
+  - MCP Tool Selection
+  - MCP Tool Execution: read_file
+Tool Selection
+  requested: read_file
+  selected: read_file
+```
+
+A stable failure case can be captured by requesting a missing tool:
+
+```bash
+PYTHONPATH=src python -m lumiagent.cli capture mcp \
+  --transport stdio \
+  --server-command "npx" \
+  --server-arg "-y" \
+  --server-arg "@modelcontextprotocol/server-filesystem" \
+  --server-arg "$PWD" \
+  --tool "read_me" \
+  --arguments '{"path":"README.md"}' \
+  -o ".lumiagent/traces/filesystem-tool-not-found.json"
+
+PYTHONPATH=src python -m lumiagent.cli show ".lumiagent/traces/filesystem-tool-not-found.json"
 ```
 
 ## Architecture
@@ -116,11 +170,15 @@ Mermaid source: [`docs/diagrams/trace-core-visualization-intent.mmd`](docs/diagr
 
 Mermaid source: [`docs/diagrams/mcp-tool-chain-evidence-layer.mmd`](docs/diagrams/mcp-tool-chain-evidence-layer.mmd)
 
+![MCP Capture Display Chain](docs/assets/mcp-capture-display-chain.svg)
+
+Mermaid source: [`docs/diagrams/mcp-capture-display-chain.mmd`](docs/diagrams/mcp-capture-display-chain.mmd)
+
 The trace core is intentionally independent from any single agent framework. Coding Agent support, MCP Tool Chain capture, SDK hooks, CLI wrappers, and transcript importers should be built as adapters on top of the core model.
 
-Trace Core data is also designed for future visualization through a clean layering: `CaptureStrategy → Trace Core → view models (Phase 5) → visualization surfaces`. The CLI viewer already consumes this data from Phase 2b, the Web UI follows in Phase 7, and run summary, timeline, span tree, span detail, artifact viewer, evaluation/diagnosis panel, trace diff, and experiment comparison should be derived from stable core primitives or view models before adding new Core fields.
+Trace Core data is also designed for future visualization through a clean layering: `CaptureStrategy → Trace Core → view models (Phase 5) → visualization surfaces`. The CLI viewer already consumes this data from Stage 2b, the Web UI follows later, and run summary, timeline, span tree, span detail, artifact viewer, evaluation/diagnosis panel, trace diff, and experiment comparison should be derived from stable core primitives or view models before adding new Core fields.
 
-The MCP Tool Chain layer is an adapter evidence layer: it records tool discovery, schema snapshots, argument generation, permission, execution results, failure evidence, and result consumption without adding MCP-specific fields to the Trace Core.
+The MCP Tool Chain layer is an adapter evidence layer: it records tool discovery, schema snapshots, argument generation, permission, execution results, failure evidence, result consumption, and real stdio capture without adding MCP-specific fields to the Trace Core.
 
 ## Roadmap
 
@@ -128,7 +186,7 @@ The MCP Tool Chain layer is an adapter evidence layer: it records tool discovery
 
 - [x] Trace Schema / Span Tree Core
 - [x] MCP Tool Chain evidence model
-- [ ] MCP Capture + Display chain (unified `CaptureStrategy` entry point)
+- [x] MCP Capture + Display chain (unified `CaptureStrategy` entry point)
 - [ ] Coding Agent trace model + Claude Code hooks capture + CLI viewer
 - [ ] Evaluation / Diagnosis Agent (built on LumiAgent's own agent infrastructure)
 - [ ] Replay / Visualization data preparation
@@ -136,6 +194,7 @@ The MCP Tool Chain layer is an adapter evidence layer: it records tool discovery
 ### Future Phases
 
 - [ ] Capture SDK + MCP Proxy
+- [ ] HTTP/SSE MCP runtime support
 - [ ] Web UI
 - [ ] Expert Knowledge Base + Advanced Diagnosis
 - [ ] Multi-Agent Visualization + Performance
@@ -165,6 +224,7 @@ src/lumiagent/
 │       ├── conventions.py
 │       ├── schemas.py
 │       └── taxonomy.py
+├── cli.py
 └── tracing/
     ├── __init__.py
     ├── builder.py
@@ -199,11 +259,24 @@ tests/
     └── test_writer.py
 
 docs/
+├── assets/
+│   ├── trace-core-model.svg
+│   ├── trace-core-visualization-intent.svg
+│   ├── mcp-tool-chain-evidence-layer.svg
+│   └── mcp-capture-display-chain.svg
+├── diagrams/
+│   ├── trace-core-model.mmd
+│   ├── trace-core-visualization-intent.mmd
+│   ├── mcp-tool-chain-evidence-layer.mmd
+│   └── mcp-capture-display-chain.mmd
 ├── reports/
 │   ├── trace-core-mvp-technical-report.zh-CN.md
-│   └── mcp-tool-chain-model-technical-report.zh-CN.md
+│   ├── mcp-tool-chain-model-technical-report.zh-CN.md
+│   └── mcp-capture-display-chain-technical-report.zh-CN.md
 └── specs/
-    └── mcp-tool-chain-model.md
+    ├── trace-core-mvp.md
+    ├── mcp-tool-chain-model.md
+    └── mcp-capture-display-chain.md
 ```
 
 ## Installation
@@ -218,8 +291,8 @@ Python 3.11+ is required.
 
 ```bash
 python -m pytest -v
-python -m ruff check src/lumiagent/tracing src/lumiagent/adapters tests/tracing tests/adapters
-python -m mypy src/lumiagent/tracing src/lumiagent/adapters
+python -m ruff check src/lumiagent/tracing src/lumiagent/adapters src/lumiagent/capture tests/tracing tests/adapters tests/capture tests/test_cli_mcp.py
+python -m mypy src/lumiagent/tracing src/lumiagent/adapters src/lumiagent/capture
 ```
 
 If the package is not installed in editable mode, run the checks with the local source path:
@@ -227,8 +300,8 @@ If the package is not installed in editable mode, run the checks with the local 
 ```powershell
 $env:PYTHONPATH = "src"
 python -m pytest -v
-python -m ruff check src/lumiagent/tracing src/lumiagent/adapters tests/tracing tests/adapters
-python -m mypy src/lumiagent/tracing src/lumiagent/adapters
+python -m ruff check src/lumiagent/tracing src/lumiagent/adapters src/lumiagent/capture tests/tracing tests/adapters tests/capture tests/test_cli_mcp.py
+python -m mypy src/lumiagent/tracing src/lumiagent/adapters src/lumiagent/capture
 ```
 
 ## Tech Stack
@@ -237,6 +310,8 @@ python -m mypy src/lumiagent/tracing src/lumiagent/adapters
 | --- | --- |
 | Language | Python 3.11+ |
 | Data Model | Pydantic v2 |
+| CLI | Typer |
+| MCP Runtime | MCP Python SDK over stdio |
 | Testing | pytest |
 | Linting | ruff |
 | Type Checking | mypy |

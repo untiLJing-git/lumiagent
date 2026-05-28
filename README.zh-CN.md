@@ -42,7 +42,7 @@ LumiAgent 从结构化、可回放、可评测、可诊断的 trace 模型出发
 - 便捷构造 API：`TraceBuilder`
 - 通用 Agent 与 Coding Agent trace fixture
 
-**第二阶段：MCP Tool Chain Model — 已完成**
+**第二阶段 A：MCP Tool Chain Evidence Model — 已完成**
 
 已实现能力：
 
@@ -56,16 +56,39 @@ LumiAgent 从结构化、可回放、可评测、可诊断的 trace 模型出发
 产品价值：
 
 - 保留 Agent 如何发现工具、看到 schema、生成参数、执行 MCP 工具、消费结果的结构化证据。
-- 将 MCP 保持为 adapter evidence layer，使 Phase 3 Coding Agent Trace 与 Phase 4 Evaluation / Diagnosis 可以消费稳定证据，同时不污染 Core 模型。
+- 将 MCP 保持为 adapter evidence layer，使后续 Coding Agent Trace 与 Evaluation / Diagnosis 可以消费稳定证据，同时不污染 Core 模型。
+
+**第二阶段 B：MCP Capture + Display Chain — 已完成**
+
+已实现能力：
+
+- 作为统一采集入口的通用 `CaptureStrategy` protocol
+- transport-agnostic `McpClientRuntime` protocol 与 stdio `StdioMcpClientRuntime`
+- 显式工具选择，并记录成功选择与 `tool_not_found` 失败证据
+- `McpCaptureStrategy` 编排连接、初始化、工具发现、工具选择、工具执行和 trace mapping
+- `McpTraceMapper` 将真实 MCP runtime 输出转换为合法 `AgentRun` trace
+- CLI 命令：`lumiagent capture mcp` 与 `lumiagent show`
+- CLI viewer 展示 span tree、工具选择、参数、结果、失败和 evidence span
+- 使用 `@modelcontextprotocol/server-filesystem` 的第三方 filesystem MCP 验证路径
+
+产品价值：
+
+- 打通首个真实第三方 MCP Server 的 capture-model-display 闭环。
+- 记录 MCP 工具链失败发生的位置：连接、初始化、发现、选择、参数生成、执行、超时、transport、结果结构或结果消费。
+- 将 stdio transport 细节留在 adapter runtime 中，同时为后续 HTTP/SSE runtime、Coding Agent hooks、replay 和 diagnosis 保持稳定 trace shape。
 
 规格与报告：
 
 - [`docs/specs/trace-core-mvp.md`](docs/specs/trace-core-mvp.md)
 - [`docs/specs/mcp-tool-chain-model.md`](docs/specs/mcp-tool-chain-model.md)
+- [`docs/specs/mcp-capture-display-chain.md`](docs/specs/mcp-capture-display-chain.md)
 - [`docs/reports/trace-core-mvp-technical-report.zh-CN.md`](docs/reports/trace-core-mvp-technical-report.zh-CN.md)
 - [`docs/reports/mcp-tool-chain-model-technical-report.zh-CN.md`](docs/reports/mcp-tool-chain-model-technical-report.zh-CN.md)
+- [`docs/reports/mcp-capture-display-chain-technical-report.zh-CN.md`](docs/reports/mcp-capture-display-chain-technical-report.zh-CN.md)
 
 ## 快速示例
+
+### 用代码构造 trace
 
 ```python
 from lumiagent.tracing import SpanKind, TraceBuilder, to_json
@@ -86,7 +109,7 @@ run = builder.build(output={"status": "done"})
 print(to_json(run))
 ```
 
-也可以通过 CLI 采集并查看一次 MCP 工具调用：
+### 采集并查看真实 MCP 工具调用
 
 ```bash
 PYTHONPATH=src python -m lumiagent.cli capture mcp \
@@ -100,6 +123,37 @@ PYTHONPATH=src python -m lumiagent.cli capture mcp \
   -o ".lumiagent/traces/filesystem-read-success.json"
 
 PYTHONPATH=src python -m lumiagent.cli show ".lumiagent/traces/filesystem-read-success.json"
+```
+
+输出形态示例：
+
+```text
+Run: MCP capture npx.read_file
+Status: success
+- MCP Tool Chain
+  - MCP Initialization
+  - MCP Tool Discovery
+  - MCP Tool Selection
+  - MCP Tool Execution: read_file
+Tool Selection
+  requested: read_file
+  selected: read_file
+```
+
+也可以通过请求不存在的工具稳定生成失败 trace：
+
+```bash
+PYTHONPATH=src python -m lumiagent.cli capture mcp \
+  --transport stdio \
+  --server-command "npx" \
+  --server-arg "-y" \
+  --server-arg "@modelcontextprotocol/server-filesystem" \
+  --server-arg "$PWD" \
+  --tool "read_me" \
+  --arguments '{"path":"README.md"}' \
+  -o ".lumiagent/traces/filesystem-tool-not-found.json"
+
+PYTHONPATH=src python -m lumiagent.cli show ".lumiagent/traces/filesystem-tool-not-found.json"
 ```
 
 ## 架构
@@ -116,11 +170,15 @@ Mermaid 源文件：[`docs/diagrams/trace-core-visualization-intent.mmd`](docs/d
 
 Mermaid 源文件：[`docs/diagrams/mcp-tool-chain-evidence-layer.mmd`](docs/diagrams/mcp-tool-chain-evidence-layer.mmd)
 
+![MCP Capture Display Chain](docs/assets/mcp-capture-display-chain.svg)
+
+Mermaid 源文件：[`docs/diagrams/mcp-capture-display-chain.mmd`](docs/diagrams/mcp-capture-display-chain.mmd)
+
 Trace Core 刻意保持与具体 Agent 框架解耦。Coding Agent 支持、MCP Tool Chain 捕获、SDK hooks、CLI wrappers 和 transcript importers 都应作为核心模型之上的适配层实现。
 
-Trace Core 数据也通过清晰分层服务未来可视化：`CaptureStrategy → Trace Core → view models（Phase 5）→ 可视化界面`。CLI Viewer 从 Phase 2b 起就消费这层数据，Web UI 在 Phase 7 跟进；Run Summary、Timeline、Span Tree、Span Detail、Artifact Viewer、Evaluation/Diagnosis Panel、Trace Diff 和 Experiment 对比都应优先从稳定 Core primitives 或 view models 推导，只有通用、稳定、跨视图重复需要的字段才提升进 Core。
+Trace Core 数据也通过清晰分层服务未来可视化：`CaptureStrategy → Trace Core → view models（Phase 5）→ 可视化界面`。CLI Viewer 从 Stage 2b 起就消费这层数据，Web UI 在后续阶段跟进；Run Summary、Timeline、Span Tree、Span Detail、Artifact Viewer、Evaluation/Diagnosis Panel、Trace Diff 和 Experiment 对比都应优先从稳定 Core primitives 或 view models 推导，只有通用、稳定、跨视图重复需要的字段才提升进 Core。
 
-MCP Tool Chain 层是 adapter evidence layer：它记录工具发现、schema snapshot、参数生成、权限、执行结果、失败证据和结果消费，同时不向 Trace Core 添加 MCP 专用字段。
+MCP Tool Chain 层是 adapter evidence layer：它记录工具发现、schema snapshot、参数生成、权限、执行结果、失败证据、结果消费和真实 stdio capture，同时不向 Trace Core 添加 MCP 专用字段。
 
 ## 路线图
 
@@ -128,7 +186,7 @@ MCP Tool Chain 层是 adapter evidence layer：它记录工具发现、schema sn
 
 - [x] Trace Schema / Span Tree Core
 - [x] MCP Tool Chain evidence model
-- [ ] MCP 采集 + 展示链（统一 `CaptureStrategy` 入口）
+- [x] MCP 采集 + 展示链（统一 `CaptureStrategy` 入口）
 - [ ] Coding Agent trace model + Claude Code hooks 采集 + CLI Viewer
 - [ ] Evaluation / Diagnosis Agent（基于 LumiAgent 自身 Agent 基础设施）
 - [ ] Replay / Visualization 数据准备
@@ -136,6 +194,7 @@ MCP Tool Chain 层是 adapter evidence layer：它记录工具发现、schema sn
 ### 未来阶段
 
 - [ ] 采集 SDK + MCP Proxy
+- [ ] HTTP/SSE MCP runtime 支持
 - [ ] Web UI
 - [ ] 专家知识库 + 高级诊断
 - [ ] 多 Agent 可视化 + 性能优化
@@ -165,6 +224,7 @@ src/lumiagent/
 │       ├── conventions.py
 │       ├── schemas.py
 │       └── taxonomy.py
+├── cli.py
 └── tracing/
     ├── __init__.py
     ├── builder.py
@@ -199,11 +259,24 @@ tests/
     └── test_writer.py
 
 docs/
+├── assets/
+│   ├── trace-core-model.svg
+│   ├── trace-core-visualization-intent.svg
+│   ├── mcp-tool-chain-evidence-layer.svg
+│   └── mcp-capture-display-chain.svg
+├── diagrams/
+│   ├── trace-core-model.mmd
+│   ├── trace-core-visualization-intent.mmd
+│   ├── mcp-tool-chain-evidence-layer.mmd
+│   └── mcp-capture-display-chain.mmd
 ├── reports/
 │   ├── trace-core-mvp-technical-report.zh-CN.md
-│   └── mcp-tool-chain-model-technical-report.zh-CN.md
+│   ├── mcp-tool-chain-model-technical-report.zh-CN.md
+│   └── mcp-capture-display-chain-technical-report.zh-CN.md
 └── specs/
-    └── mcp-tool-chain-model.md
+    ├── trace-core-mvp.md
+    ├── mcp-tool-chain-model.md
+    └── mcp-capture-display-chain.md
 ```
 
 ## 安装
@@ -218,8 +291,8 @@ pip install -e ".[dev]"
 
 ```bash
 python -m pytest -v
-python -m ruff check src/lumiagent/tracing src/lumiagent/adapters tests/tracing tests/adapters
-python -m mypy src/lumiagent/tracing src/lumiagent/adapters
+python -m ruff check src/lumiagent/tracing src/lumiagent/adapters src/lumiagent/capture tests/tracing tests/adapters tests/capture tests/test_cli_mcp.py
+python -m mypy src/lumiagent/tracing src/lumiagent/adapters src/lumiagent/capture
 ```
 
 如果当前环境没有以 editable mode 安装本项目，可以使用本地源码路径运行：
@@ -227,8 +300,8 @@ python -m mypy src/lumiagent/tracing src/lumiagent/adapters
 ```powershell
 $env:PYTHONPATH = "src"
 python -m pytest -v
-python -m ruff check src/lumiagent/tracing src/lumiagent/adapters tests/tracing tests/adapters
-python -m mypy src/lumiagent/tracing src/lumiagent/adapters
+python -m ruff check src/lumiagent/tracing src/lumiagent/adapters src/lumiagent/capture tests/tracing tests/adapters tests/capture tests/test_cli_mcp.py
+python -m mypy src/lumiagent/tracing src/lumiagent/adapters src/lumiagent/capture
 ```
 
 ## 技术栈
@@ -237,6 +310,8 @@ python -m mypy src/lumiagent/tracing src/lumiagent/adapters
 | --- | --- |
 | 语言 | Python 3.11+ |
 | 数据模型 | Pydantic v2 |
+| CLI | Typer |
+| MCP Runtime | MCP Python SDK over stdio |
 | 测试 | pytest |
 | Lint | ruff |
 | 类型检查 | mypy |
