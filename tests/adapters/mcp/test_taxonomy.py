@@ -1,11 +1,13 @@
-from lumiagent.adapters.mcp.conventions import (
+from lumiagent.adapters.mcp import (
     MCP_ARTIFACT_FAILURE_EVIDENCE,
+    MCP_ARTIFACT_TOOL_SELECTION,
+    MCP_SPAN_INITIALIZATION,
+)
+from lumiagent.adapters.mcp.conventions import (
     MCP_ARTIFACT_TOOL_RESULT,
     MCP_ARTIFACT_TOOL_SCHEMA_SNAPSHOT,
-    MCP_ARTIFACT_TOOL_SELECTION,
     MCP_SPAN_CONNECTION,
     MCP_SPAN_DISCOVERY,
-    MCP_SPAN_INITIALIZATION,
     MCP_SPAN_TOOL_CHAIN,
     MCP_SPAN_TOOL_EXECUTION,
     MCP_SPAN_TOOL_SELECTION,
