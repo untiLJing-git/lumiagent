@@ -1,12 +1,19 @@
 """Transport-agnostic MCP client runtime interfaces."""
 from __future__ import annotations
 
+import asyncio
+import time
+from contextlib import AsyncExitStack
+from datetime import timedelta
 from enum import StrEnum
-from typing import TYPE_CHECKING, Any, Protocol
+from typing import TYPE_CHECKING, Any, Protocol, cast
 
 from pydantic import BaseModel, Field, field_validator
 
 if TYPE_CHECKING:
+    from mcp import ClientSession
+    from mcp.types import CallToolResult, InitializeResult, ListToolsResult
+
     from lumiagent.adapters.mcp.taxonomy import McpFailureType
 else:
     McpFailureType = __import__(
@@ -121,18 +128,235 @@ class StdioMcpClientRuntime:
         self.server_args = server_args or []
         self.server_name = server_name or server_command
         self.timeout_seconds = timeout_seconds
+        self._loop: asyncio.AbstractEventLoop | None = None
+        self._exit_stack: AsyncExitStack | None = None
+        self._session: ClientSession | None = None
+        self._connection: McpConnectionInfo | None = None
 
     def connect(self) -> McpConnectionInfo:
-        raise NotImplementedError("Stdio MCP connection is implemented in Task 10")
+        if self._connection is not None:
+            return self._connection
+        try:
+            self._loop = asyncio.new_event_loop()
+            self._connection = self._loop.run_until_complete(self._connect_async())
+            return self._connection
+        except McpRuntimeError:
+            self.close()
+            raise
+        except Exception as exc:
+            self.close()
+            raise self._runtime_error(
+                McpFailureType.CONNECTION_FAILED,
+                McpRuntimeStage.CONNECTION,
+                f"Failed to connect to MCP stdio server {self.server_name!r}: {exc}",
+                exc,
+            ) from exc
+
+    async def _connect_async(self) -> McpConnectionInfo:
+        from mcp import ClientSession
+        from mcp.client.stdio import StdioServerParameters, stdio_client
+
+        self._exit_stack = AsyncExitStack()
+        params = StdioServerParameters(command=self.server_command, args=self.server_args)
+        try:
+            read_stream, write_stream = await self._exit_stack.enter_async_context(
+                stdio_client(params)
+            )
+            self._session = await self._exit_stack.enter_async_context(
+                ClientSession(
+                    read_stream,
+                    write_stream,
+                    read_timeout_seconds=timedelta(seconds=self.timeout_seconds),
+                )
+            )
+        except Exception as exc:
+            await self._exit_stack.aclose()
+            self._exit_stack = None
+            raise self._runtime_error(
+                McpFailureType.CONNECTION_FAILED,
+                McpRuntimeStage.CONNECTION,
+                f"Failed to launch MCP stdio server {self.server_name!r}: {exc}",
+                exc,
+            ) from exc
+        return McpConnectionInfo(
+            transport="stdio",
+            server_name=self.server_name,
+            server_command=self.server_command,
+            server_args=list(self.server_args),
+        )
 
     def initialize(self) -> McpSessionInfo:
-        raise NotImplementedError("Stdio MCP initialization is implemented in Task 10")
+        try:
+            result = self._run(self._require_session().initialize())
+            return self._to_session_info(cast("InitializeResult", result))
+        except McpRuntimeError:
+            raise
+        except Exception as exc:
+            raise self._runtime_error(
+                McpFailureType.INITIALIZATION_FAILED,
+                McpRuntimeStage.INITIALIZATION,
+                f"Failed to initialize MCP server {self.server_name!r}: {exc}",
+                exc,
+            ) from exc
 
     def list_tools(self) -> list[McpToolDefinition]:
-        raise NotImplementedError("Stdio MCP tool discovery is implemented in Task 10")
+        try:
+            result = cast("ListToolsResult", self._run(self._require_session().list_tools()))
+            return [
+                McpToolDefinition(
+                    name=tool.name,
+                    description=tool.description or "",
+                    input_schema=dict(tool.inputSchema),
+                )
+                for tool in result.tools
+            ]
+        except McpRuntimeError:
+            raise
+        except Exception as exc:
+            raise self._runtime_error(
+                McpFailureType.TOOL_DISCOVERY_FAILED,
+                McpRuntimeStage.TOOL_DISCOVERY,
+                f"Failed to list MCP tools from {self.server_name!r}: {exc}",
+                exc,
+            ) from exc
 
     def call_tool(self, name: str, arguments: dict[str, Any]) -> McpToolCallResult:
-        raise NotImplementedError("Stdio MCP tool execution is implemented in Task 10")
+        started = time.monotonic()
+        try:
+            result = cast(
+                "CallToolResult",
+                self._run(
+                    self._require_session().call_tool(
+                        name,
+                        arguments,
+                        read_timeout_seconds=timedelta(seconds=self.timeout_seconds),
+                    )
+                ),
+            )
+            return self._to_tool_result(name, arguments, result, started)
+        except McpRuntimeError:
+            raise
+        except TimeoutError as exc:
+            raise self._runtime_error(
+                McpFailureType.TIMEOUT,
+                McpRuntimeStage.TOOL_EXECUTION,
+                f"MCP tool {name!r} timed out.",
+                exc,
+            ) from exc
+        except Exception as exc:
+            failure_type = self._tool_failure_type(exc)
+            raise self._runtime_error(
+                failure_type,
+                McpRuntimeStage.TOOL_EXECUTION,
+                f"MCP tool {name!r} failed: {exc}",
+                exc,
+            ) from exc
 
     def close(self) -> None:
-        return None
+        if self._loop is not None and self._exit_stack is not None:
+            try:
+                self._loop.run_until_complete(self._exit_stack.aclose())
+            finally:
+                self._exit_stack = None
+                self._session = None
+                self._connection = None
+        if self._loop is not None:
+            self._loop.close()
+            self._loop = None
+
+    def _run(self, awaitable: Any) -> Any:
+        if self._loop is None:
+            self.connect()
+        if self._loop is None:
+            raise self._runtime_error(
+                McpFailureType.TRANSPORT_INTERRUPTED,
+                McpRuntimeStage.CONNECTION,
+                "MCP stdio transport is not connected.",
+            )
+        try:
+            return self._loop.run_until_complete(awaitable)
+        except TimeoutError:
+            raise
+        except (BrokenPipeError, EOFError) as exc:
+            raise self._runtime_error(
+                McpFailureType.TRANSPORT_INTERRUPTED,
+                McpRuntimeStage.CONNECTION,
+                f"MCP stdio transport closed unexpectedly: {exc}",
+                exc,
+            ) from exc
+
+    def _require_session(self) -> ClientSession:
+        if self._session is None:
+            self.connect()
+        if self._session is None:
+            raise self._runtime_error(
+                McpFailureType.TRANSPORT_INTERRUPTED,
+                McpRuntimeStage.CONNECTION,
+                "MCP stdio session is unavailable.",
+            )
+        return self._session
+
+    def _to_session_info(self, result: InitializeResult) -> McpSessionInfo:
+        try:
+            capabilities = result.capabilities.model_dump(by_alias=True, exclude_none=True)
+            return McpSessionInfo(
+                protocol_version=str(result.protocolVersion),
+                server_name=result.serverInfo.name,
+                capabilities=capabilities,
+            )
+        except Exception as exc:
+            raise self._runtime_error(
+                McpFailureType.RESULT_INVALID,
+                McpRuntimeStage.INITIALIZATION,
+                f"MCP initialize result shape is invalid: {exc}",
+                exc,
+            ) from exc
+
+    def _to_tool_result(
+        self,
+        name: str,
+        arguments: dict[str, Any],
+        result: CallToolResult,
+        started: float,
+    ) -> McpToolCallResult:
+        try:
+            content = [item.model_dump(by_alias=True, exclude_none=True) for item in result.content]
+            raw_result = result.model_dump(by_alias=True, exclude_none=True)
+            return McpToolCallResult(
+                tool_name=name,
+                arguments=arguments,
+                content=content,
+                is_error=result.isError,
+                latency_ms=max(0, round((time.monotonic() - started) * 1000)),
+                raw_result=raw_result,
+            )
+        except Exception as exc:
+            raise self._runtime_error(
+                McpFailureType.RESULT_INVALID,
+                McpRuntimeStage.RESULT_PARSING,
+                f"MCP tool {name!r} result shape is invalid: {exc}",
+                exc,
+            ) from exc
+
+    def _tool_failure_type(self, exc: Exception) -> McpFailureType:
+        message = str(exc).lower()
+        if "permission" in message and "denied" in message:
+            return McpFailureType.PERMISSION_DENIED
+        return McpFailureType.TOOL_EXECUTION_FAILED
+
+    def _runtime_error(
+        self,
+        failure_type: McpFailureType,
+        stage: McpRuntimeStage,
+        message: str,
+        exc: Exception | None = None,
+    ) -> McpRuntimeError:
+        raw_error_code = exc.__class__.__name__ if exc is not None else None
+        raw_error_data = {"error": str(exc)} if exc is not None else None
+        return McpRuntimeError(
+            failure_type=failure_type,
+            stage=stage,
+            message=message,
+            raw_error_code=raw_error_code,
+            raw_error_data=raw_error_data,
+        )

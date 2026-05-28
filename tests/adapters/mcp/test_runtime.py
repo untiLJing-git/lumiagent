@@ -78,6 +78,16 @@ def test_stdio_runtime_stores_launch_configuration() -> None:
     assert runtime.timeout_seconds == 5
 
 
+def test_stdio_runtime_exposes_runtime_methods() -> None:
+    runtime = StdioMcpClientRuntime(server_command="npx", server_args=[])
+
+    assert callable(runtime.connect)
+    assert callable(runtime.initialize)
+    assert callable(runtime.list_tools)
+    assert callable(runtime.call_tool)
+    assert callable(runtime.close)
+
+
 def test_stdio_runtime_rejects_blank_server_command() -> None:
     with pytest.raises(ValueError, match="server_command"):
         StdioMcpClientRuntime(server_command="   ")
