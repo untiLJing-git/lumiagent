@@ -86,6 +86,22 @@ run = builder.build(output={"status": "done"})
 print(to_json(run))
 ```
 
+Capture and inspect an MCP tool call from the CLI:
+
+```powershell
+lumiagent capture mcp `
+  --transport stdio `
+  --server-command "npx" `
+  --server-arg "-y" `
+  --server-arg "@modelcontextprotocol/server-filesystem" `
+  --server-arg "D:\Projects\github\lumiagent" `
+  --tool "read_file" `
+  --arguments "{\"path\":\"README.md\"}" `
+  -o ".lumiagent/traces/filesystem-read-success.json"
+
+lumiagent show ".lumiagent/traces/filesystem-read-success.json"
+```
+
 ## Architecture
 
 ![Trace Core Model](docs/assets/trace-core-model.svg)
@@ -135,9 +151,16 @@ Non-goals for the current MVP:
 
 ```text
 src/lumiagent/
+├── capture/
+│   ├── __init__.py
+│   └── strategy.py
 ├── adapters/
 │   └── mcp/
-│       ├── __init__.py
+│       ├── capture.py
+│       ├── runtime.py
+│       ├── selector.py
+│       ├── mapper.py
+│       ├── viewer.py
 │       ├── builder.py
 │       ├── conventions.py
 │       ├── schemas.py
@@ -148,21 +171,32 @@ src/lumiagent/
     ├── enums.py
     ├── models.py
     ├── serializer.py
-    └── validator.py
+    ├── validator.py
+    └── writer.py
 
 tests/
+├── capture/
+│   └── test_strategy.py
 ├── adapters/mcp/
 │   ├── fixtures/
+│   ├── test_capture.py
 │   ├── test_fixtures.py
+│   ├── test_mapper.py
 │   ├── test_mcp_builder.py
+│   ├── test_runtime.py
 │   ├── test_schemas.py
-│   └── test_taxonomy.py
+│   ├── test_selector.py
+│   ├── test_taxonomy.py
+│   └── test_viewer.py
+├── test_cli.py
+├── test_cli_mcp.py
 └── tracing/
     ├── fixtures/
     ├── test_builder.py
     ├── test_models.py
     ├── test_serializer.py
-    └── test_validator.py
+    ├── test_validator.py
+    └── test_writer.py
 
 docs/
 ├── reports/

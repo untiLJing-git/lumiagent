@@ -86,6 +86,22 @@ run = builder.build(output={"status": "done"})
 print(to_json(run))
 ```
 
+也可以通过 CLI 采集并查看一次 MCP 工具调用：
+
+```powershell
+lumiagent capture mcp `
+  --transport stdio `
+  --server-command "npx" `
+  --server-arg "-y" `
+  --server-arg "@modelcontextprotocol/server-filesystem" `
+  --server-arg "D:\Projects\github\lumiagent" `
+  --tool "read_file" `
+  --arguments "{\"path\":\"README.md\"}" `
+  -o ".lumiagent/traces/filesystem-read-success.json"
+
+lumiagent show ".lumiagent/traces/filesystem-read-success.json"
+```
+
 ## 架构
 
 ![Trace Core Model](docs/assets/trace-core-model.svg)
@@ -135,9 +151,16 @@ MCP Tool Chain 层是 adapter evidence layer：它记录工具发现、schema sn
 
 ```text
 src/lumiagent/
+├── capture/
+│   ├── __init__.py
+│   └── strategy.py
 ├── adapters/
 │   └── mcp/
-│       ├── __init__.py
+│       ├── capture.py
+│       ├── runtime.py
+│       ├── selector.py
+│       ├── mapper.py
+│       ├── viewer.py
 │       ├── builder.py
 │       ├── conventions.py
 │       ├── schemas.py
@@ -148,21 +171,32 @@ src/lumiagent/
     ├── enums.py
     ├── models.py
     ├── serializer.py
-    └── validator.py
+    ├── validator.py
+    └── writer.py
 
 tests/
+├── capture/
+│   └── test_strategy.py
 ├── adapters/mcp/
 │   ├── fixtures/
+│   ├── test_capture.py
 │   ├── test_fixtures.py
+│   ├── test_mapper.py
 │   ├── test_mcp_builder.py
+│   ├── test_runtime.py
 │   ├── test_schemas.py
-│   └── test_taxonomy.py
+│   ├── test_selector.py
+│   ├── test_taxonomy.py
+│   └── test_viewer.py
+├── test_cli.py
+├── test_cli_mcp.py
 └── tracing/
     ├── fixtures/
     ├── test_builder.py
     ├── test_models.py
     ├── test_serializer.py
-    └── test_validator.py
+    ├── test_validator.py
+    └── test_writer.py
 
 docs/
 ├── reports/
