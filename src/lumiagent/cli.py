@@ -2,7 +2,8 @@
 from __future__ import annotations
 
 import asyncio
-from typing import Optional
+import json
+from typing import Annotated, Any
 
 import typer
 from rich.console import Console
@@ -13,19 +14,21 @@ app = typer.Typer(
     no_args_is_help=True,
 )
 console = Console()
+capture_app = typer.Typer(help="Capture traces from external systems.")
+app.add_typer(capture_app, name="capture")
 
 
 @app.command()
 def chat(
     platform: str = typer.Option("cmd", help="Platform to use: cmd, web"),
-    model: Optional[str] = typer.Option(None, help="Override primary LLM model"),
+    model: str | None = typer.Option(None, help="Override primary LLM model"),
     debug: bool = typer.Option(False, help="Enable debug logging"),
 ) -> None:
     """Start interactive chat session."""
     asyncio.run(_run_chat(platform, model, debug))
 
 
-async def _run_chat(platform: str, model: Optional[str], debug: bool) -> None:
+async def _run_chat(platform: str, model: str | None, debug: bool) -> None:
     from lumiagent.config import get_settings
     from lumiagent.logging import setup_logging
 
@@ -43,8 +46,10 @@ async def _run_chat(platform: str, model: Optional[str], debug: bool) -> None:
 
     agent = await create_agent(settings)
 
-    console.print(f"\n[bold green]🚀 LumiAgent[/bold green] v0.1.0")
-    console.print(f"Platform: [cyan]{platform}[/cyan] | Model: [cyan]{settings.openai_model}[/cyan]")
+    console.print("\n[bold green]🚀 LumiAgent[/bold green] v0.1.0")
+    console.print(
+        f"Platform: [cyan]{platform}[/cyan] | Model: [cyan]{settings.openai_model}[/cyan]"
+    )
     console.print("Type [bold]exit[/bold] or [bold]quit[/bold] to stop.\n")
 
     await agent.start(platforms=[platform])
@@ -90,8 +95,8 @@ def ingest(
 async def _run_ingest(source: str, collection: str) -> None:
     from lumiagent.config import get_settings
     from lumiagent.logging import setup_logging
-    from lumiagent.rag.pipeline import RAGPipeline
     from lumiagent.rag.embedder import OpenAIEmbedder
+    from lumiagent.rag.pipeline import RAGPipeline
 
     settings = get_settings()
     setup_logging(level=settings.log_level)
@@ -111,13 +116,13 @@ async def _run_ingest(source: str, collection: str) -> None:
 @app.command(name="eval")
 def evaluate(
     eval_set: str = typer.Argument(help="Name of the evaluation set"),
-    output: Optional[str] = typer.Option(None, help="Output report path"),
+    output: str | None = typer.Option(None, help="Output report path"),
 ) -> None:
     """Run evaluation suite against the Agent."""
     asyncio.run(_run_eval(eval_set, output))
 
 
-async def _run_eval(eval_set: str, output: Optional[str]) -> None:
+async def _run_eval(eval_set: str, output: str | None) -> None:
     from lumiagent.config import get_settings
     from lumiagent.logging import setup_logging
 
@@ -131,11 +136,14 @@ async def _run_eval(eval_set: str, output: Optional[str]) -> None:
     agent = await create_agent(settings)
     suite = EvaluationSuite(config=settings.evaluation)
 
-    async def agent_run_fn(question: str):
-        from lumiagent.models.message import UnifiedMessage, Platform
+    async def agent_run_fn(question: str) -> tuple[str, Any, dict[str, Any]]:
+        from lumiagent.models.message import Platform, UnifiedMessage
+
         msg = UnifiedMessage.text(
-            text=question, platform=Platform.CMD,
-            channel_id="eval", user_id="evaluator",
+            text=question,
+            platform=Platform.CMD,
+            channel_id="eval",
+            user_id="evaluator",
         )
         response = await agent.engine.run(msg)
         return response.content.text or "", response.trace, {}
@@ -150,6 +158,76 @@ async def _run_eval(eval_set: str, output: Optional[str]) -> None:
     for cat, score in sorted(report.summary.items()):
         color = "green" if score >= 0.7 else "yellow" if score >= 0.4 else "red"
         console.print(f"  [{color}]{cat}: {score:.2%}[/{color}]")
+
+
+def _parse_json_object(raw: str) -> dict[str, Any]:
+    try:
+        parsed = json.loads(raw)
+    except json.JSONDecodeError as exc:
+        raise typer.BadParameter("arguments must be a JSON object") from exc
+    if not isinstance(parsed, dict):
+        raise typer.BadParameter("arguments must be a JSON object")
+    return parsed
+
+
+@capture_app.command(name="mcp")
+def capture_mcp(
+    server_command: Annotated[
+        str,
+        typer.Option(..., help="MCP server command to execute."),
+    ],
+    tool: Annotated[str, typer.Option(..., help="MCP tool name to call.")],
+    output: Annotated[
+        typer.FileTextWrite,
+        typer.Option(..., "-o", "--output", help="Trace JSON output path."),
+    ],
+    transport: Annotated[str, typer.Option(help="MCP transport to use.")] = "stdio",
+    server_arg: Annotated[
+        list[str] | None,
+        typer.Option(
+            "--server-arg",
+            help="Argument to pass to the MCP server. Repeat for multiple arguments.",
+        ),
+    ] = None,
+    arguments: Annotated[str, typer.Option(help="JSON object arguments for the MCP tool.")] = "{}",
+    timeout_seconds: Annotated[int, typer.Option(help="MCP runtime timeout in seconds.")] = 30,
+) -> None:
+    """Capture one MCP tool call as a LumiAgent trace."""
+
+    parsed_arguments = _parse_json_object(arguments)
+
+    from pathlib import Path
+
+    from lumiagent.adapters.mcp.capture import McpCaptureConfig, McpCaptureStrategy
+    from lumiagent.tracing.serializer import to_json
+
+    config = McpCaptureConfig(
+        transport=transport,
+        server_command=server_command,
+        server_args=server_arg or [],
+        tool_name=tool,
+        arguments=parsed_arguments,
+        timeout_seconds=timeout_seconds,
+    )
+    run = McpCaptureStrategy(config=config).capture()
+    output_path = Path(output.name)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(to_json(run), encoding="utf-8")
+    console.print(str(output_path))
+
+
+@app.command()
+def show(
+    trace_path: Annotated[typer.FileText, typer.Argument(help="Trace JSON file to render.")],
+) -> None:
+    """Render a plain-text MCP trace summary."""
+
+    from lumiagent.adapters.mcp.viewer import render_mcp_trace_summary
+    from lumiagent.tracing.serializer import from_json
+
+    run = from_json(trace_path.read())
+    for line in render_mcp_trace_summary(run):
+        console.print(line)
 
 
 @app.command()
