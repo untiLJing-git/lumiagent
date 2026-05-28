@@ -56,10 +56,10 @@ def test_execution_summary_records_failure_type() -> None:
         status="error",
         latency_ms=1200,
         result_artifact_id=None,
-        failure_type=McpFailureType.TOOL_TIMEOUT,
+        failure_type=McpFailureType.TIMEOUT,
     )
 
-    assert summary.failure_type is McpFailureType.TOOL_TIMEOUT
+    assert summary.failure_type is McpFailureType.TIMEOUT
 
 
 def test_failure_evidence_records_argument_invalid_fields() -> None:
@@ -107,7 +107,7 @@ def test_execution_summary_rejects_negative_latency() -> None:
 def test_failure_evidence_rejects_negative_latency() -> None:
     with pytest.raises(ValidationError):
         McpFailureEvidence(
-            failure_type=McpFailureType.TOOL_TIMEOUT,
+            failure_type=McpFailureType.TIMEOUT,
             failure_stage="execution",
             latency_ms=-5,
         )
