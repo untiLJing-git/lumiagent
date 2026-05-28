@@ -8,6 +8,11 @@ from pydantic import BaseModel, Field, field_validator
 
 if TYPE_CHECKING:
     from lumiagent.adapters.mcp.taxonomy import McpFailureType
+else:
+    McpFailureType = __import__(
+        "lumiagent.adapters.mcp.taxonomy",
+        fromlist=["McpFailureType"],
+    ).McpFailureType
 
 
 class McpRuntimeStage(StrEnum):
@@ -107,6 +112,11 @@ class StdioMcpClientRuntime:
         server_name: str | None = None,
         timeout_seconds: int = 30,
     ) -> None:
+        if not server_command.strip():
+            raise ValueError("server_command must not be empty")
+        if timeout_seconds < 1:
+            raise ValueError("timeout_seconds must be positive")
+
         self.server_command = server_command
         self.server_args = server_args or []
         self.server_name = server_name or server_command

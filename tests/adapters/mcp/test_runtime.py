@@ -76,3 +76,13 @@ def test_stdio_runtime_stores_launch_configuration() -> None:
     assert runtime.server_args == ["-y", "@modelcontextprotocol/server-filesystem", "."]
     assert runtime.server_name == "filesystem"
     assert runtime.timeout_seconds == 5
+
+
+def test_stdio_runtime_rejects_blank_server_command() -> None:
+    with pytest.raises(ValueError, match="server_command"):
+        StdioMcpClientRuntime(server_command="   ")
+
+
+def test_stdio_runtime_rejects_non_positive_timeout() -> None:
+    with pytest.raises(ValueError, match="timeout_seconds"):
+        StdioMcpClientRuntime(server_command="npx", timeout_seconds=0)
