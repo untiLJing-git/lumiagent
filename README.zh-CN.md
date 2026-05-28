@@ -88,18 +88,18 @@ print(to_json(run))
 
 也可以通过 CLI 采集并查看一次 MCP 工具调用：
 
-```powershell
-lumiagent capture mcp `
-  --transport stdio `
-  --server-command "npx" `
-  --server-arg "-y" `
-  --server-arg "@modelcontextprotocol/server-filesystem" `
-  --server-arg "$PWD" `
-  --tool "read_file" `
-  --arguments '{"path":"README.md"}' `
+```bash
+PYTHONPATH=src python -m lumiagent.cli capture mcp \
+  --transport stdio \
+  --server-command "npx" \
+  --server-arg "-y" \
+  --server-arg "@modelcontextprotocol/server-filesystem" \
+  --server-arg "$PWD" \
+  --tool "read_file" \
+  --arguments '{"path":"README.md"}' \
   -o ".lumiagent/traces/filesystem-read-success.json"
 
-lumiagent show ".lumiagent/traces/filesystem-read-success.json"
+PYTHONPATH=src python -m lumiagent.cli show ".lumiagent/traces/filesystem-read-success.json"
 ```
 
 ## 架构

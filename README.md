@@ -88,18 +88,18 @@ print(to_json(run))
 
 Capture and inspect an MCP tool call from the CLI:
 
-```powershell
-lumiagent capture mcp `
-  --transport stdio `
-  --server-command "npx" `
-  --server-arg "-y" `
-  --server-arg "@modelcontextprotocol/server-filesystem" `
-  --server-arg "$PWD" `
-  --tool "read_file" `
-  --arguments '{"path":"README.md"}' `
+```bash
+PYTHONPATH=src python -m lumiagent.cli capture mcp \
+  --transport stdio \
+  --server-command "npx" \
+  --server-arg "-y" \
+  --server-arg "@modelcontextprotocol/server-filesystem" \
+  --server-arg "$PWD" \
+  --tool "read_file" \
+  --arguments '{"path":"README.md"}' \
   -o ".lumiagent/traces/filesystem-read-success.json"
 
-lumiagent show ".lumiagent/traces/filesystem-read-success.json"
+PYTHONPATH=src python -m lumiagent.cli show ".lumiagent/traces/filesystem-read-success.json"
 ```
 
 ## Architecture
