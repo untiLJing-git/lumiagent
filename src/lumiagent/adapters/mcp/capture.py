@@ -74,6 +74,7 @@ class McpCaptureStrategy:
         connection: McpConnectionInfo | None = None
         session: McpSessionInfo | None = None
         tools: list[McpToolDefinition] = []
+        run: AgentRun | None = None
         try:
             connection = self.runtime.connect()
             session = self.runtime.initialize()
@@ -83,7 +84,7 @@ class McpCaptureStrategy:
                 tools=tools,
             )
             result = self.runtime.call_tool(selection.selected_tool_name, self.config.arguments)
-            return self.mapper.map_success(
+            run = self.mapper.map_success(
                 run_name=self._run_name(),
                 connection=connection,
                 session=session,
@@ -92,7 +93,7 @@ class McpCaptureStrategy:
                 result=result,
             )
         except McpRuntimeError as error:
-            return self.mapper.map_failure(
+            run = self.mapper.map_failure(
                 run_name=self._run_name(),
                 connection=connection or self._fallback_connection(),
                 session=session,
@@ -101,7 +102,15 @@ class McpCaptureStrategy:
                 error=error,
             )
         finally:
-            self.runtime.close()
+            try:
+                self.runtime.close()
+            except Exception:
+                if run is None:
+                    raise
+
+        if run is None:
+            raise RuntimeError("MCP capture did not produce a trace")
+        return run
 
     def _run_name(self) -> str:
         server_name = self.config.server_name or self.config.server_command
