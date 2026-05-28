@@ -13,21 +13,39 @@ from lumiagent.adapters.mcp.conventions import (
 from lumiagent.adapters.mcp.taxonomy import McpFailureType
 
 
-def test_mcp_failure_type_values_are_stable() -> None:
-    assert [item.value for item in McpFailureType] == [
-        "connection_failed",
+def test_mcp_failure_type_values_include_phase_2b_values() -> None:
+    values = {item.value for item in McpFailureType}
+
+    assert {
         "initialization_failed",
         "tool_discovery_failed",
+        "timeout",
+        "transport_interrupted",
+        "result_invalid",
+        "unknown",
+        "connection_failed",
         "tool_not_found",
         "argument_invalid",
         "permission_denied",
         "tool_execution_failed",
-        "timeout",
-        "transport_interrupted",
-        "result_invalid",
         "result_misinterpreted",
-        "unknown",
-    ]
+    } <= values
+
+
+def test_mcp_failure_type_values_preserve_phase_2a_legacy_values() -> None:
+    values = {item.value for item in McpFailureType}
+
+    assert {
+        "discovery_failed",
+        "schema_unavailable",
+        "schema_mismatch",
+        "tool_selection_wrong",
+        "argument_generation_failed",
+        "permission_required",
+        "tool_timeout",
+        "tool_result_invalid",
+        "insufficient_recovery_evidence",
+    } <= values
 
 
 def test_existing_mcp_failure_values_remain_available() -> None:
