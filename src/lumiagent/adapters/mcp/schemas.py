@@ -44,6 +44,20 @@ class McpToolCallInput(BaseModel):
         return value
 
 
+class McpToolSelectionEvidence(BaseModel):
+    requested_tool_name: str
+    selected_tool_name: str | None = None
+    available_tool_names: list[str] = Field(default_factory=list)
+    selection_strategy: str = "explicit"
+    reason: str = ""
+
+    @field_validator("requested_tool_name", "selection_strategy")
+    @classmethod
+    def require_non_empty_string(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("value must not be empty")
+        return value
+
 class McpToolExecutionSummary(BaseModel):
     status: Literal["success", "error"]
     latency_ms: int | None = Field(default=None, ge=0)
@@ -65,6 +79,10 @@ class McpFailureEvidence(BaseModel):
     validation_errors: list[dict[str, Any]] = Field(default_factory=list)
     error_code: str | None = None
     error_message: str | None = None
+    raw_error_code: str | None = None
+    raw_error_message: str | None = None
+    raw_error_data: dict[str, Any] | None = None
+    runtime_stage: str | None = None
     latency_ms: int | None = Field(default=None, ge=0)
     permission_status: str | None = None
     consumed_artifact_ids: list[str] = Field(default_factory=list)

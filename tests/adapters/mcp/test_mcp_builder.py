@@ -1,18 +1,23 @@
 from lumiagent.adapters.mcp import (
     MCP_ARTIFACT_TOOL_RESULT,
     MCP_ARTIFACT_TOOL_SCHEMA_SNAPSHOT,
+    MCP_ARTIFACT_TOOL_SELECTION,
     MCP_SPAN_DISCOVERY,
+    MCP_SPAN_INITIALIZATION,
     MCP_SPAN_RESULT_CONSUMPTION,
     MCP_SPAN_TOOL_CHAIN,
     MCP_SPAN_TOOL_EXECUTION,
+    MCP_SPAN_TOOL_SELECTION,
     McpFailureType,
 )
 from lumiagent.adapters.mcp.builder import (
     add_mcp_failure_evidence,
+    add_mcp_initialization,
     add_mcp_result_consumption,
     add_mcp_tool_execution,
     add_mcp_tool_result,
     add_mcp_tool_schema_snapshot,
+    add_mcp_tool_selection,
     start_mcp_tool_chain,
 )
 from lumiagent.tracing import ArtifactKind, RunStatus, SpanKind, SpanStatus
@@ -120,3 +125,35 @@ def test_mcp_helper_metadata_cannot_override_reserved_type() -> None:
     assert event.event_id == event_id
     assert event.name == "mcp_failure_evidence"
     assert event.metadata["failure_type"] == "argument_invalid"
+
+
+def test_mcp_builder_records_initialization_and_tool_selection() -> None:
+    builder = TraceBuilder(run_id="run_selection", name="selection demo")
+    chain_id = start_mcp_tool_chain(builder, server_name="filesystem")
+    init_id = add_mcp_initialization(
+        builder,
+        chain_id,
+        server_name="filesystem",
+        protocol_version="2024-11-05",
+        capabilities={"tools": True},
+    )
+    selection_id = add_mcp_tool_selection(
+        builder,
+        chain_id,
+        server_name="filesystem",
+        requested_tool_name="read_file",
+        selected_tool_name="read_file",
+        available_tool_names=["read_file"],
+        reason="Tool name was provided by CLI.",
+    )
+    builder.end_span(chain_id)
+    run = builder.build()
+
+    validate_run(run)
+    assert run.root_spans[0].children[0].metadata["type"] == MCP_SPAN_INITIALIZATION
+    assert run.root_spans[0].children[1].metadata["type"] == MCP_SPAN_TOOL_SELECTION
+    assert (
+        run.root_spans[0].children[1].artifacts[0].metadata["type"]
+        == MCP_ARTIFACT_TOOL_SELECTION
+    )
+    assert init_id != selection_id

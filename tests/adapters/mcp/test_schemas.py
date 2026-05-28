@@ -8,6 +8,7 @@ from lumiagent.adapters.mcp.schemas import (
     McpToolCallInput,
     McpToolExecutionSummary,
     McpToolSchemaSnapshot,
+    McpToolSelectionEvidence,
 )
 
 
@@ -51,6 +52,18 @@ def test_tool_call_input_records_arguments_and_validation() -> None:
     assert call_input.validation["status"] == "valid"
 
 
+def test_tool_selection_evidence_records_explicit_selection() -> None:
+    evidence = McpToolSelectionEvidence(
+        requested_tool_name="read_file",
+        selected_tool_name="read_file",
+        available_tool_names=["read_file", "list_directory"],
+        selection_strategy="explicit",
+        reason="Tool name was provided by CLI.",
+    )
+    assert evidence.selected_tool_name == "read_file"
+    assert evidence.available_tool_names == ["read_file", "list_directory"]
+
+
 def test_execution_summary_records_failure_type() -> None:
     summary = McpToolExecutionSummary(
         status="error",
@@ -75,6 +88,20 @@ def test_failure_evidence_records_argument_invalid_fields() -> None:
 
     assert evidence.failure_type is McpFailureType.ARGUMENT_INVALID
     assert evidence.validation_errors[0]["message"] == "Field required"
+
+
+def test_failure_evidence_records_raw_runtime_error_fields() -> None:
+    evidence = McpFailureEvidence(
+        failure_type=McpFailureType.TOOL_NOT_FOUND,
+        failure_stage="tool_selection",
+        raw_error_code="tool_not_found",
+        raw_error_message="Tool read_me was not found.",
+        raw_error_data={"available_tools": ["read_file"]},
+        runtime_stage="tool_selection",
+    )
+    assert evidence.raw_error_code == "tool_not_found"
+    assert evidence.raw_error_data == {"available_tools": ["read_file"]}
+    assert evidence.runtime_stage == "tool_selection"
 
 
 def test_result_consumption_evidence_records_misinterpretation_fields() -> None:

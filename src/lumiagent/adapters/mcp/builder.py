@@ -6,10 +6,13 @@ from typing import TYPE_CHECKING, Any, Literal
 from lumiagent.adapters.mcp.conventions import (
     MCP_ARTIFACT_TOOL_RESULT,
     MCP_ARTIFACT_TOOL_SCHEMA_SNAPSHOT,
+    MCP_ARTIFACT_TOOL_SELECTION,
     MCP_SPAN_DISCOVERY,
+    MCP_SPAN_INITIALIZATION,
     MCP_SPAN_RESULT_CONSUMPTION,
     MCP_SPAN_TOOL_CHAIN,
     MCP_SPAN_TOOL_EXECUTION,
+    MCP_SPAN_TOOL_SELECTION,
 )
 from lumiagent.adapters.mcp.schemas import (
     McpFailureEvidence,
@@ -17,6 +20,7 @@ from lumiagent.adapters.mcp.schemas import (
     McpToolCallInput,
     McpToolExecutionSummary,
     McpToolSchemaSnapshot,
+    McpToolSelectionEvidence,
 )
 from lumiagent.tracing import ArtifactKind, EventLevel, SpanKind, SpanStatus
 
@@ -48,6 +52,79 @@ def start_mcp_tool_chain(
             {"type": MCP_SPAN_TOOL_CHAIN, "server_name": server_name}, metadata
         ),
     )
+
+
+def add_mcp_initialization(
+    builder: TraceBuilder,
+    parent_span_id: str,
+    *,
+    server_name: str,
+    protocol_version: str | None = None,
+    capabilities: dict[str, Any] | None = None,
+    metadata: dict[str, Any] | None = None,
+) -> str:
+    """Record MCP server initialization as a completed span."""
+
+    init_id = builder.start_span(
+        "MCP Initialization",
+        kind=SpanKind.CUSTOM,
+        parent_span_id=parent_span_id,
+        input_value={
+            "server_name": server_name,
+            "protocol_version": protocol_version,
+            "capabilities": capabilities or {},
+        },
+        metadata=_merge_metadata(
+            {"type": MCP_SPAN_INITIALIZATION, "server_name": server_name}, metadata
+        ),
+    )
+    builder.end_span(init_id, status=SpanStatus.SUCCESS, output={"status": "initialized"})
+    return init_id
+
+
+def add_mcp_tool_selection(
+    builder: TraceBuilder,
+    parent_span_id: str,
+    *,
+    server_name: str,
+    requested_tool_name: str,
+    selected_tool_name: str | None = None,
+    available_tool_names: list[str] | None = None,
+    selection_strategy: str = "explicit",
+    reason: str = "",
+    metadata: dict[str, Any] | None = None,
+) -> str:
+    """Record MCP tool selection evidence under a completed selection span."""
+
+    evidence = McpToolSelectionEvidence(
+        requested_tool_name=requested_tool_name,
+        selected_tool_name=selected_tool_name,
+        available_tool_names=available_tool_names or [],
+        selection_strategy=selection_strategy,
+        reason=reason,
+    )
+    selection_id = builder.start_span(
+        "MCP Tool Selection",
+        kind=SpanKind.CUSTOM,
+        parent_span_id=parent_span_id,
+        input_value={"server_name": server_name, "requested_tool_name": requested_tool_name},
+        metadata={"type": MCP_SPAN_TOOL_SELECTION, "server_name": server_name},
+    )
+    builder.add_artifact(
+        selection_id,
+        name="MCP Tool Selection Evidence",
+        kind=ArtifactKind.CUSTOM,
+        content=evidence.model_dump(mode="json"),
+        metadata=_merge_metadata(
+            {"type": MCP_ARTIFACT_TOOL_SELECTION, "server_name": server_name}, metadata
+        ),
+    )
+    builder.end_span(
+        selection_id,
+        status=SpanStatus.SUCCESS,
+        output={"selected_tool_name": selected_tool_name},
+    )
+    return selection_id
 
 
 def add_mcp_tool_schema_snapshot(
@@ -179,6 +256,10 @@ def add_mcp_failure_evidence(
     validation_errors: list[dict[str, Any]] | None = None,
     error_code: str | None = None,
     error_message: str | None = None,
+    raw_error_code: str | None = None,
+    raw_error_message: str | None = None,
+    raw_error_data: dict[str, Any] | None = None,
+    runtime_stage: str | None = None,
     latency_ms: int | None = None,
     permission_status: str | None = None,
     consumed_artifact_ids: list[str] | None = None,
@@ -202,6 +283,10 @@ def add_mcp_failure_evidence(
         validation_errors=validation_errors or [],
         error_code=error_code,
         error_message=error_message,
+        raw_error_code=raw_error_code,
+        raw_error_message=raw_error_message,
+        raw_error_data=raw_error_data,
+        runtime_stage=runtime_stage,
         latency_ms=latency_ms,
         permission_status=permission_status,
         consumed_artifact_ids=consumed_artifact_ids or [],
