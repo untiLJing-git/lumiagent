@@ -342,7 +342,21 @@ tool_result_invalid
 insufficient_recovery_evidence
 ```
 
-## 14. Acceptance Criteria
+## 14. Visualization Compatibility Notes
+
+Phase 2 does not define final visualization view models and does not implement UI, dashboard, timeline, or replay surfaces. It must still preserve MCP evidence in a shape that future Phase 5 Replay / Visualization Data Preparation can project into run summary, span tree, timeline, span detail, artifact preview, evidence navigation, diagnosis panel, and trace diff inputs.
+
+Visualization compatibility in this phase means:
+
+- MCP semantics stay in adapter conventions, span metadata, and artifacts rather than Trace Core fields.
+- MCP `metadata.type` values remain stable enough for future projection rules.
+- Schema snapshots, tool arguments, tool results, failure evidence, and result consumption are stored as structured data instead of viewer-specific strings.
+- Failure evidence keeps span and artifact references so future views can navigate from diagnosis summaries back to concrete evidence.
+- Optional compressed spans should be expanded into explicit spans when they represent failures that future evaluators or views need to highlight.
+
+The final projection layer belongs to the later Replay / Visualization Data Preparation phase, after Coding Agent traces and Evaluation / Diagnosis outputs exist. That phase may add view models such as run summary, timeline, span tree, span detail, artifact preview, evidence reference, and diff inputs without changing the Phase 2 adapter boundary.
+
+## 15. Acceptance Criteria
 
 The Phase 2 implementation is complete only when:
 
@@ -366,6 +380,6 @@ python -m ruff check src/lumiagent/tracing src/lumiagent/adapters tests/tracing 
 python -m mypy src/lumiagent/tracing src/lumiagent/adapters
 ```
 
-## 15. Design Summary
+## 16. Design Summary
 
-Phase 2 should make MCP tool-chain behavior observable as structured trace evidence. It should preserve the existing Trace Core, establish MCP-specific conventions in an adapter layer, and prepare stable evidence for later Coding Agent workflow modeling and diagnosis.
+Phase 2 should make MCP tool-chain behavior observable as structured trace evidence. It should preserve the existing Trace Core, establish MCP-specific conventions in an adapter layer, and prepare stable evidence for later Coding Agent workflow modeling, diagnosis, replay, and visualization projection.

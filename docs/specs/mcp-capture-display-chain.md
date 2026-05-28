@@ -471,7 +471,21 @@ lumiagent show ".lumiagent/traces/filesystem-tool-not-found.json"
 
 The failure path intentionally uses an invalid tool name so the failure is stable and clearly attributable to tool selection.
 
-## 15. Fixtures and Tests
+## 15. Visualization Compatibility Notes
+
+Phase 2b includes a minimal CLI viewer so captured traces can be inspected immediately, but it does not define final visualization view models and does not implement Web UI, TUI, dashboard, timeline, replay, or diff surfaces. The capture/display chain must preserve enough structured data for future Phase 5 Replay / Visualization Data Preparation to derive those surfaces without adding MCP-specific fields to Trace Core.
+
+Visualization compatibility in this phase means:
+
+- Capture spans use stable MCP stage conventions for initialization, discovery, selection, and execution.
+- Runtime outputs are mapped into structured artifacts and execution summaries, not only human-readable CLI text.
+- Tool selection, schema snapshots, arguments, results, raw runtime errors, and failure evidence remain addressable through span and artifact IDs.
+- `lumiagent show` derives its output from trace data and must not require viewer-only fields in `AgentRun`.
+- Error traces should preserve the failing runtime stage and evidence span so future diagnosis, artifact preview, timeline, and trace diff views can highlight the failure location.
+
+The final projection layer belongs to the later Replay / Visualization Data Preparation phase, after Coding Agent traces and Evaluation / Diagnosis outputs exist. That phase should consume captured MCP traces together with generic and Coding Agent traces to define stable run summary, span tree, timeline, span detail, artifact preview, evidence reference, diagnosis panel, diff, and experiment-comparison models.
+
+## 16. Fixtures and Tests
 
 Unit tests must not depend on a real third-party MCP server.
 
@@ -489,7 +503,7 @@ Required unit coverage:
 
 Executable verification must include the filesystem MCP success and failure commands in Section 14. Because those commands depend on Node/npm and third-party package availability, they may be manual or integration-level checks rather than default CI tests. The technical report must record whether they were run and what happened.
 
-## 16. Acceptance Criteria
+## 17. Acceptance Criteria
 
 Phase 2b is complete when:
 
@@ -506,7 +520,7 @@ Phase 2b is complete when:
 - Required verification commands pass.
 - A Chinese technical report records technology choices, design patterns, implementation details, validation results, risks, trade-offs, and follow-up suggestions.
 
-## 17. Relationship to Later Phases
+## 18. Relationship to Later Phases
 
 Phase 2b is the bridge from static MCP evidence modeling to real trace capture:
 
