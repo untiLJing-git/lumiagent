@@ -67,3 +67,21 @@ def test_mcp_convention_values_are_stable() -> None:
     assert MCP_ARTIFACT_TOOL_SELECTION == "mcp_tool_selection"
     assert MCP_ARTIFACT_TOOL_RESULT == "mcp_tool_result"
     assert MCP_ARTIFACT_FAILURE_EVIDENCE == "mcp_failure_evidence"
+
+
+def test_mcp_capture_apis_are_public() -> None:
+    from lumiagent.adapters.mcp import (
+        ExplicitToolSelector,
+        McpCaptureConfig,
+        McpCaptureStrategy,
+        McpClientRuntime,
+        McpTraceMapper,
+        StdioMcpClientRuntime,
+    )
+
+    assert McpCaptureConfig.__name__ == "McpCaptureConfig"
+    assert McpCaptureStrategy.__name__ == "McpCaptureStrategy"
+    assert McpClientRuntime.__name__ == "McpClientRuntime"
+    assert StdioMcpClientRuntime.__name__ == "StdioMcpClientRuntime"
+    assert ExplicitToolSelector.__name__ == "ExplicitToolSelector"
+    assert McpTraceMapper.__name__ == "McpTraceMapper"
