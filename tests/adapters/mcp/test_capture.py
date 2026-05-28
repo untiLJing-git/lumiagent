@@ -80,10 +80,12 @@ class FakeRuntime:
 
 def test_capture_config_rejects_non_dict_arguments() -> None:
     with pytest.raises(ValidationError):
-        McpCaptureConfig(
-            server_command="mcp-filesystem",
-            tool_name="read_file",
-            arguments=[("path", "README.md")],
+        McpCaptureConfig.model_validate(
+            {
+                "server_command": "mcp-filesystem",
+                "tool_name": "read_file",
+                "arguments": [("path", "README.md")],
+            }
         )
 
 
@@ -123,10 +125,12 @@ def test_capture_config_rejects_invalid_timeout_seconds() -> None:
 
 def test_capture_config_rejects_extra_output_path() -> None:
     with pytest.raises(ValidationError):
-        McpCaptureConfig(
-            server_command="mcp-filesystem",
-            tool_name="read_file",
-            output_path="trace.json",
+        McpCaptureConfig.model_validate(
+            {
+                "server_command": "mcp-filesystem",
+                "tool_name": "read_file",
+                "output_path": "trace.json",
+            }
         )
 
 
