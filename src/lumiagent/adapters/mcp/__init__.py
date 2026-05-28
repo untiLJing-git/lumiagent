@@ -2,10 +2,12 @@
 
 from lumiagent.adapters.mcp.builder import (
     add_mcp_failure_evidence,
+    add_mcp_initialization,
     add_mcp_result_consumption,
     add_mcp_tool_execution,
     add_mcp_tool_result,
     add_mcp_tool_schema_snapshot,
+    add_mcp_tool_selection,
     start_mcp_tool_chain,
 )
 from lumiagent.adapters.mcp.conventions import (
@@ -29,6 +31,7 @@ from lumiagent.adapters.mcp.schemas import (
     McpToolCallInput,
     McpToolExecutionSummary,
     McpToolSchemaSnapshot,
+    McpToolSelectionEvidence,
 )
 from lumiagent.adapters.mcp.taxonomy import McpFailureType
 
@@ -39,6 +42,7 @@ __all__ = [
     "McpToolCallInput",
     "McpToolExecutionSummary",
     "McpToolSchemaSnapshot",
+    "McpToolSelectionEvidence",
     "MCP_ARTIFACT_FAILURE_EVIDENCE",
     "MCP_ARTIFACT_TOOL_RESULT",
     "MCP_ARTIFACT_TOOL_SCHEMA_SNAPSHOT",
@@ -53,9 +57,11 @@ __all__ = [
     "MCP_SPAN_TOOL_EXECUTION",
     "MCP_SPAN_TOOL_SELECTION",
     "add_mcp_failure_evidence",
+    "add_mcp_initialization",
     "add_mcp_result_consumption",
     "add_mcp_tool_execution",
     "add_mcp_tool_result",
     "add_mcp_tool_schema_snapshot",
+    "add_mcp_tool_selection",
     "start_mcp_tool_chain",
 ]

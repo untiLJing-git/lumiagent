@@ -108,7 +108,9 @@ def add_mcp_tool_selection(
         kind=SpanKind.CUSTOM,
         parent_span_id=parent_span_id,
         input_value={"server_name": server_name, "requested_tool_name": requested_tool_name},
-        metadata={"type": MCP_SPAN_TOOL_SELECTION, "server_name": server_name},
+        metadata=_merge_metadata(
+            {"type": MCP_SPAN_TOOL_SELECTION, "server_name": server_name}, metadata
+        ),
     )
     builder.add_artifact(
         selection_id,

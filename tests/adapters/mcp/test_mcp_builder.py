@@ -1,3 +1,4 @@
+import lumiagent.adapters.mcp as mcp
 from lumiagent.adapters.mcp import (
     MCP_ARTIFACT_TOOL_RESULT,
     MCP_ARTIFACT_TOOL_SCHEMA_SNAPSHOT,
@@ -125,6 +126,90 @@ def test_mcp_helper_metadata_cannot_override_reserved_type() -> None:
     assert event.event_id == event_id
     assert event.name == "mcp_failure_evidence"
     assert event.metadata["failure_type"] == "argument_invalid"
+
+
+
+def test_mcp_package_exports_selection_helper_apis() -> None:
+    assert mcp.McpToolSelectionEvidence.__name__ == "McpToolSelectionEvidence"
+    assert mcp.add_mcp_initialization.__name__ == "add_mcp_initialization"
+    assert mcp.add_mcp_tool_selection.__name__ == "add_mcp_tool_selection"
+
+
+def test_mcp_tool_selection_preserves_span_metadata_and_reserved_keys() -> None:
+    builder = TraceBuilder(run_id="run_selection_metadata", name="selection metadata")
+    chain_id = start_mcp_tool_chain(builder, server_name="filesystem")
+
+    selection_id = add_mcp_tool_selection(
+        builder,
+        chain_id,
+        server_name="filesystem",
+        requested_tool_name="read_file",
+        selected_tool_name="read_file",
+        metadata={"type": "custom", "server_name": "custom-server", "note": "kept"},
+    )
+    run = builder.build()
+
+    selection = run.root_spans[0].children[0]
+    assert selection.span_id == selection_id
+    assert selection.metadata["type"] == MCP_SPAN_TOOL_SELECTION
+    assert selection.metadata["server_name"] == "filesystem"
+    assert selection.metadata["note"] == "kept"
+
+
+def test_mcp_failure_evidence_records_raw_runtime_error_metadata() -> None:
+    builder = TraceBuilder(run_id="run_raw_failure", name="raw failure")
+    chain_id = start_mcp_tool_chain(builder, server_name="filesystem")
+    execution_id = add_mcp_tool_execution(
+        builder,
+        chain_id,
+        server_name="filesystem",
+        tool_name="read_file",
+    )
+
+    add_mcp_failure_evidence(
+        builder,
+        execution_id,
+        failure_type=McpFailureType.TOOL_EXECUTION_FAILED,
+        failure_stage="tool_execution",
+        raw_error_code="ENOENT",
+        raw_error_message="file not found",
+        raw_error_data={"path": "missing.txt"},
+        runtime_stage="read_result",
+    )
+    run = builder.build(status=RunStatus.ERROR)
+
+    metadata = run.root_spans[0].children[0].events[0].metadata
+    assert metadata["raw_error_code"] == "ENOENT"
+    assert metadata["raw_error_message"] == "file not found"
+    assert metadata["raw_error_data"] == {"path": "missing.txt"}
+    assert metadata["runtime_stage"] == "read_result"
+
+
+def test_mcp_tool_selection_emits_evidence_artifact_content() -> None:
+    builder = TraceBuilder(run_id="run_selection_artifact", name="selection artifact")
+    chain_id = start_mcp_tool_chain(builder, server_name="filesystem")
+
+    add_mcp_tool_selection(
+        builder,
+        chain_id,
+        server_name="filesystem",
+        requested_tool_name="read_file",
+        selected_tool_name="read_file",
+        available_tool_names=["read_file", "write_file"],
+        selection_strategy="explicit",
+        reason="User requested read_file.",
+    )
+    run = builder.build()
+
+    artifact = run.root_spans[0].children[0].artifacts[0]
+    assert artifact.metadata["type"] == MCP_ARTIFACT_TOOL_SELECTION
+    assert artifact.content == {
+        "requested_tool_name": "read_file",
+        "selected_tool_name": "read_file",
+        "available_tool_names": ["read_file", "write_file"],
+        "selection_strategy": "explicit",
+        "reason": "User requested read_file.",
+    }
 
 
 def test_mcp_builder_records_initialization_and_tool_selection() -> None:
