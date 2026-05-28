@@ -94,9 +94,9 @@ lumiagent capture mcp `
   --server-command "npx" `
   --server-arg "-y" `
   --server-arg "@modelcontextprotocol/server-filesystem" `
-  --server-arg "D:\Projects\github\lumiagent" `
+  --server-arg "$PWD" `
   --tool "read_file" `
-  --arguments "{\"path\":\"README.md\"}" `
+  --arguments '{"path":"README.md"}' `
   -o ".lumiagent/traces/filesystem-read-success.json"
 
 lumiagent show ".lumiagent/traces/filesystem-read-success.json"
