@@ -10,6 +10,7 @@ from lumiagent.adapters.mcp.builder import (
     add_mcp_tool_selection,
     start_mcp_tool_chain,
 )
+from lumiagent.adapters.mcp.capture import McpCaptureConfig, McpCaptureStrategy
 from lumiagent.adapters.mcp.conventions import (
     MCP_ARTIFACT_FAILURE_EVIDENCE,
     MCP_ARTIFACT_TOOL_RESULT,
@@ -25,7 +26,6 @@ from lumiagent.adapters.mcp.conventions import (
     MCP_SPAN_TOOL_EXECUTION,
     MCP_SPAN_TOOL_SELECTION,
 )
-from lumiagent.adapters.mcp.capture import McpCaptureConfig, McpCaptureStrategy
 from lumiagent.adapters.mcp.mapper import McpTraceMapper
 from lumiagent.adapters.mcp.runtime import McpClientRuntime, StdioMcpClientRuntime
 from lumiagent.adapters.mcp.schemas import (
