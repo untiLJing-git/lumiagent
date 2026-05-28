@@ -1,3 +1,5 @@
+import asyncio
+
 import pytest
 from pydantic import ValidationError
 
@@ -96,3 +98,80 @@ def test_stdio_runtime_rejects_blank_server_command() -> None:
 def test_stdio_runtime_rejects_non_positive_timeout() -> None:
     with pytest.raises(ValueError, match="timeout_seconds"):
         StdioMcpClientRuntime(server_command="npx", timeout_seconds=0)
+
+
+def test_import_failure_maps_to_connection_failed(monkeypatch: pytest.MonkeyPatch) -> None:
+    runtime = StdioMcpClientRuntime(server_command="server")
+
+    def fail_imports() -> None:
+        raise ImportError("No module named 'mcp'")
+
+    monkeypatch.setattr(runtime, "_import_mcp_stdio", fail_imports)
+
+    with pytest.raises(McpRuntimeError) as error_info:
+        runtime.connect()
+
+    error = error_info.value
+    assert error.failure_type is McpFailureType.CONNECTION_FAILED
+    assert error.stage is McpRuntimeStage.CONNECTION
+    assert "MCP SDK is required" in error.message
+
+
+def test_sync_stdio_runtime_rejects_running_event_loop() -> None:
+    async def run_sync_connect() -> None:
+        runtime = StdioMcpClientRuntime(server_command="server")
+
+        with pytest.raises(McpRuntimeError) as error_info:
+            runtime.connect()
+
+        error = error_info.value
+        assert error.failure_type is McpFailureType.CONNECTION_FAILED
+        assert error.stage is McpRuntimeStage.CONNECTION
+        assert "cannot be used inside a running event loop" in error.message
+
+    asyncio.run(run_sync_connect())
+
+
+def test_runtime_classifies_timeout_permission_transport_and_invalid_result() -> None:
+    runtime = StdioMcpClientRuntime(server_command="server")
+
+    assert runtime._classify_error(TimeoutError("timed out")) is McpFailureType.TIMEOUT
+    assert runtime._classify_error(Exception("TimeoutCancellationError")) is McpFailureType.TIMEOUT
+    assert (
+        runtime._classify_error(Exception("permission required"))
+        is McpFailureType.PERMISSION_DENIED
+    )
+    assert runtime._classify_error(Exception("Unauthorized")) is McpFailureType.PERMISSION_DENIED
+    assert runtime._classify_error(EOFError("EOF")) is McpFailureType.TRANSPORT_INTERRUPTED
+    assert runtime._classify_error(Exception("broken pipe")) is McpFailureType.TRANSPORT_INTERRUPTED
+    assert (
+        runtime._classify_error(Exception("connection reset by peer"))
+        is McpFailureType.TRANSPORT_INTERRUPTED
+    )
+    assert runtime._classify_error(ValueError("malformed result")) is McpFailureType.RESULT_INVALID
+
+
+def test_list_tools_malformed_tool_maps_to_result_invalid() -> None:
+    class BrokenTool:
+        name = "broken"
+        description = None
+
+    class BrokenListToolsResult:
+        tools = [BrokenTool()]
+
+    class FakeSession:
+        async def list_tools(self) -> BrokenListToolsResult:
+            return BrokenListToolsResult()
+
+    runtime = StdioMcpClientRuntime(server_command="server")
+    runtime._loop = asyncio.new_event_loop()
+    runtime._session = FakeSession()  # type: ignore[assignment]
+    try:
+        with pytest.raises(McpRuntimeError) as error_info:
+            runtime.list_tools()
+    finally:
+        runtime.close()
+
+    error = error_info.value
+    assert error.failure_type is McpFailureType.RESULT_INVALID
+    assert error.stage is McpRuntimeStage.RESULT_PARSING
