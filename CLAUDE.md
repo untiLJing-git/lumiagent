@@ -4,9 +4,9 @@ This file provides project-level guidance for AI coding assistants working on Lu
 
 ## Project Positioning
 
-LumiAgent is a general Agent Trace / Eval Core that models LLM, Tool, RAG, Memory, Evaluator, Fallback, and Error steps as a nested Span Tree. Each Agent Run should be structured, replayable, evaluable, and diagnosable.
+LumiAgent is an Agent Evaluation & Optimization Loop built on a general Agent Trace / Eval Core. It models LLM, Tool, RAG, Memory, Evaluator, Fallback, and Error steps as a nested Span Tree so each Agent Run is structured, replayable, evaluable, diagnosable, and useful for deciding the next improvement.
 
-The first application focuses on Coding Agents and MCP Tool Chains. LumiAgent captures file search, code reading, code edits, command execution, test verification, MCP tool discovery, tool calls, argument generation, and tool results to diagnose context gaps, tool misuse, argument errors, result misinterpretation, insufficient verification, failure recovery issues, and risk-control problems.
+The first application focuses on Coding Agents and MCP Tool Chains. LumiAgent captures file search, code reading, code edits, command execution, test verification, MCP tool discovery, tool calls, argument generation, and tool results to diagnose context gaps, tool misuse, argument errors, result misinterpretation, insufficient verification, failure recovery issues, and risk-control problems. The product loop should preserve evidence for human review, improvement planning, and rerun comparison.
 
 ## Current Product Focus
 
@@ -87,11 +87,11 @@ $env:PYTHONPATH = "src"
 The MVP should prioritize:
 
 1. Trace Schema / Span Tree Core
-2. MCP Tool Chain capture model
+2. MCP Tool Chain evidence and capture/display model
 3. Coding Agent trace model
-4. Trace Replay data flow
-5. Evaluation and diagnosis model
-6. Minimal runnable examples and tests
+4. Evaluation and diagnosis model
+5. Replay / visualization data preparation
+6. Minimal runnable examples and realistic verification paths
 
 ## Quality Bar
 
