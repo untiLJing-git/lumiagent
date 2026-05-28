@@ -3,8 +3,10 @@ from __future__ import annotations
 
 import asyncio
 import json
+import pathlib  # noqa: TC003
 from typing import Annotated, Any
 
+import click
 import typer
 from rich.console import Console
 
@@ -178,7 +180,7 @@ def capture_mcp(
     ],
     tool: Annotated[str, typer.Option(..., help="MCP tool name to call.")],
     output: Annotated[
-        typer.FileTextWrite,
+        pathlib.Path,
         typer.Option(..., "-o", "--output", help="Trace JSON output path."),
     ],
     transport: Annotated[str, typer.Option(help="MCP transport to use.")] = "stdio",
@@ -190,13 +192,14 @@ def capture_mcp(
         ),
     ] = None,
     arguments: Annotated[str, typer.Option(help="JSON object arguments for the MCP tool.")] = "{}",
-    timeout_seconds: Annotated[int, typer.Option(help="MCP runtime timeout in seconds.")] = 30,
+    timeout_seconds: Annotated[
+        int,
+        typer.Option("--timeout", "--timeout-seconds", help="MCP runtime timeout in seconds."),
+    ] = 30,
 ) -> None:
     """Capture one MCP tool call as a LumiAgent trace."""
 
     parsed_arguments = _parse_json_object(arguments)
-
-    from pathlib import Path
 
     from lumiagent.adapters.mcp.capture import McpCaptureConfig, McpCaptureStrategy
     from lumiagent.tracing.serializer import to_json
@@ -209,23 +212,32 @@ def capture_mcp(
         arguments=parsed_arguments,
         timeout_seconds=timeout_seconds,
     )
-    run = McpCaptureStrategy(config=config).capture()
-    output_path = Path(output.name)
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    output_path.write_text(to_json(run), encoding="utf-8")
-    console.print(str(output_path))
+    try:
+        run = McpCaptureStrategy(config=config).capture()
+    except NotImplementedError as exc:
+        message = str(exc) or "MCP capture is not implemented yet"
+        raise click.ClickException(
+            f"MCP stdio capture is not implemented yet: {message}"
+        ) from exc
+
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text(to_json(run), encoding="utf-8")
+    console.print(str(output))
 
 
 @app.command()
 def show(
-    trace_path: Annotated[typer.FileText, typer.Argument(help="Trace JSON file to render.")],
+    trace_path: Annotated[pathlib.Path, typer.Argument(help="Trace JSON file to render.")],
 ) -> None:
     """Render a plain-text MCP trace summary."""
 
     from lumiagent.adapters.mcp.viewer import render_mcp_trace_summary
     from lumiagent.tracing.serializer import from_json
 
-    run = from_json(trace_path.read())
+    try:
+        run = from_json(trace_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError, KeyError, TypeError, ValueError) as exc:
+        raise click.ClickException(f"Invalid trace JSON: {exc}") from exc
     for line in render_mcp_trace_summary(run):
         console.print(line)
 
