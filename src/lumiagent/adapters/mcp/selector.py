@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING
 
 from pydantic import BaseModel, Field, field_validator
 
+from lumiagent.adapters.mcp.runtime import McpRuntimeError, McpRuntimeStage
 from lumiagent.adapters.mcp.taxonomy import McpFailureType
 
 if TYPE_CHECKING:
@@ -34,10 +35,15 @@ class ExplicitToolSelector:
         tools: list[McpToolDefinition],
     ) -> McpToolSelection:
         available_tool_names = [tool.name for tool in tools]
+        if not requested_tool_name.strip():
+            raise ValueError("requested_tool_name must not be empty")
         if requested_tool_name not in available_tool_names:
-            raise ValueError(
-                f"{McpFailureType.TOOL_NOT_FOUND.value}: requested tool "
-                f"{requested_tool_name!r} is not available"
+            raise McpRuntimeError(
+                failure_type=McpFailureType.TOOL_NOT_FOUND,
+                stage=McpRuntimeStage.TOOL_SELECTION,
+                message=f"Tool {requested_tool_name!r} was not found.",
+                raw_error_code=McpFailureType.TOOL_NOT_FOUND.value,
+                raw_error_data={"available_tools": available_tool_names},
             )
         return McpToolSelection(
             requested_tool_name=requested_tool_name,

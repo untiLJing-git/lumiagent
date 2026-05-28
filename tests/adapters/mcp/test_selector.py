@@ -1,6 +1,6 @@
 import pytest
 
-from lumiagent.adapters.mcp.runtime import McpToolDefinition
+from lumiagent.adapters.mcp.runtime import McpRuntimeError, McpRuntimeStage, McpToolDefinition
 from lumiagent.adapters.mcp.selector import ExplicitToolSelector, McpToolSelection
 from lumiagent.adapters.mcp.taxonomy import McpFailureType
 
@@ -22,16 +22,29 @@ def test_explicit_tool_selector_selects_requested_tool() -> None:
     assert selection.selection_strategy == "explicit"
 
 
-def test_explicit_tool_selector_raises_tool_not_found() -> None:
+def test_explicit_tool_selector_raises_typed_tool_not_found() -> None:
     selector = ExplicitToolSelector()
 
-    with pytest.raises(ValueError) as exc_info:
+    with pytest.raises(McpRuntimeError) as exc_info:
         selector.select(
             requested_tool_name="read_me",
             tools=[McpToolDefinition(name="read_file")],
         )
 
-    assert "tool_not_found" in str(exc_info.value)
+    assert exc_info.value.failure_type is McpFailureType.TOOL_NOT_FOUND
+    assert exc_info.value.stage is McpRuntimeStage.TOOL_SELECTION
+    assert exc_info.value.raw_error_code == "tool_not_found"
+    assert exc_info.value.raw_error_data == {"available_tools": ["read_file"]}
+
+
+def test_explicit_tool_selector_rejects_blank_requested_tool_name() -> None:
+    selector = ExplicitToolSelector()
+
+    with pytest.raises(ValueError, match="requested_tool_name must not be empty"):
+        selector.select(
+            requested_tool_name="   ",
+            tools=[McpToolDefinition(name="read_file")],
+        )
 
 
 def test_tool_selection_serializes_as_evidence() -> None:
@@ -49,7 +62,3 @@ def test_tool_selection_serializes_as_evidence() -> None:
         "selection_strategy": "explicit",
         "reason": "Tool name was provided by CLI.",
     }
-
-
-def test_selector_failure_type_constant_is_tool_not_found() -> None:
-    assert McpFailureType.TOOL_NOT_FOUND.value == "tool_not_found"
