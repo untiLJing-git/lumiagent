@@ -202,6 +202,7 @@ def capture_mcp(
     parsed_arguments = _parse_json_object(arguments)
 
     from lumiagent.adapters.mcp.capture import McpCaptureConfig, McpCaptureStrategy
+    from lumiagent.adapters.mcp.runtime import McpRuntimeError
     from lumiagent.tracing.serializer import to_json
 
     config = McpCaptureConfig(
@@ -214,6 +215,8 @@ def capture_mcp(
     )
     try:
         run = McpCaptureStrategy(config=config).capture()
+    except McpRuntimeError as exc:
+        raise click.ClickException(f"MCP capture failed: {exc}") from exc
     except NotImplementedError as exc:
         message = str(exc) or "MCP capture is not implemented yet"
         raise click.ClickException(

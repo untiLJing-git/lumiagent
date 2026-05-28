@@ -104,7 +104,7 @@ def test_capture_mcp_accepts_timeout_alias(monkeypatch: Any, tmp_path: Path) -> 
     assert trace_path.exists()
 
 
-def test_capture_mcp_runtime_not_implemented_does_not_create_output(
+def test_capture_mcp_runtime_failure_reports_error_and_does_not_create_output(
     tmp_path: Path,
 ) -> None:
     trace_path = tmp_path / "nested" / "trace.json"
@@ -124,7 +124,8 @@ def test_capture_mcp_runtime_not_implemented_does_not_create_output(
     )
 
     assert result.exit_code != 0
-    assert "MCP stdio capture is not implemented yet" in result.output
+    assert "MCP capture failed:" in result.output
+    assert "Failed to connect to MCP stdio server 'example-server'" in result.output
     assert not trace_path.exists()
 
 
