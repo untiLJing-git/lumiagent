@@ -30,7 +30,6 @@ class McpCaptureConfig(BaseModel):
     server_args: list[str] = Field(default_factory=list)
     tool_name: str
     arguments: dict[str, Any] = Field(default_factory=dict)
-    output_path: str | None = None
     timeout_seconds: int = Field(default=30, ge=1)
     server_name: str | None = None
 
@@ -75,6 +74,7 @@ class McpCaptureStrategy:
         session: McpSessionInfo | None = None
         tools: list[McpToolDefinition] = []
         run: AgentRun | None = None
+        primary_error: BaseException | None = None
         try:
             connection = self.runtime.connect()
             session = self.runtime.initialize()
@@ -93,20 +93,30 @@ class McpCaptureStrategy:
                 result=result,
             )
         except McpRuntimeError as error:
+            primary_error = error
+            if connection is None:
+                raise
             run = self.mapper.map_failure(
                 run_name=self._run_name(),
-                connection=connection or self._fallback_connection(),
+                connection=connection,
                 session=session,
-                tools=tools,
+                tools=tools or self._fallback_tools(),
                 requested_tool_name=self.config.tool_name,
                 error=error,
             )
+        except Exception as error:
+            primary_error = error
+            raise
         finally:
             try:
                 self.runtime.close()
-            except Exception:
-                if run is None:
-                    raise
+            except Exception as close_exc:
+                if run is not None:
+                    pass
+                elif primary_error is not None:
+                    raise primary_error from close_exc
+                else:
+                    raise close_exc
 
         if run is None:
             raise RuntimeError("MCP capture did not produce a trace")
@@ -116,10 +126,5 @@ class McpCaptureStrategy:
         server_name = self.config.server_name or self.config.server_command
         return f"MCP capture {server_name}.{self.config.tool_name}"
 
-    def _fallback_connection(self) -> McpConnectionInfo:
-        return McpConnectionInfo(
-            transport=self.config.transport,
-            server_name=self.config.server_name or self.config.server_command,
-            server_command=self.config.server_command,
-            server_args=self.config.server_args,
-        )
+    def _fallback_tools(self) -> list[McpToolDefinition]:
+        return [McpToolDefinition(name=self.config.tool_name)]
