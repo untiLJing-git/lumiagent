@@ -1,5 +1,6 @@
 """Trace / Eval Core public API."""
 from lumiagent.tracing.builder import TraceBuilder
+from lumiagent.tracing.builder_writer import BuilderTraceWriter
 from lumiagent.tracing.enums import (
     ArtifactKind,
     EventLevel,
@@ -36,6 +37,7 @@ __all__ = [
     "Annotation",
     "Artifact",
     "ArtifactKind",
+    "BuilderTraceWriter",
     "Diagnosis",
     "Event",
     "EventLevel",
