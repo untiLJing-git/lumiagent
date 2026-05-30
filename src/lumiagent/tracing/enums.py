@@ -48,6 +48,7 @@ class ArtifactKind(StrEnum):
     CODE_DIFF = "code_diff"
     TEST_OUTPUT = "test_output"
     LOG = "log"
+    JSON = "json"
     CUSTOM = "custom"
 
 
