@@ -2379,6 +2379,7 @@ git commit -m "Add coding trace CLI commands"
 - Modify: `src/lumiagent/adapters/claude_code/__init__.py`
 - Modify: `src/lumiagent/cli.py`
 - Test: `tests/adapters/claude_code/test_setup.py`
+- Test: `tests/test_cli_claude_code_setup.py`
 
 - [ ] **Step 1: Write failing setup tests**
 
@@ -2388,7 +2389,13 @@ Create `tests/adapters/claude_code/test_setup.py`:
 import json
 from pathlib import Path
 
-from lumiagent.adapters.claude_code.setup import configure_claude_code_hooks
+import pytest
+
+from lumiagent.adapters.claude_code.setup import (
+    ClaudeCodeSettingsError,
+    configure_claude_code_hooks,
+    inspect_claude_code_hook_activation,
+)
 
 
 def test_configure_claude_code_hooks_creates_settings(tmp_path: Path) -> None:
@@ -2399,7 +2406,10 @@ def test_configure_claude_code_hooks_creates_settings(tmp_path: Path) -> None:
     data = json.loads(settings_path.read_text(encoding="utf-8"))
     assert result.updated is True
     assert "hooks" in data
+    assert "PreToolUse" in data["hooks"]
     assert "PostToolUse" in data["hooks"]
+    assert "PostToolUseFailure" in data["hooks"]
+    assert "PermissionRequest" in data["hooks"]
 
 
 def test_configure_claude_code_hooks_preserves_existing_settings(tmp_path: Path) -> None:
@@ -2415,7 +2425,111 @@ def test_configure_claude_code_hooks_preserves_existing_settings(tmp_path: Path)
     data = json.loads(settings_path.read_text(encoding="utf-8"))
     assert data["permissions"] == {"allow": ["Bash(git status:*)"]}
     assert "Stop" in data["hooks"]
+    assert "PreToolUse" in data["hooks"]
     assert "PostToolUse" in data["hooks"]
+    assert "PostToolUseFailure" in data["hooks"]
+    assert "PermissionRequest" in data["hooks"]
+
+
+def test_configure_claude_code_hooks_reports_not_in_claude_code(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.delenv("CLAUDE_CODE_SESSION_ID", raising=False)
+    monkeypatch.delenv("LUMIAGENT_SESSION_ID", raising=False)
+
+    result = configure_claude_code_hooks(tmp_path / ".claude" / "settings.json")
+
+    assert result.activation_status == "not_in_claude_code"
+    assert result.session_id is None
+
+
+def test_inspect_claude_code_hook_activation_reports_needs_reload(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("CLAUDE_CODE_SESSION_ID", "session_1")
+
+    result = inspect_claude_code_hook_activation(sessions_dir=tmp_path / "sessions")
+
+    assert result.activation_status == "needs_reload"
+    assert result.session_id == "session_1"
+    assert result.events_path == tmp_path / "sessions" / "session_1" / "events.jsonl"
+    assert "/hooks" in result.activation_hint
+
+
+def test_inspect_claude_code_hook_activation_reports_active(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("CLAUDE_CODE_SESSION_ID", "session_1")
+    events_path = tmp_path / "sessions" / "session_1" / "events.jsonl"
+    events_path.parent.mkdir(parents=True)
+    events_path.write_text("{}\n", encoding="utf-8")
+
+    result = inspect_claude_code_hook_activation(sessions_dir=tmp_path / "sessions")
+
+    assert result.activation_status == "active"
+    assert result.events_path == events_path
+
+
+def test_configure_claude_code_hooks_rejects_incompatible_hook_shapes(
+    tmp_path: Path,
+) -> None:
+    settings_path = tmp_path / ".claude" / "settings.json"
+    settings_path.parent.mkdir(parents=True)
+    settings_path.write_text(
+        json.dumps({"hooks": {"PreToolUse": {"bad": "shape"}}}),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ClaudeCodeSettingsError, match="hooks.PreToolUse"):
+        configure_claude_code_hooks(settings_path)
+
+    data = json.loads(settings_path.read_text(encoding="utf-8"))
+    assert data["hooks"]["PreToolUse"] == {"bad": "shape"}
+```
+
+Create `tests/test_cli_claude_code_setup.py`:
+
+```python
+from pathlib import Path
+
+from typer.testing import CliRunner
+
+from lumiagent.cli import app
+
+runner = CliRunner()
+
+
+def test_setup_claude_code_verify_reports_needs_reload(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    monkeypatch.setenv("CLAUDE_CODE_SESSION_ID", "session_1")
+    with runner.isolated_filesystem(temp_dir=tmp_path):
+        result = runner.invoke(app, ["setup", "claude-code", "--verify"])
+
+    assert result.exit_code == 0
+    assert "Activation: needs_reload" in result.output
+    assert "Open /hooks" in result.output
+
+
+def test_setup_claude_code_verify_reports_active(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    monkeypatch.setenv("CLAUDE_CODE_SESSION_ID", "session_1")
+    with runner.isolated_filesystem(temp_dir=tmp_path):
+        events_path = Path(".lumiagent") / "sessions" / "session_1" / "events.jsonl"
+        events_path.parent.mkdir(parents=True)
+        events_path.write_text("{}\n", encoding="utf-8")
+
+        result = runner.invoke(app, ["setup", "claude-code", "--verify"])
+
+    assert result.exit_code == 0
+    assert "Activation: active" in result.output
+    assert "Events path: .lumiagent" in result.output
 ```
 
 - [ ] **Step 2: Run setup tests and verify they fail**
@@ -2423,10 +2537,10 @@ def test_configure_claude_code_hooks_preserves_existing_settings(tmp_path: Path)
 Run:
 
 ```powershell
-$env:PYTHONPATH = "src"; python -m pytest tests/adapters/claude_code/test_setup.py -v
+$env:PYTHONPATH = "src"; python -m pytest tests/adapters/claude_code/test_setup.py tests/test_cli_claude_code_setup.py -v
 ```
 
-Expected: FAIL because setup module does not exist.
+Expected: FAIL because setup module, activation inspection, CLI `--verify`, or activation status fields do not exist.
 
 - [ ] **Step 3: Implement setup helper and hook entrypoint**
 
@@ -2437,37 +2551,97 @@ Create `src/lumiagent/adapters/claude_code/setup.py`:
 from __future__ import annotations
 
 import json
-from pathlib import Path
+import os
+import pathlib
+from typing import Literal
 
 from pydantic import BaseModel
 
+ActivationStatus = Literal["active", "needs_reload", "not_in_claude_code"]
+
+
+class ClaudeCodeSettingsError(ValueError):
+    pass
+
 
 class ClaudeCodeSetupResult(BaseModel):
-    settings_path: Path
+    settings_path: pathlib.Path
     updated: bool
     configured_hooks: list[str]
+    session_id: str | None = None
+    events_path: pathlib.Path | None = None
+    activation_status: ActivationStatus
+    activation_hint: str
 
 
-def configure_claude_code_hooks(settings_path: Path) -> ClaudeCodeSetupResult:
+def configure_claude_code_hooks(settings_path: pathlib.Path) -> ClaudeCodeSetupResult:
     settings_path.parent.mkdir(parents=True, exist_ok=True)
-    if settings_path.exists():
-        data = json.loads(settings_path.read_text(encoding="utf-8"))
-    else:
-        data = {}
-    hooks = data.setdefault("hooks", {})
+    data = json.loads(settings_path.read_text(encoding="utf-8")) if settings_path.exists() else {}
+    hooks = data.get("hooks")
+    if hooks is None:
+        hooks = {}
+        data["hooks"] = hooks
+    elif not isinstance(hooks, dict):
+        raise ClaudeCodeSettingsError("hooks must be a JSON object")
     configured: list[str] = []
     command = "python -m lumiagent.adapters.claude_code.hooks"
-    for hook_name in ("PreToolUse", "PostToolUse"):
-        entries = hooks.setdefault(hook_name, [])
+    for hook_name in ("PreToolUse", "PostToolUse", "PostToolUseFailure", "PermissionRequest"):
+        entries = hooks.get(hook_name)
+        if entries is None:
+            entries = []
+            hooks[hook_name] = entries
+        elif not isinstance(entries, list):
+            raise ClaudeCodeSettingsError(f"hooks.{hook_name} must be a list")
         entry = {"matcher": "*", "hooks": [{"type": "command", "command": command}]}
         if entry not in entries:
             entries.append(entry)
             configured.append(hook_name)
     settings_path.write_text(json.dumps(data, indent=2), encoding="utf-8")
+    activation = inspect_claude_code_hook_activation()
     return ClaudeCodeSetupResult(
         settings_path=settings_path,
         updated=bool(configured),
         configured_hooks=configured,
+        session_id=activation.session_id,
+        events_path=activation.events_path,
+        activation_status=activation.activation_status,
+        activation_hint=activation.activation_hint,
+    )
+
+
+def inspect_claude_code_hook_activation(
+    *,
+    sessions_dir: pathlib.Path = pathlib.Path(".lumiagent/sessions"),
+) -> ClaudeCodeSetupResult:
+    session_id = os.environ.get("CLAUDE_CODE_SESSION_ID") or os.environ.get("LUMIAGENT_SESSION_ID")
+    if not session_id:
+        return ClaudeCodeSetupResult(
+            settings_path=pathlib.Path(".claude/settings.json"),
+            updated=False,
+            configured_hooks=[],
+            activation_status="not_in_claude_code",
+            activation_hint=(
+                "Not running inside a Claude Code session; runtime hook activation cannot be checked."
+            ),
+        )
+    events_path = sessions_dir / session_id / "events.jsonl"
+    if events_path.exists() and events_path.stat().st_size > 0:
+        status: ActivationStatus = "active"
+        hint = "Hooks are active for this Claude Code session."
+    else:
+        status = "needs_reload"
+        hint = (
+            "Hooks are configured, but this running Claude Code session has not captured events yet. "
+            "Open /hooks and close it, or restart Claude Code, then run any tool call and verify again."
+        )
+    return ClaudeCodeSetupResult(
+        settings_path=pathlib.Path(".claude/settings.json"),
+        updated=False,
+        configured_hooks=[],
+        session_id=session_id,
+        events_path=events_path,
+        activation_status=status,
+        activation_hint=hint,
     )
 ```
 
@@ -2516,14 +2690,21 @@ if __name__ == "__main__":
 Modify `src/lumiagent/adapters/claude_code/__init__.py`:
 
 ```python
-from lumiagent.adapters.claude_code.setup import ClaudeCodeSetupResult, configure_claude_code_hooks
+from lumiagent.adapters.claude_code.setup import (
+    ClaudeCodeSettingsError,
+    ClaudeCodeSetupResult,
+    configure_claude_code_hooks,
+    inspect_claude_code_hook_activation,
+)
 ```
 
 Add to `__all__`:
 
 ```python
+"ClaudeCodeSettingsError",
 "ClaudeCodeSetupResult",
 "configure_claude_code_hooks",
+"inspect_claude_code_hook_activation",
 ```
 
 - [ ] **Step 4: Add CLI setup command**
@@ -2544,13 +2725,36 @@ def setup_claude_code(
         pathlib.Path,
         typer.Option("--settings-path", help="Claude Code settings path to update."),
     ] = pathlib.Path(".claude/settings.json"),
+    verify: Annotated[
+        bool,
+        typer.Option("--verify", help="Only verify whether hooks are active in this session."),
+    ] = False,
 ) -> None:
-    from lumiagent.adapters.claude_code.setup import configure_claude_code_hooks
+    from lumiagent.adapters.claude_code.setup import (
+        ClaudeCodeSettingsError,
+        configure_claude_code_hooks,
+        inspect_claude_code_hook_activation,
+    )
 
-    result = configure_claude_code_hooks(settings_path)
+    try:
+        result = (
+            inspect_claude_code_hook_activation()
+            if verify
+            else configure_claude_code_hooks(settings_path)
+        )
+    except ClaudeCodeSettingsError as exc:
+        raise click.ClickException(f"Claude Code settings are incompatible: {exc}") from exc
     console.print(f"Claude Code settings: {result.settings_path}")
-    console.print(f"Updated: {result.updated}")
-    console.print(f"Configured hooks: {', '.join(result.configured_hooks) or 'already configured'}")
+    if not verify:
+        console.print(f"Updated: {result.updated}")
+        console.print(f"Configured hooks: {', '.join(result.configured_hooks) or 'already configured'}")
+    console.print(f"Current session: {result.session_id or 'not detected'}")
+    console.print(f"Activation: {result.activation_status}")
+    if result.events_path is not None:
+        console.print(f"Events path: {result.events_path}")
+    console.print(f"Next step: {result.activation_hint}")
+    if result.activation_status == "needs_reload":
+        console.print("Verify: lumiagent setup claude-code --verify")
 ```
 
 - [ ] **Step 5: Run setup tests**
@@ -2558,7 +2762,7 @@ def setup_claude_code(
 Run:
 
 ```powershell
-$env:PYTHONPATH = "src"; python -m pytest tests/adapters/claude_code/test_setup.py -v
+$env:PYTHONPATH = "src"; python -m pytest tests/adapters/claude_code/test_setup.py tests/test_cli_claude_code_setup.py -v
 ```
 
 Expected: PASS.
@@ -2566,7 +2770,7 @@ Expected: PASS.
 - [ ] **Step 6: Commit Task 12**
 
 ```bash
-git add src/lumiagent/adapters/claude_code/__init__.py src/lumiagent/adapters/claude_code/hooks.py src/lumiagent/adapters/claude_code/setup.py src/lumiagent/cli.py tests/adapters/claude_code/test_setup.py
+git add src/lumiagent/adapters/claude_code/__init__.py src/lumiagent/adapters/claude_code/hooks.py src/lumiagent/adapters/claude_code/setup.py src/lumiagent/cli.py tests/adapters/claude_code/test_setup.py tests/test_cli_claude_code_setup.py
 git commit -m "Add Claude Code hook setup"
 ```
 

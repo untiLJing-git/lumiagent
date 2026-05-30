@@ -75,9 +75,15 @@ Phase 3 implements the Claude Code capture path:
 
 ```text
 lumiagent setup claude-code
-  -> registers hooks in .claude/settings.json
+  -> registers PreToolUse / PostToolUse / PostToolUseFailure / PermissionRequest hooks in .claude/settings.json
+  -> reports activation: active | needs_reload | not_in_claude_code
+
+lumiagent setup claude-code --verify
+  -> checks current-session activation without changing settings
 
 Claude Code session
+  -> if activation is needs_reload, open /hooks and close it or restart Claude Code
+  -> run any tool call
   -> hooks write .lumiagent/sessions/<session-id>/events.jsonl
 
 lumiagent trace <session-id> -o trace.json
@@ -741,9 +747,13 @@ Responsibilities:
 
 - locate or create project `.claude/settings.json`;
 - merge LumiAgent hooks without deleting existing hooks;
-- configure hooks to write `.lumiagent/sessions/<session-id>/events.jsonl`;
+- configure `PreToolUse`, `PostToolUse`, `PostToolUseFailure`, and `PermissionRequest` hooks to write `.lumiagent/sessions/<session-id>/events.jsonl`;
 - print configured hook summary;
+- print current-session activation status as `active`, `needs_reload`, or `not_in_claude_code`;
+- when activation is `needs_reload`, tell the user to open `/hooks` and close it, or restart Claude Code, then trigger any tool call and run `--verify` again;
 - warn or preserve backups on conflicts.
+
+`lumiagent setup claude-code --verify` must check activation without modifying `.claude/settings.json`.
 
 Safety requirements:
 
@@ -888,14 +898,23 @@ Sanitized fixtures must preserve span shape, ordering, conventions, evidence sha
 
 ### 12.1 Real Claude Code Verification
 
-Setup:
+Setup and activation check:
 
 ```powershell
 $env:PYTHONPATH = "src"
 python -m lumiagent.cli setup claude-code
+python -m lumiagent.cli setup claude-code --verify
 ```
 
-Run Claude Code normally on a small safe task. Expected output:
+Expected activation states:
+
+```text
+active          hooks are configured and this session has written events
+needs_reload    settings are configured, but this running Claude Code session has not captured events yet
+not_in_claude_code  activation cannot be checked outside a Claude Code session
+```
+
+If the status is `needs_reload`, open `/hooks` and close it, or restart Claude Code. Then run a small safe tool call and verify again until events exist under the current session directory.
 
 ```text
 .lumiagent/sessions/<session-id>/events.jsonl
@@ -986,6 +1005,7 @@ Deliver setup command, trace command, real verification, sanitized fixture, and 
 Acceptance:
 
 - real Claude Code session captured and converted;
+- hook activation flow documents `active`, `needs_reload`, `not_in_claude_code`, `--verify`, and the `/hooks` reload path;
 - trace viewable in CLI;
 - tests and static checks pass;
 - technical report is written.
@@ -1070,16 +1090,17 @@ Phase 3 is complete when:
 1. Unified Coding Agent trace conventions express a workflow from user request to final response.
 2. The stable conventions listed in Section 2.1 can be represented and serialized.
 3. Claude Code hooks write LumiAgent-owned `events.jsonl` files.
-4. `lumiagent trace <session-id> -o trace.json` converts hooks events to a valid `AgentRun`.
-5. Minimal transcript enrichment supplements semantic evidence when available.
-6. Hooks-only trace remains valid when transcript is unavailable or unsupported.
-7. The hooks converter uses `TraceWriter`.
-8. Phase 2b `McpTraceMapper` is not required to migrate.
-9. Workflow validator emits deterministic, high-confidence structured findings.
-10. `lumiagent show <trace.json>` displays span tree, semantic summary, and workflow checks.
-11. `lumiagent show <trace.json> --checks` displays detailed workflow findings.
-12. Synthetic Coding Agent fixtures are committed and used in tests.
-13. A real Claude Code session is locally captured and converted.
-14. A sanitized/minimized real fixture is committed without sensitive content.
-15. Required pytest, ruff, and mypy commands pass.
-16. The Chinese technical report is written.
+4. Hook setup and verification expose `active`, `needs_reload`, and `not_in_claude_code`, including the `/hooks` reload path for already-running Claude Code sessions.
+5. `lumiagent trace <session-id> -o trace.json` converts hooks events to a valid `AgentRun`.
+6. Minimal transcript enrichment supplements semantic evidence when available.
+7. Hooks-only trace remains valid when transcript is unavailable or unsupported.
+8. The hooks converter uses `TraceWriter`.
+9. Phase 2b `McpTraceMapper` is not required to migrate.
+10. Workflow validator emits deterministic, high-confidence structured findings.
+11. `lumiagent show <trace.json>` displays span tree, semantic summary, and workflow checks.
+12. `lumiagent show <trace.json> --checks` displays detailed workflow findings.
+13. Synthetic Coding Agent fixtures are committed and used in tests.
+14. A real Claude Code session is locally captured and converted.
+15. A sanitized/minimized real fixture is committed without sensitive content.
+16. Required pytest, ruff, and mypy commands pass.
+17. The Chinese technical report is written.

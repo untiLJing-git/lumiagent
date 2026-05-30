@@ -210,7 +210,10 @@ CaptureStrategy
 
 织入 — Claude Code hooks 采集：
 
-- `lumiagent setup claude-code` 一键配置命令，在 `.claude/settings.json` 中注册 hooks
+- `lumiagent setup claude-code` 一键配置命令，在 `.claude/settings.json` 中注册 `PreToolUse`、`PostToolUse`、`PostToolUseFailure` 和 `PermissionRequest` hooks
+- setup 输出运行时 activation 状态：`active`、`needs_reload` 或 `not_in_claude_code`，用于区分 settings 已配置与当前 Claude Code 会话 hooks 已激活
+- `lumiagent setup claude-code --verify` 只检查 activation，不修改 settings
+- 当 activation 为 `needs_reload` 时，用户应打开 `/hooks` 后关闭，或重启 Claude Code，再触发任意工具调用并重新 verify
 - hooks 将工具调用事件写入 `.lumiagent/sessions/<session-id>/events.jsonl`（LumiAgent 自定义格式）
 - `lumiagent trace <session-id> -o trace.json` 将事件转为 AgentRun
 - 可选：从 Claude Code 会话转录中补充用户消息和 LLM 推理内容
@@ -231,6 +234,7 @@ CaptureStrategy
 - 可以表达一次 Coding Agent 从需求到验证的完整执行链路
 - 可以识别修改代码但未测试、命令失败未处理等流程问题
 - 真实 Claude Code 会话可以通过 hooks 采集并转为合法 AgentRun
+- hook setup 可以暴露当前会话是 `active`、`needs_reload` 还是 `not_in_claude_code`，并记录 `needs_reload` 时的 `/hooks` 热加载路径
 - trace 可在 CLI Viewer 中查看
 
 ### Phase 4: Evaluation / Diagnosis Engine

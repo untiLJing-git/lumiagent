@@ -15,7 +15,8 @@ Phase 3 builds a Generic Semantic Coding Trace Core and uses Claude Code hooks p
 Key decisions:
 
 - The Coding Agent trace model is framework-agnostic and not tied to Claude Code internals.
-- Claude Code hooks provide stable action evidence.
+- Claude Code hooks provide stable action evidence, and setup must distinguish settings configuration from current-session activation.
+- Hook activation status is explicit: `active`, `needs_reload`, or `not_in_claude_code`; `needs_reload` is resolved by opening `/hooks` and closing it, or restarting Claude Code before verifying again.
 - Transcript enrichment provides best-effort semantic evidence.
 - TraceWriter is used only for incremental Coding Agent hooks capture in Phase 3.
 - Phase 2b `McpTraceMapper` remains unchanged.

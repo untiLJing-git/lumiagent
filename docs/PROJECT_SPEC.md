@@ -210,7 +210,10 @@ Deliverables:
 
 Woven in — Claude Code hooks capture:
 
-- `lumiagent setup claude-code` one-time setup command that registers hooks in `.claude/settings.json`
+- `lumiagent setup claude-code` one-time setup command that registers `PreToolUse`, `PostToolUse`, `PostToolUseFailure`, and `PermissionRequest` hooks in `.claude/settings.json`
+- setup reports runtime activation as `active`, `needs_reload`, or `not_in_claude_code`, so users can distinguish configured settings from hooks that are active in the current Claude Code session
+- `lumiagent setup claude-code --verify` checks activation without modifying settings
+- when activation is `needs_reload`, users should open `/hooks` and close it, or restart Claude Code, then trigger any tool call and verify again
 - hooks write tool use events to `.lumiagent/sessions/<session-id>/events.jsonl` (LumiAgent-defined format)
 - `lumiagent trace <session-id> -o trace.json` converts events to AgentRun
 - optional enrichment from Claude Code session transcripts (user messages, LLM reasoning) when available
@@ -231,6 +234,7 @@ Acceptance criteria:
 - A Coding Agent workflow from user request to verification can be represented.
 - Process issues such as editing code without tests or ignoring failed commands can be identified.
 - A real Claude Code session can be captured via hooks and converted to a valid AgentRun.
+- Hook setup exposes whether the current session is `active`, `needs_reload`, or `not_in_claude_code`, and documents the `/hooks` reload path for `needs_reload` sessions.
 - The trace can be viewed in the CLI viewer.
 
 ### Phase 4: Evaluation / Diagnosis Engine
