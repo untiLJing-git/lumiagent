@@ -10,6 +10,16 @@ LumiAgent 采用 **分层解耦 + 插件化** 架构，将系统分为 6 个独�
 
 Mermaid 源文件：[`docs/diagrams/legacy-layered-architecture.mmd`](diagrams/legacy-layered-architecture.mmd)
 
+Trace / Eval Core 是当前 MVP 的产品底座。Trace Core 保持框架无关，Coding Agent、MCP Tool Chain、Claude Code hooks、CLI wrappers、transcript importers 和未来 SDK/proxy 都应作为 Core 之上的 adapter 或 capture layer。
+
+Phase 3 的 Coding Agent capture flow：
+
+![Coding Agent Capture Flow](assets/coding-agent-capture-flow.svg)
+
+Mermaid 源文件：[`docs/diagrams/coding-agent-capture-flow.mmd`](diagrams/coding-agent-capture-flow.mmd)
+
+Claude Code hooks 提供稳定 action evidence，transcript enrichment 仅作为 best-effort semantic evidence；两者经过 Coding Agent adapter 归一化后写入 `AgentRun`、Span Tree 和 workflow check artifacts。
+
 ### 1.2 设计原则
 
 | 原则 | 说明 |

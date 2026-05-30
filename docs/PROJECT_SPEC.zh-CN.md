@@ -167,7 +167,7 @@ LumiAgent 当前主线由四部分组成：
 - 可以记录工具参数、结果、错误和耗时
 - 可以识别工具调用失败类型
 
-### Phase 2b: MCP 采集 + 展示链
+### Phase 2b: MCP 采集 + 展示链 — 已完成
 
 目标：为 MCP trace 打通最小采集-模型-展示闭环，并建立所有未来采集策略共用的统一采集入口。
 
@@ -198,9 +198,13 @@ CaptureStrategy
 - trace 可以用 `lumiagent show` 查看，展示 MCP 特有信息（failure type、schema、arguments、result consumption）
 - `CaptureStrategy` 协议已定义且可扩展
 
-### Phase 3: Coding Agent Trace Model
+### Phase 3: Coding Agent Trace Model — 已完成
 
 目标：建立 Coding Agent 执行轨迹模型，并通过真实 Agent 数据验证。
+
+正式规格：`docs/specs/coding-agent-trace-model.md`。
+
+技术报告：`docs/reports/coding-agent-trace-model-technical-report.zh-CN.md`。
 
 交付物：
 
@@ -226,7 +230,7 @@ CaptureStrategy
 
 织入 — 最小 CLI Viewer：
 
-- `lumiagent show <trace.json>` 在终端打印 span tree 和 diagnosis summary
+- `lumiagent show <trace.json>` 在终端打印 span tree、semantic summary 和 workflow checks
 - 定位为开发辅助工具，非产品功能
 
 验收标准：

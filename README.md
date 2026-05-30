@@ -77,16 +77,88 @@ Product value:
 - Records where an MCP tool-chain failure happened: connection, initialization, discovery, selection, argument generation, execution, timeout, transport, result shape, or result consumption.
 - Keeps stdio transport details in the adapter runtime while preserving a stable trace shape for future HTTP/SSE runtimes, Coding Agent hooks, replay, and diagnosis.
 
+**Stage 3: Coding Agent Trace Model — completed**
+
+Implemented capabilities:
+
+- Framework-agnostic Coding Agent conventions under `src/lumiagent/adapters/coding/`
+- Action evidence and semantic evidence schemas for coding workflows
+- Minimal `BuilderTraceWriter` for incremental hook-to-trace construction
+- Claude Code hook capture adapter under `src/lumiagent/adapters/claude_code/`
+- Hook setup and activation verification via `lumiagent setup claude-code` and `--verify`
+- `lumiagent trace <session-id>` conversion from hook events to `AgentRun`
+- Optional best-effort Claude Code transcript enrichment
+- Deterministic workflow checks for missing verification, failed command recovery, permission denial, and unresolved errors
+- Coding Agent CLI viewer output with semantic summary, span tree, and `--checks`
+- Synthetic coding fixtures plus a sanitized real Claude Code session fixture
+
+Product value:
+
+- Captures how a Coding Agent moves from user request to context gathering, code edits, verification, recovery, and final response.
+- Separates stable Coding Agent semantics from Claude Code-specific hook payloads.
+- Produces reviewable workflow evidence without expanding into Phase 4 evaluation or diagnosis.
+
 Specifications and reports:
 
 - [`docs/specs/trace-core-mvp.md`](docs/specs/trace-core-mvp.md)
 - [`docs/specs/mcp-tool-chain-model.md`](docs/specs/mcp-tool-chain-model.md)
 - [`docs/specs/mcp-capture-display-chain.md`](docs/specs/mcp-capture-display-chain.md)
+- [`docs/specs/coding-agent-trace-model.md`](docs/specs/coding-agent-trace-model.md)
 - [`docs/reports/trace-core-mvp-technical-report.zh-CN.md`](docs/reports/trace-core-mvp-technical-report.zh-CN.md)
 - [`docs/reports/mcp-tool-chain-model-technical-report.zh-CN.md`](docs/reports/mcp-tool-chain-model-technical-report.zh-CN.md)
 - [`docs/reports/mcp-capture-display-chain-technical-report.zh-CN.md`](docs/reports/mcp-capture-display-chain-technical-report.zh-CN.md)
+- [`docs/reports/coding-agent-trace-model-technical-report.zh-CN.md`](docs/reports/coding-agent-trace-model-technical-report.zh-CN.md)
 
 ## Quick Example
+
+### Capture and inspect a Claude Code coding session
+
+Configure Claude Code hooks for this project:
+
+```powershell
+$env:PYTHONPATH = "src"
+python -m lumiagent.cli setup claude-code
+```
+
+The setup command reports whether hooks are active in the current Claude Code session:
+
+- `active`: this session has written hook events.
+- `needs_reload`: settings are configured, but the running session needs `/hooks` reload or restart.
+- `not_in_claude_code`: runtime activation cannot be checked outside Claude Code.
+
+After hooks are active and a tool call has run, convert and inspect the session:
+
+```powershell
+$env:PYTHONPATH = "src"
+python -m lumiagent.cli setup claude-code --verify
+python -m lumiagent.cli trace <session-id> -o .lumiagent/traces/<session-id>-raw.json
+python -m lumiagent.cli show .lumiagent/traces/<session-id>-raw.json --checks
+```
+
+Example output shape:
+
+```text
+Run: Claude Code session <session-id>
+Status: success
+Semantic Summary
+Span Tree
+- Coding Agent Run  type=coding_agent_run
+  - Context Gathering  type=context_gathering
+  - Edit code  type=code_edit
+  - Verification  type=verification
+  - Workflow Check  type=workflow_check
+Workflow Checks
+  status: pass
+```
+
+Optional transcript enrichment can add semantic evidence such as user prompt, task understanding, and final response:
+
+```powershell
+$env:PYTHONPATH = "src"
+python -m lumiagent.cli trace <session-id> `
+  --transcript-path C:\path\to\claude-code-session.jsonl `
+  -o .lumiagent/traces/<session-id>-transcript-raw.json
+```
 
 ### Build a trace in code
 
@@ -174,6 +246,10 @@ Mermaid source: [`docs/diagrams/mcp-tool-chain-evidence-layer.mmd`](docs/diagram
 
 Mermaid source: [`docs/diagrams/mcp-capture-display-chain.mmd`](docs/diagrams/mcp-capture-display-chain.mmd)
 
+![Coding Agent Capture Flow](docs/assets/coding-agent-capture-flow.svg)
+
+Mermaid source: [`docs/diagrams/coding-agent-capture-flow.mmd`](docs/diagrams/coding-agent-capture-flow.mmd)
+
 The trace core is intentionally independent from any single agent framework. Coding Agent support, MCP Tool Chain capture, SDK hooks, CLI wrappers, and transcript importers should be built as adapters on top of the core model.
 
 Trace Core data is also designed for future visualization through a clean layering: `CaptureStrategy → Trace Core → view models (Phase 5) → visualization surfaces`. The CLI viewer already consumes this data from Stage 2b, the Web UI follows later, and run summary, timeline, span tree, span detail, artifact viewer, evaluation/diagnosis panel, trace diff, and experiment comparison should be derived from stable core primitives or view models before adding new Core fields.
@@ -187,7 +263,7 @@ The MCP Tool Chain layer is an adapter evidence layer: it records tool discovery
 - [x] Trace Schema / Span Tree Core
 - [x] MCP Tool Chain evidence model
 - [x] MCP Capture + Display chain (unified `CaptureStrategy` entry point)
-- [ ] Coding Agent trace model + Claude Code hooks capture + CLI viewer
+- [x] Coding Agent trace model + Claude Code hooks capture + CLI viewer
 - [ ] Evaluation / Diagnosis Agent (built on LumiAgent's own agent infrastructure)
 - [ ] Replay / Visualization data preparation
 
@@ -214,20 +290,34 @@ src/lumiagent/
 │   ├── __init__.py
 │   └── strategy.py
 ├── adapters/
-│   └── mcp/
-│       ├── capture.py
-│       ├── runtime.py
-│       ├── selector.py
-│       ├── mapper.py
-│       ├── viewer.py
-│       ├── builder.py
-│       ├── conventions.py
-│       ├── schemas.py
-│       └── taxonomy.py
+│   ├── mcp/
+│   │   ├── capture.py
+│   │   ├── runtime.py
+│   │   ├── selector.py
+│   │   ├── mapper.py
+│   │   ├── viewer.py
+│   │   ├── builder.py
+│   │   ├── conventions.py
+│   │   ├── schemas.py
+│   │   └── taxonomy.py
+│   ├── coding/
+│   │   ├── conventions.py
+│   │   ├── events.py
+│   │   ├── normalizer.py
+│   │   ├── validator.py
+│   │   └── viewer.py
+│   └── claude_code/
+│       ├── hooks.py
+│       ├── setup.py
+│       ├── events.py
+│       ├── transcript.py
+│       ├── converter.py
+│       └── sanitizer.py
 ├── cli.py
 └── tracing/
     ├── __init__.py
     ├── builder.py
+    ├── builder_writer.py
     ├── enums.py
     ├── models.py
     ├── serializer.py
@@ -237,22 +327,20 @@ src/lumiagent/
 tests/
 ├── capture/
 │   └── test_strategy.py
-├── adapters/mcp/
-│   ├── fixtures/
-│   ├── test_capture.py
-│   ├── test_fixtures.py
-│   ├── test_mapper.py
-│   ├── test_mcp_builder.py
-│   ├── test_runtime.py
-│   ├── test_schemas.py
-│   ├── test_selector.py
-│   ├── test_taxonomy.py
-│   └── test_viewer.py
+├── adapters/
+│   ├── mcp/
+│   ├── coding/
+│   │   └── fixtures/
+│   └── claude_code/
+│       └── fixtures/
 ├── test_cli.py
 ├── test_cli_mcp.py
+├── test_cli_coding_trace.py
+├── test_cli_claude_code_setup.py
 └── tracing/
     ├── fixtures/
     ├── test_builder.py
+    ├── test_builder_writer.py
     ├── test_models.py
     ├── test_serializer.py
     ├── test_validator.py
@@ -263,20 +351,24 @@ docs/
 │   ├── trace-core-model.svg
 │   ├── trace-core-visualization-intent.svg
 │   ├── mcp-tool-chain-evidence-layer.svg
-│   └── mcp-capture-display-chain.svg
+│   ├── mcp-capture-display-chain.svg
+│   └── coding-agent-capture-flow.svg
 ├── diagrams/
 │   ├── trace-core-model.mmd
 │   ├── trace-core-visualization-intent.mmd
 │   ├── mcp-tool-chain-evidence-layer.mmd
-│   └── mcp-capture-display-chain.mmd
+│   ├── mcp-capture-display-chain.mmd
+│   └── coding-agent-capture-flow.mmd
 ├── reports/
 │   ├── trace-core-mvp-technical-report.zh-CN.md
 │   ├── mcp-tool-chain-model-technical-report.zh-CN.md
-│   └── mcp-capture-display-chain-technical-report.zh-CN.md
+│   ├── mcp-capture-display-chain-technical-report.zh-CN.md
+│   └── coding-agent-trace-model-technical-report.zh-CN.md
 └── specs/
     ├── trace-core-mvp.md
     ├── mcp-tool-chain-model.md
-    └── mcp-capture-display-chain.md
+    ├── mcp-capture-display-chain.md
+    └── coding-agent-trace-model.md
 ```
 
 ## Installation

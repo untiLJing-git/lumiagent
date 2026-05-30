@@ -4,64 +4,77 @@
 
 ## 当前项目
 
-- 本地路径：`D:\Project\resume\lumiagent`
+- 本地路径：`D:\Projects\github\lumiagent`
 - GitHub 仓库：`untiLJing-git/lumiagent`
 - 当前主分支：`main`
+- 当前主分支阶段：Phase 3 Coding Agent Trace Model 已完成
 
 ## 已完成内容
 
 1. 第一阶段 Trace Core MVP 已完成并合入 `main`。
-2. 已实现 `src/lumiagent/tracing/`：
-   - `models.py`
-   - `enums.py`
-   - `serializer.py`
-   - `validator.py`
-   - `builder.py`
-   - `__init__.py`
-3. 已有测试：
-   - `tests/tracing/test_models.py`
-   - `tests/tracing/test_serializer.py`
-   - `tests/tracing/test_validator.py`
-   - `tests/tracing/test_builder.py`
-   - `tests/tracing/fixtures/generic_agent_run.json`
-   - `tests/tracing/fixtures/coding_agent_trace_sample.json`
-4. 已有中文技术报告：
-   - `docs/reports/trace-core-mvp-technical-report.zh-CN.md`
-5. README 已拆成中英文：
+   - `AgentRun`、`Span`、`Event`、`Artifact`、`Evaluation`、`Diagnosis`、`Annotation`
+   - JSON/dict 序列化、结构校验、`TraceBuilder`
+   - `BuilderTraceWriter` 最小增量 writer
+2. 第二阶段 A：MCP Tool Chain Evidence Model 已完成。
+   - MCP conventions、taxonomy、schemas、builder helpers
+   - MCP 成功与失败 fixtures
+3. 第二阶段 B：MCP Capture + Display Chain 已完成。
+   - `CaptureStrategy`
+   - `McpClientRuntime` / `StdioMcpClientRuntime`
+   - `ExplicitToolSelector`
+   - `McpCaptureStrategy` / `McpTraceMapper`
+   - `lumiagent capture mcp` 与 `lumiagent show`
+4. 第三阶段：Coding Agent Trace Model 已完成。
+   - `src/lumiagent/adapters/coding/`：framework-agnostic Coding Agent conventions、schemas、normalizer、validator、viewer
+   - `src/lumiagent/adapters/claude_code/`：hooks、setup、events、transcript enrichment、converter、sanitizer
+   - Claude Code hooks capture：`PreToolUse`、`PostToolUse`、`PostToolUseFailure`、`PermissionRequest`
+   - hook activation 状态：`active`、`needs_reload`、`not_in_claude_code`
+   - `lumiagent trace <session-id>` 与 `lumiagent show --checks`
+   - synthetic coding fixtures 与 sanitized real Claude Code fixture
+5. README 已拆成中英文并更新到 Phase 3 状态：
    - `README.md`
    - `README.zh-CN.md`
-6. 架构图已改为 Mermaid 源文件和 SVG：
+6. 架构图使用 Mermaid 源文件和 SVG：
    - `docs/diagrams/*.mmd`
    - `docs/assets/*.svg`
-7. 所有阶段性修改已提交并推送到远程 `main`。
-   - 最新阶段提交：`7960cf0 Add Mermaid architecture diagrams`
+   - Phase 3 新增：`coding-agent-capture-flow.mmd` / `coding-agent-capture-flow.svg`
+7. 关键规格与报告：
+   - `docs/specs/trace-core-mvp.md`
+   - `docs/specs/mcp-tool-chain-model.md`
+   - `docs/specs/mcp-capture-display-chain.md`
+   - `docs/specs/coding-agent-trace-model.md`
+   - `docs/reports/trace-core-mvp-technical-report.zh-CN.md`
+   - `docs/reports/mcp-tool-chain-model-technical-report.zh-CN.md`
+   - `docs/reports/mcp-capture-display-chain-technical-report.zh-CN.md`
+   - `docs/reports/coding-agent-trace-model-technical-report.zh-CN.md`
 
 ## 当前验证状态
 
-使用本地源码路径验证通过：
+主分支 `main` 在 Phase 3 完成后已通过以下 fresh verification：
 
 ```powershell
 $env:PYTHONPATH = "src"
 python -m pytest -v
-python -m ruff check src/lumiagent/tracing tests/tracing
-python -m mypy src/lumiagent/tracing
+python -m ruff check src/lumiagent/tracing src/lumiagent/adapters tests/tracing tests/adapters
+python -m mypy src/lumiagent/tracing src/lumiagent/adapters
 ```
 
 验证结果：
 
 ```text
-pytest: 18 passed
+pytest: 163 passed
 ruff: All checks passed
-mypy: Success: no issues found in 6 source files
+mypy: Success: no issues found in 32 source files
 ```
 
-注意：如果当前环境没有执行 `pip install -e ".[dev]"`，直接运行 `pytest` 可能出现：
+CLI / real-path smoke verification：
 
-```text
-ModuleNotFoundError: No module named 'lumiagent'
+```powershell
+$env:PYTHONPATH = "src"
+python -m lumiagent.cli show tests/adapters/claude_code/fixtures/real_session_sanitized_trace.json --checks
 ```
 
-可以先设置 `PYTHONPATH=src`，或安装 editable 包。
+输出包含 `Semantic Summary`、`Span Tree`、`Workflow Checks`，且 workflow status 为 `pass`。
 
 ## 后续会话需要遵守的偏好
 
@@ -69,26 +82,17 @@ ModuleNotFoundError: No module named 'lumiagent'
 - LumiAgent 每次实现完成后，都要写中文技术报告到 `docs/reports/`。
 - LumiAgent 架构图优先使用 Mermaid；需要图片时用 Mermaid CLI 导出 SVG 到 `docs/assets/`。
 - 每次代码或文档改动后，都要运行相关测试或验证命令。
+- 不要提交本地 `.claude/settings.json`；Claude Code hooks 应通过 `lumiagent setup claude-code` 在本地生成。
 
 ## 下一步建议
 
-下一阶段建议进入 **MCP Tool Chain Model**，但不要直接开始写代码。应先做需求规格和设计文档，明确：
+下一阶段建议进入 **Phase 4: Evaluation / Diagnosis Engine**，但不要直接开始写代码。应先做需求规格和设计文档，明确：
 
-- MCP server connection span
-- tool discovery span
-- tool schema snapshot
-- tool call / result
-- tool arguments
-- permission / error / latency
-- 如何映射到现有 `AgentRun / Span / Event / Artifact / Evaluation / Diagnosis`
-
-## 第二阶段设计倾向
-
-- 暂不接真实 MCP Server。
-- 暂不做 UI。
-- 暂不做完整诊断引擎。
-- 尽量不新增大量专用 `SpanKind`。
-- MCP 细节优先通过 `metadata` 和 `artifact` 表达，保持 Trace Core 稳定。
+- Diagnosis Agent 如何消费 Phase 3 `workflow_check` artifacts
+- trace analysis tool set：`read_span_tree`、`inspect_span`、`extract_evidence`、`query_knowledge`、`compare_arguments`、`check_workflow_pattern`、`compare_traces`
+- deterministic rule engine 与 LLM reasoning layer 的边界
+- Evaluation / Diagnosis schema 输出：score、reason、evidence span、suggested fix
+- 如何 dogfood：Diagnosis Agent 自身执行过程也应可被 trace 捕获
 
 ## 换设备后的建议启动命令
 

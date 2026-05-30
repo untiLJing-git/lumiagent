@@ -1,0 +1,39 @@
+flowchart LR
+    Setup["lumiagent setup claude-code"] --> Settings[".claude/settings.json hooks"]
+    Verify["lumiagent setup claude-code --verify"] --> Activation{"Activation status"}
+    Settings --> Activation
+    Activation --> Active["active"]
+    Activation --> Reload["needs_reload: open /hooks or restart"]
+    Activation --> Outside["not_in_claude_code"]
+
+    subgraph ClaudeCode["Claude Code Session"]
+        ToolUse["Tool use / permission / failure events"]
+        Transcript["Optional session transcript"]
+    end
+
+    Active --> ToolUse
+    Reload --> ToolUse
+    ToolUse --> Events[".lumiagent/sessions/<session-id>/events.jsonl"]
+    Transcript -. "best-effort semantic enrichment" .-> TraceCommand["lumiagent trace <session-id>"]
+    Events --> TraceCommand
+
+    subgraph AdapterLayer["Coding Agent Adapter Layer"]
+        Normalizer["CodingEventNormalizer"]
+        Converter["ClaudeCodeTraceConverter"]
+        Writer["BuilderTraceWriter"]
+        Validator["WorkflowValidator"]
+        Viewer["Coding trace viewer"]
+    end
+
+    TraceCommand --> Normalizer
+    Normalizer --> Converter
+    Converter --> Writer
+    Writer --> AgentRun["AgentRun / Span Tree / Evidence Artifacts"]
+    AgentRun --> Validator
+    Validator --> Checks["workflow_check artifact"]
+    AgentRun --> Show["lumiagent show --checks"]
+    Checks --> Show
+    Show --> Viewer
+
+    TraceCore["Trace Core"] -. "framework-agnostic models" .-> AgentRun
+    AdapterLayer -. "Claude Code stays outside Core" .-> TraceCore

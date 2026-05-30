@@ -167,7 +167,7 @@ Acceptance criteria:
 - Tool arguments, results, errors, and latency can be recorded.
 - Tool-call failure types can be identified.
 
-### Phase 2b: MCP Capture + Display Chain
+### Phase 2b: MCP Capture + Display Chain — completed
 
 Goal: close the minimal capture-model-display loop for MCP traces, and establish the unified capture entry point used by all future capture strategies.
 
@@ -198,9 +198,13 @@ Acceptance criteria:
 - The trace can be viewed with `lumiagent show`, displaying MCP-specific information (failure type, schema, arguments, result consumption).
 - The `CaptureStrategy` protocol is defined and extensible for future capture methods.
 
-### Phase 3: Coding Agent Trace Model
+### Phase 3: Coding Agent Trace Model — completed
 
 Goal: establish the Coding Agent execution trace model and validate it against real agent data.
+
+Formal specification: `docs/specs/coding-agent-trace-model.md`.
+
+Technical report: `docs/reports/coding-agent-trace-model-technical-report.zh-CN.md`.
 
 Deliverables:
 
@@ -226,7 +230,7 @@ Woven in — real case fixture:
 
 Woven in — minimal CLI viewer:
 
-- `lumiagent show <trace.json>` prints span tree and diagnosis summary in the terminal
+- `lumiagent show <trace.json>` prints span tree, semantic summary, and workflow checks in the terminal
 - positioned as a developer tool, not a product feature
 
 Acceptance criteria:
