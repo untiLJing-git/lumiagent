@@ -1,0 +1,361 @@
+{
+  "started_at": "2026-05-30T06:49:36.822060Z",
+  "ended_at": "2026-05-30T06:49:36.822234Z",
+  "run_id": "run_e7bbcee2dd6a467d9b91c1aa04b91303",
+  "name": "Claude Code session fixture_session",
+  "status": "error",
+  "input": null,
+  "output": null,
+  "metadata": {
+    "domain": "coding_agent",
+    "source": "claude_code"
+  },
+  "parent_run_id": null,
+  "triggered_by_span_id": null,
+  "root_spans": [
+    {
+      "started_at": "2026-05-30T06:49:36.822064Z",
+      "ended_at": "2026-05-30T06:49:36.822232Z",
+      "span_id": "span_b6693b117d624458a5f162357b81081d",
+      "run_id": "run_e7bbcee2dd6a467d9b91c1aa04b91303",
+      "parent_span_id": null,
+      "name": "Coding Agent Run",
+      "kind": "custom",
+      "status": "error",
+      "input": null,
+      "output": null,
+      "metadata": {
+        "domain": "coding_agent",
+        "type": "coding_agent_run",
+        "source": "claude_code"
+      },
+      "events": [],
+      "artifacts": [],
+      "children": [
+        {
+          "started_at": "2026-05-30T06:49:36.822081Z",
+          "ended_at": "2026-05-30T06:49:36.822098Z",
+          "span_id": "span_e4394197472a4cf39171eacb8a767fa2",
+          "run_id": "run_e7bbcee2dd6a467d9b91c1aa04b91303",
+          "parent_span_id": "span_b6693b117d624458a5f162357b81081d",
+          "name": "Edit code",
+          "kind": "tool",
+          "status": "success",
+          "input": {
+            "file_path": "<PROJECT_DIR>/src/app.py"
+          },
+          "output": {
+            "status": "success"
+          },
+          "metadata": {
+            "domain": "coding_agent",
+            "type": "code_edit",
+            "source": "claude_code_hook",
+            "source_event_ids": [
+              "evt_1"
+            ],
+            "evidence_types": [
+              "action_evidence"
+            ],
+            "classification": {
+              "strategy": "rule",
+              "reason": "Edit maps to code_edit"
+            }
+          },
+          "events": [],
+          "artifacts": [
+            {
+              "artifact_id": "artifact_52fae4b5a1a0429c8324ae4804d24826",
+              "name": "Action Evidence",
+              "kind": "json",
+              "uri": null,
+              "content": {
+                "artifact_type": "coding_action_evidence",
+                "schema_version": "coding_action_evidence.v1",
+                "source": "claude_code_hook",
+                "tool_name": "Edit",
+                "arguments": {
+                  "file_path": "<PROJECT_DIR>/src/app.py"
+                },
+                "result": {
+                  "status": "success"
+                },
+                "safety": {
+                  "redaction_state": "redacted"
+                }
+              },
+              "metadata": {
+                "type": "coding_action_evidence"
+              }
+            }
+          ],
+          "children": []
+        },
+        {
+          "started_at": "2026-05-30T06:49:36.822121Z",
+          "ended_at": "2026-05-30T06:49:36.822217Z",
+          "span_id": "span_155b11c48b794e9b92a4af4307487dc0",
+          "run_id": "run_e7bbcee2dd6a467d9b91c1aa04b91303",
+          "parent_span_id": "span_b6693b117d624458a5f162357b81081d",
+          "name": "Verification",
+          "kind": "custom",
+          "status": "error",
+          "input": null,
+          "output": null,
+          "metadata": {
+            "domain": "coding_agent",
+            "type": "verification",
+            "source": "claude_code_hook"
+          },
+          "events": [],
+          "artifacts": [],
+          "children": [
+            {
+              "started_at": "2026-05-30T06:49:36.822127Z",
+              "ended_at": "2026-05-30T06:49:36.822143Z",
+              "span_id": "span_e4b76fe7563647eb9a0d4ec7106d0317",
+              "run_id": "run_e7bbcee2dd6a467d9b91c1aa04b91303",
+              "parent_span_id": "span_155b11c48b794e9b92a4af4307487dc0",
+              "name": "Run tests",
+              "kind": "tool",
+              "status": "error",
+              "input": {
+                "command": "python -m pytest -v"
+              },
+              "output": {
+                "exit_code": 1,
+                "status": "error"
+              },
+              "metadata": {
+                "domain": "coding_agent",
+                "type": "test_run",
+                "source": "claude_code_hook",
+                "source_event_ids": [
+                  "evt_2"
+                ],
+                "evidence_types": [
+                  "action_evidence"
+                ],
+                "classification": {
+                  "strategy": "rule",
+                  "reason": "command matched test pattern"
+                }
+              },
+              "events": [],
+              "artifacts": [
+                {
+                  "artifact_id": "artifact_b7186ad4a64e4a9ab45171783ee95fa3",
+                  "name": "Action Evidence",
+                  "kind": "json",
+                  "uri": null,
+                  "content": {
+                    "artifact_type": "coding_action_evidence",
+                    "schema_version": "coding_action_evidence.v1",
+                    "source": "claude_code_hook",
+                    "tool_name": "Bash",
+                    "arguments": {
+                      "command": "python -m pytest -v"
+                    },
+                    "result": {
+                      "exit_code": 1,
+                      "status": "error"
+                    },
+                    "safety": {
+                      "redaction_state": "redacted"
+                    }
+                  },
+                  "metadata": {
+                    "type": "coding_action_evidence"
+                  }
+                }
+              ],
+              "children": []
+            },
+            {
+              "started_at": "2026-05-30T06:49:36.822197Z",
+              "ended_at": "2026-05-30T06:49:36.822214Z",
+              "span_id": "span_290192b5dfa349338407ff4bb6c7143e",
+              "run_id": "run_e7bbcee2dd6a467d9b91c1aa04b91303",
+              "parent_span_id": "span_155b11c48b794e9b92a4af4307487dc0",
+              "name": "Run tests",
+              "kind": "tool",
+              "status": "success",
+              "input": {
+                "command": "python -m pytest -v"
+              },
+              "output": {
+                "exit_code": 0,
+                "status": "success"
+              },
+              "metadata": {
+                "domain": "coding_agent",
+                "type": "test_run",
+                "source": "claude_code_hook",
+                "source_event_ids": [
+                  "evt_4"
+                ],
+                "evidence_types": [
+                  "action_evidence"
+                ],
+                "classification": {
+                  "strategy": "rule",
+                  "reason": "command matched test pattern"
+                }
+              },
+              "events": [],
+              "artifacts": [
+                {
+                  "artifact_id": "artifact_fdae1c91d53443b1a7c02f191a56b7aa",
+                  "name": "Action Evidence",
+                  "kind": "json",
+                  "uri": null,
+                  "content": {
+                    "artifact_type": "coding_action_evidence",
+                    "schema_version": "coding_action_evidence.v1",
+                    "source": "claude_code_hook",
+                    "tool_name": "Bash",
+                    "arguments": {
+                      "command": "python -m pytest -v"
+                    },
+                    "result": {
+                      "exit_code": 0,
+                      "status": "success"
+                    },
+                    "safety": {
+                      "redaction_state": "redacted"
+                    }
+                  },
+                  "metadata": {
+                    "type": "coding_action_evidence"
+                  }
+                }
+              ],
+              "children": []
+            }
+          ]
+        },
+        {
+          "started_at": "2026-05-30T06:49:36.822153Z",
+          "ended_at": "2026-05-30T06:49:36.822168Z",
+          "span_id": "span_314a83cb02954392a1931c892f9553c0",
+          "run_id": "run_e7bbcee2dd6a467d9b91c1aa04b91303",
+          "parent_span_id": "span_b6693b117d624458a5f162357b81081d",
+          "name": "Edit code",
+          "kind": "tool",
+          "status": "success",
+          "input": {
+            "file_path": "<PROJECT_DIR>/src/app.py"
+          },
+          "output": {
+            "status": "success"
+          },
+          "metadata": {
+            "domain": "coding_agent",
+            "type": "code_edit",
+            "source": "claude_code_hook",
+            "source_event_ids": [
+              "evt_3"
+            ],
+            "evidence_types": [
+              "action_evidence"
+            ],
+            "classification": {
+              "strategy": "rule",
+              "reason": "Edit maps to code_edit"
+            }
+          },
+          "events": [],
+          "artifacts": [
+            {
+              "artifact_id": "artifact_ac1d7131e2a14b95aa7006cd6bfebb2f",
+              "name": "Action Evidence",
+              "kind": "json",
+              "uri": null,
+              "content": {
+                "artifact_type": "coding_action_evidence",
+                "schema_version": "coding_action_evidence.v1",
+                "source": "claude_code_hook",
+                "tool_name": "Edit",
+                "arguments": {
+                  "file_path": "<PROJECT_DIR>/src/app.py"
+                },
+                "result": {
+                  "status": "success"
+                },
+                "safety": {
+                  "redaction_state": "redacted"
+                }
+              },
+              "metadata": {
+                "type": "coding_action_evidence"
+              }
+            }
+          ],
+          "children": []
+        },
+        {
+          "started_at": "2026-05-30T06:49:36.822191Z",
+          "ended_at": null,
+          "span_id": "span_ce376c92673b419198b28eb2b22d5444",
+          "run_id": "run_e7bbcee2dd6a467d9b91c1aa04b91303",
+          "parent_span_id": "span_b6693b117d624458a5f162357b81081d",
+          "name": "Verification",
+          "kind": "custom",
+          "status": "running",
+          "input": null,
+          "output": null,
+          "metadata": {
+            "domain": "coding_agent",
+            "type": "verification",
+            "source": "claude_code_hook"
+          },
+          "events": [],
+          "artifacts": [],
+          "children": []
+        },
+        {
+          "started_at": "2026-05-30T06:49:36.822219Z",
+          "ended_at": "2026-05-30T06:49:36.822230Z",
+          "span_id": "span_aaec21ae52c7456fb7a3a67139567231",
+          "run_id": "run_e7bbcee2dd6a467d9b91c1aa04b91303",
+          "parent_span_id": "span_b6693b117d624458a5f162357b81081d",
+          "name": "Workflow Check",
+          "kind": "custom",
+          "status": "success",
+          "input": null,
+          "output": null,
+          "metadata": {
+            "domain": "coding_agent",
+            "type": "workflow_check",
+            "source": "workflow_validator",
+            "evidence_types": [
+              "workflow_finding"
+            ]
+          },
+          "events": [],
+          "artifacts": [
+            {
+              "artifact_id": "artifact_bc6ef841c0434f34ab994d01f511f608",
+              "name": "Workflow Checks",
+              "kind": "json",
+              "uri": null,
+              "content": {
+                "artifact_type": "coding_workflow_checks",
+                "schema_version": "coding_workflow_checks.v1",
+                "status": "pass",
+                "findings": []
+              },
+              "metadata": {
+                "type": "coding_workflow_checks"
+              }
+            }
+          ],
+          "children": []
+        }
+      ]
+    }
+  ],
+  "evaluations": [],
+  "diagnoses": [],
+  "annotations": []
+}

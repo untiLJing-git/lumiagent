@@ -1,0 +1,155 @@
+{
+  "started_at": "2026-05-30T06:49:36.821433Z",
+  "ended_at": "2026-05-30T06:49:36.821498Z",
+  "run_id": "run_3f8fb27bebf6438c9963709960b62c1f",
+  "name": "Claude Code session fixture_session",
+  "status": "success",
+  "input": null,
+  "output": null,
+  "metadata": {
+    "domain": "coding_agent",
+    "source": "claude_code"
+  },
+  "parent_run_id": null,
+  "triggered_by_span_id": null,
+  "root_spans": [
+    {
+      "started_at": "2026-05-30T06:49:36.821438Z",
+      "ended_at": "2026-05-30T06:49:36.821496Z",
+      "span_id": "span_bfd8973c09ad4a4fa027b5d7a5e0f7c7",
+      "run_id": "run_3f8fb27bebf6438c9963709960b62c1f",
+      "parent_span_id": null,
+      "name": "Coding Agent Run",
+      "kind": "custom",
+      "status": "success",
+      "input": null,
+      "output": null,
+      "metadata": {
+        "domain": "coding_agent",
+        "type": "coding_agent_run",
+        "source": "claude_code"
+      },
+      "events": [],
+      "artifacts": [],
+      "children": [
+        {
+          "started_at": "2026-05-30T06:49:36.821457Z",
+          "ended_at": "2026-05-30T06:49:36.821477Z",
+          "span_id": "span_e47392bcb54b45f4a408e27630e52d6d",
+          "run_id": "run_3f8fb27bebf6438c9963709960b62c1f",
+          "parent_span_id": "span_bfd8973c09ad4a4fa027b5d7a5e0f7c7",
+          "name": "Edit code",
+          "kind": "tool",
+          "status": "success",
+          "input": {
+            "file_path": "<PROJECT_DIR>/src/app.py"
+          },
+          "output": {
+            "status": "success"
+          },
+          "metadata": {
+            "domain": "coding_agent",
+            "type": "code_edit",
+            "source": "claude_code_hook",
+            "source_event_ids": [
+              "evt_1"
+            ],
+            "evidence_types": [
+              "action_evidence"
+            ],
+            "classification": {
+              "strategy": "rule",
+              "reason": "Edit maps to code_edit"
+            }
+          },
+          "events": [],
+          "artifacts": [
+            {
+              "artifact_id": "artifact_4092240ac85b4486945b81c8332a58da",
+              "name": "Action Evidence",
+              "kind": "json",
+              "uri": null,
+              "content": {
+                "artifact_type": "coding_action_evidence",
+                "schema_version": "coding_action_evidence.v1",
+                "source": "claude_code_hook",
+                "tool_name": "Edit",
+                "arguments": {
+                  "file_path": "<PROJECT_DIR>/src/app.py"
+                },
+                "result": {
+                  "status": "success"
+                },
+                "safety": {
+                  "redaction_state": "redacted"
+                }
+              },
+              "metadata": {
+                "type": "coding_action_evidence"
+              }
+            }
+          ],
+          "children": []
+        },
+        {
+          "started_at": "2026-05-30T06:49:36.821480Z",
+          "ended_at": "2026-05-30T06:49:36.821494Z",
+          "span_id": "span_10a6b78aee4c4dda9757dfd94e6a7bc8",
+          "run_id": "run_3f8fb27bebf6438c9963709960b62c1f",
+          "parent_span_id": "span_bfd8973c09ad4a4fa027b5d7a5e0f7c7",
+          "name": "Workflow Check",
+          "kind": "custom",
+          "status": "success",
+          "input": null,
+          "output": null,
+          "metadata": {
+            "domain": "coding_agent",
+            "type": "workflow_check",
+            "source": "workflow_validator",
+            "evidence_types": [
+              "workflow_finding"
+            ]
+          },
+          "events": [],
+          "artifacts": [
+            {
+              "artifact_id": "artifact_89f5cbbbbfc64a939bfc50f21d62e5af",
+              "name": "Workflow Checks",
+              "kind": "json",
+              "uri": null,
+              "content": {
+                "artifact_type": "coding_workflow_checks",
+                "schema_version": "coding_workflow_checks.v1",
+                "status": "warning",
+                "findings": [
+                  {
+                    "artifact_type": "coding_workflow_finding",
+                    "schema_version": "coding_workflow_finding.v1",
+                    "rule_id": "code_edit_requires_verification",
+                    "status": "failed",
+                    "severity": "warning",
+                    "summary": "Code was edited without a later test or verification span.",
+                    "evidence_span_ids": [
+                      "span_83be7d9e69af44cca2616e9cf379f59b"
+                    ],
+                    "related_span_ids": [],
+                    "expected": "A code_edit span should be followed by test_run or verification.",
+                    "actual": "No later test_run or verification span was found.",
+                    "confidence": "high"
+                  }
+                ]
+              },
+              "metadata": {
+                "type": "coding_workflow_checks"
+              }
+            }
+          ],
+          "children": []
+        }
+      ]
+    }
+  ],
+  "evaluations": [],
+  "diagnoses": [],
+  "annotations": []
+}

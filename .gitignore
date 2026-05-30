@@ -43,3 +43,7 @@ htmlcov/
 
 # Local worktrees
 .worktrees/
+
+# Local LumiAgent captures
+.lumiagent/sessions/
+.lumiagent/traces/*-raw.json

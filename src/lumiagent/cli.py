@@ -4,11 +4,21 @@ from __future__ import annotations
 import asyncio
 import json
 import pathlib  # noqa: TC003
+import sys
 from typing import Annotated, Any
 
 import click
 import typer
 from rich.console import Console
+
+def _configure_stdio_encoding() -> None:
+    for stream_name in ("stdout", "stderr"):
+        stream = getattr(sys, stream_name, None)
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(encoding="utf-8", errors="replace")
+
+
+_configure_stdio_encoding()
 
 app = typer.Typer(
     name="lumi",
@@ -18,6 +28,8 @@ app = typer.Typer(
 console = Console()
 capture_app = typer.Typer(help="Capture traces from external systems.")
 app.add_typer(capture_app, name="capture")
+setup_app = typer.Typer(help="Configure integrations.")
+app.add_typer(setup_app, name="setup")
 
 
 @app.command()
@@ -172,6 +184,46 @@ def _parse_json_object(raw: str) -> dict[str, Any]:
     return parsed
 
 
+@setup_app.command(name="claude-code")
+def setup_claude_code(
+    settings_path: Annotated[
+        pathlib.Path,
+        typer.Option("--settings-path", help="Claude Code settings path to update."),
+    ] = pathlib.Path(".claude/settings.json"),
+    verify: Annotated[
+        bool,
+        typer.Option("--verify", help="Only verify whether hooks are active in this session."),
+    ] = False,
+) -> None:
+    from lumiagent.adapters.claude_code.setup import (
+        ClaudeCodeSettingsError,
+        configure_claude_code_hooks,
+        inspect_claude_code_hook_activation,
+    )
+
+    try:
+        result = (
+            inspect_claude_code_hook_activation()
+            if verify
+            else configure_claude_code_hooks(settings_path)
+        )
+    except ClaudeCodeSettingsError as exc:
+        raise click.ClickException(f"Claude Code settings are incompatible: {exc}") from exc
+    console.print(f"Claude Code settings: {result.settings_path}")
+    if not verify:
+        console.print(f"Updated: {result.updated}")
+        console.print(
+            f"Configured hooks: {', '.join(result.configured_hooks) or 'already configured'}"
+        )
+    console.print(f"Current session: {result.session_id or 'not detected'}")
+    console.print(f"Activation: {result.activation_status}")
+    if result.events_path is not None:
+        console.print(f"Events path: {result.events_path}")
+    console.print(f"Next step: {result.activation_hint}")
+    if result.activation_status == "needs_reload":
+        console.print("Verify: lumiagent setup claude-code --verify")
+
+
 @capture_app.command(name="mcp")
 def capture_mcp(
     server_command: Annotated[
@@ -231,9 +283,14 @@ def capture_mcp(
 @app.command()
 def show(
     trace_path: Annotated[pathlib.Path, typer.Argument(help="Trace JSON file to render.")],
+    checks: Annotated[
+        bool,
+        typer.Option("--checks", help="Show workflow check details."),
+    ] = False,
 ) -> None:
-    """Render a plain-text MCP trace summary."""
+    """Render a plain-text trace summary."""
 
+    from lumiagent.adapters.coding.viewer import is_coding_trace, render_coding_trace_summary
     from lumiagent.adapters.mcp.viewer import render_mcp_trace_summary
     from lumiagent.tracing.serializer import from_json
 
@@ -241,8 +298,68 @@ def show(
         run = from_json(trace_path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError, KeyError, TypeError, ValueError) as exc:
         raise click.ClickException(f"Invalid trace JSON: {exc}") from exc
-    for line in render_mcp_trace_summary(run):
+    if is_coding_trace(run):
+        lines = render_coding_trace_summary(run, show_checks=checks)
+    else:
+        lines = render_mcp_trace_summary(run)
+    for line in lines:
         console.print(line)
+
+
+@app.command(name="trace")
+def trace_session(
+    session_id: Annotated[str, typer.Argument(help="Claude Code session ID to convert.")],
+    output: Annotated[
+        pathlib.Path,
+        typer.Option(..., "-o", "--output", help="Trace JSON output path."),
+    ],
+    sessions_dir: Annotated[
+        pathlib.Path,
+        typer.Option(
+            "--sessions-dir",
+            help="Directory containing LumiAgent session event folders.",
+        ),
+    ] = pathlib.Path(".lumiagent/sessions"),
+    transcript_path: Annotated[
+        pathlib.Path | None,
+        typer.Option("--transcript-path", help="Optional transcript path for semantic enrichment."),
+    ] = None,
+) -> None:
+    from lumiagent.adapters.claude_code.converter import ClaudeCodeTraceConverter
+    from lumiagent.adapters.claude_code.events import read_hook_events
+    from lumiagent.adapters.claude_code.transcript import enrich_transcript
+    from lumiagent.adapters.coding.viewer import render_coding_trace_summary
+    from lumiagent.tracing.serializer import to_json
+
+    events_path = sessions_dir / session_id / "events.jsonl"
+    if not events_path.exists():
+        raise click.ClickException(f"Session events not found: {events_path}")
+    events = read_hook_events(events_path)
+    semantic_items = None
+    enrichment_status = "unavailable"
+    if transcript_path is not None:
+        enrichment = enrich_transcript(transcript_path, session_id=session_id)
+        semantic_items = [item.model_dump(mode="json") for item in enrichment.items]
+        enrichment_status = enrichment.status
+    run = ClaudeCodeTraceConverter().convert(
+        session_id=session_id,
+        events=events,
+        semantic_items=semantic_items,
+    )
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text(to_json(run), encoding="utf-8")
+    summary = render_coding_trace_summary(run)
+    workflow_status = next(
+        (
+            line.strip().removeprefix("status: ")
+            for line in summary
+            if line.strip().startswith("status: ")
+        ),
+        "not_applicable",
+    )
+    console.print(f"Trace written: {output}")
+    console.print(f"Workflow checks: {workflow_status}")
+    console.print(f"Transcript enrichment: {enrichment_status}")
 
 
 @app.command()
