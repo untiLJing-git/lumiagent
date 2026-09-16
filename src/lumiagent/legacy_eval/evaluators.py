@@ -4,7 +4,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import Any, Optional
 
-from lumiagent.evaluation.metrics import EvalCase, MetricCategory, Score
+from lumiagent.legacy_eval.metrics import EvalCase, MetricCategory, Score
 from lumiagent.logging import get_logger
 
 logger = get_logger(__name__)

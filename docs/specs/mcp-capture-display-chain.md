@@ -125,11 +125,13 @@ McpCaptureStrategy
 Future implementations should fit the same concept:
 
 ```text
-ClaudeCodeHooksStrategy
+ClaudeCodeHooksStrategy   (reserved; Phase 3 delivered hooks + converter, not the strategy class)
 TranscriptImportStrategy
 SdkDecoratorStrategy
 McpProxyStrategy
 ```
+
+`ClaudeCodeHooksStrategy` stays reserved. The Claude Code hooks product path remains open; wrapping the existing hooks-to-`AgentRun` pipeline as a `CaptureStrategy` is deferred and must not replace the current converter.
 
 ## 7. MCP Client Runtime
 

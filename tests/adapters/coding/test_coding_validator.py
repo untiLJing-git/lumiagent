@@ -8,14 +8,31 @@ def _run_with_spans(span_types: list[tuple[str, SpanStatus]]) -> AgentRun:
         "Coding Agent Run",
         metadata={"domain": "coding_agent", "type": "coding_agent_run"},
     )
-    for span_type, status in span_types:
+    # These are controlled, complete synthetic workflows with explicit order and links.
+    builder.run.metadata["capture_capabilities"] = {
+        "workflow_coverage": "complete",
+        "coverage_basis": "controlled synthetic workflow",
+    }
+    last_error = None
+    for sequence, (span_type, status) in enumerate(span_types, start=1):
         span_id = builder.start_span(
             span_type.replace("_", " ").title(),
             kind=SpanKind.TOOL,
             parent_span_id=root_id,
-            metadata={"domain": "coding_agent", "type": span_type},
+            metadata={
+                "domain": "coding_agent",
+                "type": span_type,
+                "source_order": {
+                    "session_id": "synthetic",
+                    "sequence_start": sequence,
+                    "sequence_end": sequence,
+                },
+                "related_span_ids": [last_error] if last_error else [],
+            },
         )
         builder.end_span(span_id, status=status)
+        if status == SpanStatus.ERROR:
+            last_error = span_id
     builder.end_span(root_id, status=SpanStatus.SUCCESS)
     return builder.build(status=RunStatus.SUCCESS)
 
@@ -53,10 +70,12 @@ def test_failed_command_without_recovery_warns() -> None:
 
 def test_failed_command_with_recovery_passes() -> None:
     checks = validate_coding_workflow(
-        _run_with_spans([
-            ("shell_command", SpanStatus.ERROR),
-            ("failure_recovery", SpanStatus.SUCCESS),
-        ])
+        _run_with_spans(
+            [
+                ("shell_command", SpanStatus.ERROR),
+                ("failure_recovery", SpanStatus.SUCCESS),
+            ]
+        )
     )
 
     assert checks.status == "pass"
@@ -64,10 +83,12 @@ def test_failed_command_with_recovery_passes() -> None:
 
 def test_permission_denied_followed_by_risky_action_errors() -> None:
     checks = validate_coding_workflow(
-        _run_with_spans([
-            ("approval_decision", SpanStatus.ERROR),
-            ("shell_command", SpanStatus.SUCCESS),
-        ])
+        _run_with_spans(
+            [
+                ("approval_decision", SpanStatus.ERROR),
+                ("shell_command", SpanStatus.SUCCESS),
+            ]
+        )
     )
 
     assert checks.status == "error"
@@ -76,10 +97,12 @@ def test_permission_denied_followed_by_risky_action_errors() -> None:
 
 def test_final_response_after_unresolved_error_warns() -> None:
     checks = validate_coding_workflow(
-        _run_with_spans([
-            ("error_observed", SpanStatus.ERROR),
-            ("final_response", SpanStatus.SUCCESS),
-        ])
+        _run_with_spans(
+            [
+                ("error_observed", SpanStatus.ERROR),
+                ("final_response", SpanStatus.SUCCESS),
+            ]
+        )
     )
 
     assert checks.status == "warning"
@@ -126,7 +149,7 @@ def test_final_response_after_recovered_error_passes() -> None:
     assert checks.status == "pass"
 
 
-def test_nested_spans_are_flattened_in_workflow_order() -> None:
+def test_nested_spans_use_explicit_source_order() -> None:
     builder = TraceBuilder(name="coding run")
     root_id = builder.start_span(
         "Coding Agent Run",
@@ -142,7 +165,11 @@ def test_nested_spans_are_flattened_in_workflow_order() -> None:
         "Code Edit",
         kind=SpanKind.TOOL,
         parent_span_id=edit_group_id,
-        metadata={"domain": "coding_agent", "type": "code_edit"},
+        metadata={
+            "domain": "coding_agent",
+            "type": "code_edit",
+            "source_order": {"session_id": "synthetic", "sequence_start": 1, "sequence_end": 1},
+        },
     )
     builder.end_span(edit_id, status=SpanStatus.SUCCESS)
     builder.end_span(edit_group_id, status=SpanStatus.SUCCESS)
@@ -150,11 +177,19 @@ def test_nested_spans_are_flattened_in_workflow_order() -> None:
         "Test Run",
         kind=SpanKind.TOOL,
         parent_span_id=root_id,
-        metadata={"domain": "coding_agent", "type": "test_run"},
+        metadata={
+            "domain": "coding_agent",
+            "type": "test_run",
+            "source_order": {"session_id": "synthetic", "sequence_start": 2, "sequence_end": 2},
+        },
     )
     builder.end_span(test_id, status=SpanStatus.SUCCESS)
     builder.end_span(root_id, status=SpanStatus.SUCCESS)
 
+    builder.run.metadata["capture_capabilities"] = {
+        "workflow_coverage": "complete",
+        "coverage_basis": "controlled nested workflow",
+    }
     checks = validate_coding_workflow(builder.build(status=RunStatus.SUCCESS))
 
     assert checks.status == "pass"

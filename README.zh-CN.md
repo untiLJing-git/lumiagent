@@ -264,8 +264,15 @@ MCP Tool Chain 层是 adapter evidence layer：它记录工具发现、schema sn
 - [x] MCP Tool Chain evidence model
 - [x] MCP 采集 + 展示链（统一 `CaptureStrategy` 入口）
 - [x] Coding Agent trace model + Claude Code hooks 采集 + CLI Viewer
-- [ ] Evaluation / Diagnosis Agent（基于 LumiAgent 自身 Agent 基础设施）
+- [x] P4-P：证据就绪、源时序与 legacy eval 隔离
+- [ ] Evaluation / Diagnosis 系统（证据修复 → 任务验证 → 技能化评测 → 诊断 → 改进复跑）
 - [ ] Replay / Visualization 数据准备
+
+P4-P 已完成人工评审、实现与本地验收；任务执行、正式评测、诊断和实验仍待实施。详见 [Phase 4 规格](docs/specs/evaluation-diagnosis-engine.md)。最小 Trial/Experiment 与复跑验证属于 Phase 4，Phase 5 负责展示数据接口。
+
+[Phase 4 总实施计划](docs/superpowers/plans/2026-09-15-phase4-implementation-roadmap.md) 提供五组阶段设计与实施计划入口。P4-P 计划已执行，其余四批未启动。见 [P4-P 技术报告](docs/reports/phase4-evidence-readiness-technical-report.zh-CN.md)。
+
+P4-P 验证：225 项测试通过，ruff/mypy 通过。`lumi eval` 现仅提示迁移并退出 2；遗留聊天评分使用 `lumi legacy-eval`，已有缺陷未修复。旧 trace 缺少新证据时，`show --checks` 显示 unknown，而非直接沿用历史 pass。
 
 ### 未来阶段
 

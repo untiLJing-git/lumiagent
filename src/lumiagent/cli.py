@@ -1,4 +1,5 @@
 """CLI entry point for LumiAgent."""
+
 from __future__ import annotations
 
 import asyncio
@@ -11,6 +12,7 @@ import click
 import typer
 from rich.console import Console
 
+
 def _configure_stdio_encoding() -> None:
     for stream_name in ("stdout", "stderr"):
         stream = getattr(sys, stream_name, None)
@@ -22,7 +24,7 @@ _configure_stdio_encoding()
 
 app = typer.Typer(
     name="lumi",
-    help="LumiAgent - Multi-platform AI Agent with ReAct, RAG, and MCP",
+    help="LumiAgent - Agent Trace, Evaluation and Optimization Loop",
     no_args_is_help=True,
 )
 console = Console()
@@ -129,14 +131,33 @@ async def _run_ingest(source: str, collection: str) -> None:
 
 @app.command(name="eval")
 def evaluate(
-    eval_set: str = typer.Argument(help="Name of the evaluation set"),
-    output: str | None = typer.Option(None, help="Output report path"),
+    trace_path: Annotated[
+        str | None, typer.Argument(help="Reserved trace evaluation input.")
+    ] = None,
+    output: Annotated[str | None, typer.Option(help="Reserved report output path.")] = None,
 ) -> None:
-    """Run evaluation suite against the Agent."""
-    asyncio.run(_run_eval(eval_set, output))
+    """Reserved for Phase 4a trace evaluation (not implemented)."""
+    console.print(
+        "Trace evaluation is not implemented yet. "
+        "The deprecated chat suite moved to: lumi legacy-eval <eval-set>."
+    )
+    raise typer.Exit(code=2)
 
 
-async def _run_eval(eval_set: str, output: str | None) -> None:
+@app.command(name="legacy-eval")
+def legacy_evaluate(
+    eval_set: Annotated[str, typer.Argument(help="Legacy chat evaluation set name.")],
+    output: Annotated[str | None, typer.Option(help="Legacy report output path.")] = None,
+) -> None:
+    """Legacy chat scoring, not Phase 4; deprecated and not guaranteed operational."""
+    console.print(
+        "Warning: legacy-eval is deprecated, not Phase 4 evaluation; "
+        "the legacy scorer has known limitations."
+    )
+    asyncio.run(_run_legacy_eval(eval_set, output))
+
+
+async def _run_legacy_eval(eval_set: str, output: str | None) -> None:
     from lumiagent.config import get_settings
     from lumiagent.logging import setup_logging
 
@@ -145,7 +166,7 @@ async def _run_eval(eval_set: str, output: str | None) -> None:
     setup_logging(level=settings.log_level)
 
     from lumiagent.agent import create_agent
-    from lumiagent.evaluation.suite import EvaluationSuite
+    from lumiagent.legacy_eval.suite import EvaluationSuite
 
     agent = await create_agent(settings)
     suite = EvaluationSuite(config=settings.evaluation)
@@ -271,9 +292,7 @@ def capture_mcp(
         raise click.ClickException(f"MCP capture failed: {exc}") from exc
     except NotImplementedError as exc:
         message = str(exc) or "MCP capture is not implemented yet"
-        raise click.ClickException(
-            f"MCP stdio capture is not implemented yet: {message}"
-        ) from exc
+        raise click.ClickException(f"MCP stdio capture is not implemented yet: {message}") from exc
 
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(to_json(run), encoding="utf-8")
@@ -303,7 +322,7 @@ def show(
     else:
         lines = render_mcp_trace_summary(run)
     for line in lines:
-        console.print(line)
+        console.print(line, markup=False)
 
 
 @app.command(name="trace")
@@ -326,33 +345,46 @@ def trace_session(
     ] = None,
 ) -> None:
     from lumiagent.adapters.claude_code.converter import ClaudeCodeTraceConverter
-    from lumiagent.adapters.claude_code.events import read_hook_events
+    from lumiagent.adapters.claude_code.events import read_hook_events, session_events_path
     from lumiagent.adapters.claude_code.transcript import enrich_transcript
     from lumiagent.adapters.coding.viewer import render_coding_trace_summary
     from lumiagent.tracing.serializer import to_json
 
-    events_path = sessions_dir / session_id / "events.jsonl"
+    try:
+        events_path = session_events_path(sessions_dir, session_id)
+    except (OSError, ValueError) as exc:
+        raise click.ClickException(f"Invalid session: {exc}") from exc
     if not events_path.exists():
         raise click.ClickException(f"Session events not found: {events_path}")
-    events = read_hook_events(events_path)
+    try:
+        events = read_hook_events(events_path)
+    except (OSError, ValueError) as exc:
+        raise click.ClickException(f"Invalid session events: {exc}") from exc
     semantic_items = None
     enrichment_status = "unavailable"
     if transcript_path is not None:
         enrichment = enrich_transcript(transcript_path, session_id=session_id)
         semantic_items = [item.model_dump(mode="json") for item in enrichment.items]
         enrichment_status = enrichment.status
-    run = ClaudeCodeTraceConverter().convert(
-        session_id=session_id,
-        events=events,
-        semantic_items=semantic_items,
-    )
-    output.parent.mkdir(parents=True, exist_ok=True)
-    output.write_text(to_json(run), encoding="utf-8")
+    try:
+        run = ClaudeCodeTraceConverter().convert(
+            session_id=session_id,
+            events=events,
+            semantic_items=semantic_items,
+        )
+        output.parent.mkdir(parents=True, exist_ok=True)
+        with output.open("x", encoding="utf-8") as handle:
+            handle.write(to_json(run))
+    except FileExistsError as exc:
+        raise click.ClickException(f"Refusing to overwrite existing trace: {output}") from exc
+    except (OSError, ValueError) as exc:
+        raise click.ClickException(f"Invalid session or trace output: {exc}") from exc
     summary = render_coding_trace_summary(run)
+    workflow_lines = summary[summary.index("Workflow Checks") + 1 :]
     workflow_status = next(
         (
             line.strip().removeprefix("status: ")
-            for line in summary
+            for line in workflow_lines
             if line.strip().startswith("status: ")
         ),
         "not_applicable",

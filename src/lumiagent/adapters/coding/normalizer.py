@@ -1,4 +1,5 @@
 """Normalize source-specific tool events into Coding Agent events."""
+
 from __future__ import annotations
 
 import shlex
@@ -29,19 +30,18 @@ def normalize_hook_event(event: ClaudeCodeHookEvent) -> NormalizedCodingEvent:
     convention, parent, name, reason = _classify(event)
     status = _status(event)
     evidence = CodingActionEvidence(
+        schema_version="coding_action_evidence.v2",
         tool_name=event.tool_name,
+        server_name=_server_name(event),
+        raw_result=event.payload.get("tool_response", event.payload.get("result")),
+        schema_status="unverified" if event.payload.get("tool_schema") else "unavailable",
         arguments=_arguments(event.payload),
         result=_result(event.payload),
         safety=event.safety,
     )
-    source_event_ids = event.payload.get("_source_event_ids")
     return NormalizedCodingEvent(
         event_id=f"coding_{event.event_id}",
-        source_event_ids=(
-            [str(item) for item in source_event_ids]
-            if isinstance(source_event_ids, list)
-            else [event.event_id]
-        ),
+        source_event_ids=[event.event_id],
         session_id=event.session_id,
         sequence=event.sequence,
         timestamp=event.timestamp,
@@ -71,6 +71,8 @@ def _classify(event: ClaudeCodeHookEvent) -> tuple[str, str | None, str, str]:
             "Approval decision",
             "Claude Code permission denial event",
         )
+    if _server_name(event) is not None or (tool_name or "").startswith("mcp__"):
+        return "mcp_tool_execution", None, "Use MCP tool", "MCP identity; semantics not inferred"
     if tool_name in {"Glob", "Grep"}:
         return (
             CODING_FILE_SEARCH,
@@ -96,7 +98,16 @@ def _classify(event: ClaudeCodeHookEvent) -> tuple[str, str | None, str, str]:
                 "command matched verification pattern",
             )
         return CODING_SHELL_COMMAND, None, "Run shell command", "generic Bash command"
-    return CODING_SHELL_COMMAND, None, "Use tool", "fallback tool mapping"
+    return "tool_action", None, "Use tool", "unknown tool; not assumed to be a shell"
+
+
+def _server_name(event: ClaudeCodeHookEvent) -> str | None:
+    value = event.payload.get("server_name") or event.payload.get("mcp_server_name")
+    if isinstance(value, str) and value:
+        return value
+    name = event.tool_name or ""
+    parts = name.split("__", 2)
+    return parts[1] if len(parts) == 3 and parts[0] == "mcp" and parts[1] else None
 
 
 def _arguments(payload: dict[str, Any]) -> dict[str, Any]:
@@ -109,7 +120,40 @@ def _arguments(payload: dict[str, Any]) -> dict[str, Any]:
     return {
         key: value
         for key, value in payload.items()
-        if key not in {"status", "duration_ms", "tool_response", "result"}
+        if key
+        not in {
+            "status",
+            "duration_ms",
+            "tool_response",
+            "result",
+            "tool_input",
+            "arguments",
+            "event_id",
+            "session_id",
+            "sequence",
+            "event_index",
+            "timestamp",
+            "source",
+            "tool_name",
+            "tool_use_id",
+            "call_id",
+            "agent_id",
+            "subagent_id",
+            "phase",
+            "hook_name",
+            "hook_event_name",
+            "cwd",
+            "server_name",
+            "mcp_server_name",
+            "exit_code",
+            "stdout_summary",
+            "stderr_summary",
+            "output_truncated",
+            "decision",
+            "permission_decision",
+            "isError",
+            "tool_schema",
+        }
     }
 
 
@@ -137,21 +181,30 @@ def _result(payload: dict[str, Any]) -> dict[str, Any]:
 
 def _status(event: ClaudeCodeHookEvent) -> CodingStatus:
     payload = event.payload
-    if _is_denied_permission(payload):
+    if _is_denied_permission(payload) or event.phase == "error":
+        return "error"
+    result = _result(payload)
+    raw = payload.get("tool_response", payload.get("result"))
+    if (isinstance(raw, dict) and raw.get("isError") is True) or result.get("isError") is True:
+        return "error"
+    is_mcp = _server_name(event) is not None or (event.tool_name or "").startswith("mcp__")
+    # Business data named status/exit_code inside an MCP result is not a protocol failure.
+    exit_code = result.get("exit_code", payload.get("exit_code")) if not is_mcp else None
+    if isinstance(exit_code, int) and not isinstance(exit_code, bool) and exit_code != 0:
         return "error"
     status = payload.get("status")
-    if status == "success":
-        return "success"
     if status == "error":
         return "error"
     if status == "running":
         return "running"
     if status == "unknown":
         return "unknown"
-    result = _result(payload)
-    exit_code = result.get("exit_code", payload.get("exit_code"))
-    if exit_code not in {None, 0}:
-        return "error"
+    if event.phase in {"tool_request", "permission_request"}:
+        return "unknown"
+    if exit_code is not None and (not isinstance(exit_code, int) or isinstance(exit_code, bool)):
+        return "unknown"
+    if status == "success":
+        return "success"
     if event.phase == "tool_result" and result:
         return "success"
     return "unknown"
@@ -160,7 +213,7 @@ def _status(event: ClaudeCodeHookEvent) -> CodingStatus:
 def _flatten_tool_response(tool_response: dict[str, Any]) -> dict[str, Any]:
     result = tool_response.get("result")
     if isinstance(result, dict):
-        return result
+        return {**tool_response, **result}
     return tool_response
 
 

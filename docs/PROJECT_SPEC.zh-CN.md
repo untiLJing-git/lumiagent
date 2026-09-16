@@ -61,7 +61,7 @@ LumiAgent 当前主线由四部分组成：
 - Artifact
 - Evaluation
 - Diagnosis
-- Experiment
+- Experiment（Phase 4 先在评测层实现最小记录，不是现有 Core 必填模型）
 - Annotation
 
 核心要求：
@@ -108,23 +108,16 @@ LumiAgent 当前主线由四部分组成：
 
 ### 5.4 Evaluation / Diagnosis
 
-面向 Agent 工作流的评测与诊断能力：
+面向真实 Coding Agent / MCP 任务提供两类能力：
 
-- context gathering diagnosis
-- tool selection diagnosis
-- tool argument diagnosis
-- tool result faithfulness
-- verification sufficiency
-- failure recovery diagnosis
-- risk control diagnosis
+- Evaluation：验证结果正确性、过程可靠性、约束安全和效率稳定性。
+- Diagnosis：定位失败、区分责任层、分析证据与反证，提出可验证的改进建议。
 
-输出应包含：
+两者均可使用确定性程序、工具和受约束的 LLM 分析，不按是否使用 LLM 划分职责。
 
-- score
-- reason
-- evidence span
-- failure type
-- suggested fix
+评测结果使用 `pass / fail / unknown / not_applicable`，包含理由、适用范围和证据；分数只在评分规则明确时提供。诊断包含观察事实、原因假设、证据、建议与验证方案。证据不足时必须说明限制或暂不归因。
+
+支持离线 trace 审计与受控任务评测。任务整体通过必须有任务合同和有效验收证据，不能仅凭工具返回成功或没有 workflow finding。
 
 ## 6. MVP 阶段规划（近期）
 
@@ -183,14 +176,16 @@ LumiAgent 当前主线由四部分组成：
 
 ```text
 CaptureStrategy
-├── McpCaptureStrategy          (Phase 2b)
-├── ClaudeCodeHooksStrategy     (Phase 3)
+├── McpCaptureStrategy          (Phase 2b，已实现)
+├── ClaudeCodeHooksStrategy     (预留；hooks 采集路径已存在)
 ├── TranscriptImportStrategy    (未来)
 ├── SdkDecoratorStrategy        (Phase 6)
 └── McpProxyStrategy            (Phase 6)
 ```
 
 各策略的具体采集机制在该策略实现时定义。
+
+`ClaudeCodeHooksStrategy` 保持开放预留，不视为放弃。Phase 3 已经使用 Claude Code 文档化的 hooks 产品能力（`PreToolUse`、`PostToolUse`、`PostToolUseFailure`、`PermissionRequest`）写入 LumiAgent 自有的 `events.jsonl`，再通过 `ClaudeCodeTraceConverter` 和 `TraceWriter` 重建 `AgentRun`。预留的 strategy 是这条 hooks 路径上的后续门面，不是另一套采集机制，也不要求重开 Phase 3。Claude Code 官方 hooks 仍是公开产品能力，且已扩展到当前四个工具生命周期事件之外；后续可以按需订阅 `UserPromptSubmit`、`Stop`、`SessionStart`、`SessionEnd` 等事件，而不改 Trace Core。
 
 验收标准：
 
@@ -241,27 +236,35 @@ CaptureStrategy
 - hook setup 可以暴露当前会话是 `active`、`needs_reload` 还是 `not_in_claude_code`，并记录 `needs_reload` 时的 `/hooks` 热加载路径
 - trace 可在 CLI Viewer 中查看
 
-### Phase 4: Evaluation / Diagnosis Engine
+### Phase 4: Evaluation / Diagnosis Engine — P4-P 已完成，其余批次待实施
 
-目标：建立评测与诊断引擎，以 Diagnosis Agent 形式实现，基于 LumiAgent 自身的 Agent 基础设施（ReActEngine、ToolRegistry、RAGPipeline、MemoryManager）。
+目标：建立可执行的任务评测、证据调查、诊断与改进验证闭环。P4-P 前置修复与迁移已完成本地验收；正式评测、诊断和实验尚未实现。
 
-交付物：
+详细要求以 [Phase 4 加强版规格](specs/evaluation-diagnosis-engine.md) 为准。
 
-- Diagnosis Agent，配备专用 system prompt 和推理策略
-- trace 分析专用工具集：`read_span_tree`、`inspect_span`、`extract_evidence`、`query_knowledge`、`compare_arguments`、`check_workflow_pattern`、`compare_traces`
-- 规则引擎层，作为快速预检工具（确定性检查，无需 LLM）
-- LLM 推理层，通过 ReAct 循环进行多步分析
-- 初始评估规则集，加载到 RAGPipeline
-- `KnowledgeProvider` 接口，为未来专家知识库扩展预留
-- diagnosis report schema
+五个批次的设计与逐任务实施计划见 [Phase 4 总实施计划](superpowers/plans/2026-09-15-phase4-implementation-roadmap.md)。P4-P 已完成人工评审及本地实现验收，其余批次未执行；技术报告只在各批实际实现并验证后创建。
 
-验收标准：
+| 批次 | 交付范围 |
+|---|---|
+| P4-P | 已完成：修复证据引用、调用关联和时序；声明采集能力；隔离 legacy eval |
+| P4-A1 | 任务与 Trial 合同、真实 Agent runner、独立 verifier、6 个首批任务 |
+| P4-A2 | 技能化评测、证据审计、24 个任务、结构化 Evaluation 与 CLI |
+| P4-B1 | Diagnosis、48 条人工审核轨迹、简单基线对照和自身 trace |
+| P4-B2 | 最小 Experiment、人工批准的干预、受控复跑与比较 |
 
-- Diagnosis Agent 可以接收 trace.json，通过 ReAct 循环分析，产出包含 score、reason、evidence_span_ids 和 suggested_fix 的 Evaluation 与 Diagnosis 记录
-- 可以定位至少三类失败：上下文不足、工具误用（含 MCP 参数错误）、验证缺失
-- Diagnosis Agent 自身执行过程可被 trace 捕获（dogfooding）
-- 评测结果包含 score、reason、evidence span 和 suggested fix
-- 至少一个端到端示例：Phase 3 产出的真实 trace → Diagnosis Agent → 结构化诊断报告
+核心验收要求：
+
+- 支持离线 trace 审计与可重置环境中的真实任务评测。
+- 结果、过程、硬约束和效率分别报告；unknown 不计为成功。
+- 所有正式证据引用有效，时序与工具请求/结果关联可核验。
+- Coding、MCP、组合任务均包含真实来源与真实 Agent 执行。
+- 诊断支持多原因、反证和暂不归因；质量阈值在留出集运行前冻结。
+- 至少两个不同改进层级的受控实验，覆盖 Coding 与 MCP/组合场景；结果如实报告。
+- 评测、验证器与诊断自身可被 trace 记录，不混入被测 Agent 的过程或成本。
+
+首个闭环优先使用已有 Claude Code hooks 路径，不要求先实现自己的 Coding Agent。ReActEngine、ToolRegistry 等按实际接口与质量需要复用；RAGPipeline、MemoryManager 和旧 EvaluationSuite 不是前置依赖。保留可选 KnowledgeProvider，完整知识库仍属后续阶段。
+
+旧包已迁至 `lumiagent.legacy_eval`，旧命令为 `lumi legacy-eval`。`lumi eval` 只给迁移提示并退出 2，不启动 Agent；正式 trace evaluation 仍未交付。见 [P4-P 技术报告](reports/phase4-evidence-readiness-technical-report.zh-CN.md)。
 
 ### Phase 5: Replay / Visualization Preparation
 
@@ -275,7 +278,7 @@ CaptureStrategy
 - diagnosis summary data model
 - CLI Viewer 升级为消费 view model 的正式版本（基础版在 Phase 2b 创建）
 - trace diff 视图：`lumiagent diff trace1.json trace2.json` 用于对比成功和失败的 run
-- Experiment 容器模型：将多个 Run 组织在一起进行横向评估
+- Experiment 比较 view model：复用 Phase 4 最小实验记录，为任务、配置和重复运行提供展示接口
 
 验收标准：
 
@@ -295,7 +298,7 @@ CaptureStrategy
 - `parent_run_id: Optional[str]` — 触发本次 run 的父 run
 - `triggered_by_span_id: Optional[str]` — 父 run 中触发本次 run 的 span
 
-Phase 3-5 不使用这两个字段，但 schema 和序列化必须支持。
+schema 和序列化必须保留兼容支持。Phase 4 首版使用报告级字段关联被测 Agent、验证器和诊断器，不将评测对象误作触发者，也不依赖改变这两个字段的现有校验语义。
 
 ### 7.2 Span 级别序列化
 
@@ -326,13 +329,29 @@ Phase 3 的 hooks converter 是该接口的第一个消费者。未来 SDK decor
 - 为专家知识库（Phase 8）提供训练素材（annotation → knowledge rule）
 - 随着使用量增加实现有监督评估
 
-Phase 3-5 不实现完整标注工作流，但 Core 中应预留 Annotation 模型，与 Evaluation 和 Diagnosis 并列。
+Phase 4 使用版本化标注文件和人工复核构建诊断校准集，可复用 Annotation；完整标注 UI 和反馈平台不在本阶段范围。
 
 ### 7.5 隐私脱敏管线
 
 在 `CaptureStrategy` 管线中定义可选的脱敏接口。真实 Agent 的 trace 可能包含源代码、API key、credentials 等敏感数据。
 
-脱敏层在存储或分享前对敏感内容进行剥离或掩码。Phase 2b-5 不实现完整脱敏，但管线挂载点应存在，使各 `CaptureStrategy` 实现可以选择性接入。
+脱敏层在存储或分享前对敏感内容进行剥离或掩码。Phase 4 必须复用并补足样例脱敏、外发检查、敏感资产隔离和证据缺口标记；通用可配置脱敏平台仍不在 Phase 2b-5 范围。
+
+### 7.6 预留 ClaudeCodeHooksStrategy
+
+将 `ClaudeCodeHooksStrategy` 作为现有 Claude Code hooks 采集路径上开放的 `CaptureStrategy` 适配器保留。Phase 3 已经证明 hooks 可以采集真实会话；缺的只是 strategy 门面，不是新的采集源。
+
+预留形态：
+
+```text
+setup / 正在运行的 Claude Code 会话
+  -> hooks 写入 events.jsonl
+  -> ClaudeCodeHooksStrategy.capture()
+  -> ClaudeCodeTraceConverter + TraceWriter
+  -> AgentRun
+```
+
+Phase 4-5 不必实现这个类。不要把 hooks 路径视为关闭，也不要用仅依赖 transcript 的采集替换 hooks。
 
 ## 8. 未来阶段
 
@@ -401,8 +420,8 @@ Phase 3-5 不实现完整标注工作流，但 Core 中应预留 Annotation 模�
 - Coding Agent / MCP 是首个落地场景，不应污染通用 Core
 - 兼容未来 SDK、hooks、MCP proxy、CLI wrapper、transcript importer 等采集方式
 - 采集层与模型层解耦：trace 的产生方式（hooks / SDK / proxy / importer）不应影响 Core 数据模型
-- 评估结果由 Agent 产生：诊断和评估通过 Diagnosis Agent 的结构化推理生成，而非仅靠硬编码规则
-- 自身可观测：LumiAgent 的 Diagnosis Agent 自身执行过程应可被 trace 捕获（dogfooding）
+- 评测与诊断按职责分层：确定性验证、专业工具与受约束的 Agent 分析共同形成结论；证据必须可审核，信息不足时不得强行评分或归因
+- 自身可观测：验证器、评测与诊断过程均应独立记录 trace（dogfooding），不污染被测 Agent 的执行证据
 
 ## 12. 功能取舍标准
 

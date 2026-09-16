@@ -47,3 +47,10 @@ htmlcov/
 # Local LumiAgent captures
 .lumiagent/sessions/
 .lumiagent/traces/*-raw.json
+
+# Local benchmark sources, runs, and throwaway Python deps
+.lumiagent/sources/
+.lumiagent/benchmarks/
+.lumiagent/assessments/
+.lumiagent/config/
+.lumiagent/pydeps/

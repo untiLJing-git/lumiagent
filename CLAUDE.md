@@ -59,12 +59,21 @@ All implementation work must follow these rules:
    - The report should cover technology choices, syntax/style rules, design patterns, implementation highlights, validation results, risks, trade-offs, and follow-up suggestions.
    - Use a path that matches the implemented stage, such as `docs/reports/trace-core-mvp-technical-report.zh-CN.md`.
 
+## Documentation Layout
+
+- `docs/specs/` is the canonical requirements, contract, behavior, and acceptance reference.
+- `docs/superpowers/specs/` contains dated stage designs linked to the canonical specification.
+- `docs/superpowers/plans/` contains dated implementation plans with Goal, Architecture, Tech Stack, File Structure, Task/Files, unchecked steps, concrete tests, commands, and expected results.
+- `docs/reports/` is reserved for Chinese stage implementation technical reports written after implementation and verification. Do not place specification delivery records, documentation change logs, or placeholder reports there.
+- Keep documentation-only progress and verification notes concise in `docs/HANDOFF.zh-CN.md`.
+- Draft documents must not claim approval, executed tasks, real-path validation, or delivered functionality. Planning does not authorize implementation, delegation, paid runs, or commits.
+
 ## Verification Commands
 
 ```powershell
 python -m pytest -v
-python -m ruff check src/lumiagent/tracing src/lumiagent/adapters tests/tracing tests/adapters
-python -m mypy src/lumiagent/tracing src/lumiagent/adapters
+python -m ruff check src/lumiagent/tracing src/lumiagent/adapters src/lumiagent/capture src/lumiagent/evaluation src/lumiagent/cli.py tests
+python -m mypy src/lumiagent/tracing src/lumiagent/adapters src/lumiagent/capture src/lumiagent/evaluation
 ```
 
 If the package is not installed in editable mode, set the local source path first:

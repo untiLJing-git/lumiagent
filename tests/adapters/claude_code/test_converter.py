@@ -75,6 +75,7 @@ def test_converter_pairs_pre_and_post_tool_events_into_one_span() -> None:
             ClaudeCodeHookEvent(
                 event_id="evt_1",
                 session_id="session_1",
+                call_id="call_1",
                 sequence=1,
                 hook_name="PreToolUse",
                 tool_name="Bash",
@@ -84,6 +85,7 @@ def test_converter_pairs_pre_and_post_tool_events_into_one_span() -> None:
             ClaudeCodeHookEvent(
                 event_id="evt_2",
                 session_id="session_1",
+                call_id="call_1",
                 sequence=2,
                 hook_name="PostToolUse",
                 tool_name="Bash",
@@ -114,6 +116,7 @@ def test_converter_pairs_pre_and_post_tool_events_across_permission_request() ->
             ClaudeCodeHookEvent(
                 event_id="evt_1",
                 session_id="session_1",
+                call_id="call_1",
                 sequence=1,
                 hook_name="PreToolUse",
                 tool_name="Bash",
@@ -123,6 +126,7 @@ def test_converter_pairs_pre_and_post_tool_events_across_permission_request() ->
             ClaudeCodeHookEvent(
                 event_id="evt_2",
                 session_id="session_1",
+                call_id="call_1",
                 sequence=2,
                 hook_name="PermissionRequest",
                 tool_name="Bash",
@@ -132,6 +136,7 @@ def test_converter_pairs_pre_and_post_tool_events_across_permission_request() ->
             ClaudeCodeHookEvent(
                 event_id="evt_3",
                 session_id="session_1",
+                call_id="call_1",
                 sequence=3,
                 hook_name="PostToolUse",
                 tool_name="Bash",
@@ -151,7 +156,6 @@ def test_converter_pairs_pre_and_post_tool_events_across_permission_request() ->
     ]
     assert len(action_spans) == 1
     assert action_spans[0].metadata["source_event_ids"] == ["evt_1", "evt_3"]
-
 
     run = ClaudeCodeTraceConverter().convert(
         session_id="session_1",
@@ -215,7 +219,6 @@ def test_converter_preserves_running_and_unknown_statuses() -> None:
     assert run.root_spans[0].status.value == "running"
     assert run.status.value == "running"
 
-
     run = ClaudeCodeTraceConverter().convert(
         session_id="session_1",
         events=[
@@ -258,10 +261,12 @@ def test_converter_appends_workflow_check_span() -> None:
         child for child in root.children if child.metadata.get("type") == "workflow_check"
     )
     assert workflow.artifacts[0].metadata["type"] == "coding_workflow_checks"
-    assert workflow.artifacts[0].content["status"] == "warning"
+    # Legacy hooks have no complete-capture declaration: absence cannot prove failure.
+    assert workflow.artifacts[0].content["status"] == "unknown"
+    assert workflow.artifacts[0].content["findings"][0]["status"] == "unknown"
 
 
-def test_converter_appends_passing_workflow_check_span() -> None:
+def test_converter_does_not_promote_legacy_order_to_a_passing_check() -> None:
     run = ClaudeCodeTraceConverter().convert(
         session_id="session_1",
         events=[
@@ -290,6 +295,6 @@ def test_converter_appends_passing_workflow_check_span() -> None:
     workflow = next(
         child for child in root.children if child.metadata.get("type") == "workflow_check"
     )
-    assert workflow.status.value == "success"
-    assert workflow.artifacts[0].content["status"] == "pass"
-    assert workflow.artifacts[0].content["findings"] == []
+    assert workflow.status.value == "skipped"
+    assert workflow.artifacts[0].content["status"] == "unknown"
+    assert workflow.artifacts[0].content["limitations"]

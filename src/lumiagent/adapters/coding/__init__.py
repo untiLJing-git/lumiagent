@@ -27,13 +27,20 @@ from lumiagent.adapters.coding.conventions import (
     coding_metadata,
 )
 from lumiagent.adapters.coding.events import (
+    CaptureCapabilities,
     CodingActionEvidence,
     CodingSemanticEvidence,
     CodingWorkflowChecks,
     CodingWorkflowFinding,
     NormalizedCodingEvent,
 )
+from lumiagent.adapters.coding.evidence import (
+    EvidenceAudit,
+    audit_coding_evidence,
+    refresh_workflow_checks,
+)
 from lumiagent.adapters.coding.normalizer import normalize_hook_event
+from lumiagent.adapters.coding.ordering import SourcePosition, source_duration_ms, source_relation
 from lumiagent.adapters.coding.validator import validate_coding_workflow
 from lumiagent.adapters.coding.viewer import is_coding_trace, render_coding_trace_summary
 
@@ -61,6 +68,13 @@ __all__ = [
     "CODING_USER_PROMPT",
     "CODING_VERIFICATION",
     "CODING_WORKFLOW_CHECK",
+    "CaptureCapabilities",
+    "EvidenceAudit",
+    "SourcePosition",
+    "audit_coding_evidence",
+    "refresh_workflow_checks",
+    "source_duration_ms",
+    "source_relation",
     "CodingActionEvidence",
     "CodingSemanticEvidence",
     "CodingWorkflowChecks",

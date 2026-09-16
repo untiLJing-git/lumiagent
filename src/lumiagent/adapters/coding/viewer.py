@@ -1,4 +1,5 @@
 """Plain-text Coding Agent trace summary viewer."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
@@ -8,6 +9,7 @@ from lumiagent.adapters.coding.conventions import (
     CODING_ARTIFACT_WORKFLOW_CHECKS,
     CODING_DOMAIN,
 )
+from lumiagent.adapters.coding.evidence import audit_coding_evidence
 
 if TYPE_CHECKING:
     from lumiagent.tracing import AgentRun, Artifact, Span
@@ -40,7 +42,22 @@ def render_coding_trace_summary(
     else:
         lines.append("  (none)")
 
+    audit = audit_coding_evidence(run)
+    lines.append("Evidence Quality")
+    lines.append(f"  status: {audit.status} (reference/version integrity, not task success)")
+    capabilities = run.metadata.get("capture_capabilities")
+    if isinstance(capabilities, dict) and isinstance(capabilities.get("gaps", []), list):
+        lines.append(f"  workflow coverage: {capabilities.get('workflow_coverage', 'unknown')}")
+        for gap in capabilities.get("gaps", []):
+            lines.append(f"  gap: {gap}")
+    else:
+        lines.append("  workflow coverage: unknown (missing or invalid capability declaration)")
+    for issue in audit.issues:
+        lines.append(f"  {issue.code}: {issue.message}")
     lines.append("Span Tree")
+    lines.append(
+        "  (semantic groups; not execution order; import timestamps are not source duration)"
+    )
     for span in run.root_spans:
         _render_span(lines, span, depth=0)
 
@@ -48,7 +65,12 @@ def render_coding_trace_summary(
     check_artifacts = _artifacts_by_type(run.root_spans, CODING_ARTIFACT_WORKFLOW_CHECKS)
     if check_artifacts:
         for artifact in check_artifacts:
-            _render_workflow_checks(lines, artifact, show_checks=show_checks)
+            _render_workflow_checks(
+                lines,
+                artifact,
+                show_checks=show_checks,
+                evidence_status=audit.artifact_statuses.get(artifact.artifact_id, "unknown"),
+            )
     else:
         lines.append("  (none)")
 
@@ -69,9 +91,17 @@ def _render_workflow_checks(
     artifact: Artifact,
     *,
     show_checks: bool,
+    evidence_status: str,
 ) -> None:
     content = _artifact_content(artifact)
-    lines.append(f"  status: {_display(content.get('status'))}")
+    if evidence_status == "valid":
+        lines.append(f"  status: {_display(content.get('status'))}")
+    else:
+        lines.append(f"  status: unknown (stored evidence {evidence_status})")
+        lines.append(f"  stored status (untrusted): {_display(content.get('status'))}")
+    limitations = content.get("limitations", [])
+    for limitation in limitations if isinstance(limitations, list) else []:
+        lines.append(f"  limitation: {limitation}")
     findings = content.get("findings")
     if not isinstance(findings, list) or not findings:
         lines.append("  findings: none")
@@ -91,6 +121,7 @@ def _render_workflow_checks(
             "  - "
             f"rule_id={_display(finding.get('rule_id'))} "
             f"severity={_display(finding.get('severity'))} "
+            f"finding_status={_display(finding.get('status'))} "
             f"evidence_span_ids={evidence_text}"
         )
 

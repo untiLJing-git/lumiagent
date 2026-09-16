@@ -61,7 +61,7 @@ Defines the general execution data model for Agent systems:
 - Artifact
 - Evaluation
 - Diagnosis
-- Experiment
+- Experiment (minimal evaluation-layer records in Phase 4, not a required model in the current Core)
 - Annotation
 
 Core requirements:
@@ -108,23 +108,16 @@ The goal is not merely to "support MCP", but to make it clear how an Agent uses 
 
 ### 5.4 Evaluation / Diagnosis
 
-Provides evaluation and diagnosis for Agent workflows:
+Provide two capabilities for real Coding Agent / MCP tasks:
 
-- context gathering diagnosis
-- tool selection diagnosis
-- tool argument diagnosis
-- tool result faithfulness
-- verification sufficiency
-- failure recovery diagnosis
-- risk control diagnosis
+- Evaluation: verify outcomes, workflow reliability, safety constraints, efficiency, and stability.
+- Diagnosis: locate failures, distinguish responsibility layers, inspect supporting and opposing evidence, and propose testable improvements.
 
-Evaluation output should include:
+Both may use deterministic programs, tools, and constrained LLM analysis. Their boundary is their responsibility, not whether they use an LLM.
 
-- score
-- reason
-- evidence span
-- failure type
-- suggested fix
+Evaluations use `pass / fail / unknown / not_applicable`, with reasons, scope, and evidence. Scores are optional and require an explicit rubric. Diagnoses include observations, hypotheses, evidence, suggestions, and a verification plan. Missing evidence must lead to a stated limitation or abstention.
+
+Support offline trace audits and controlled task evaluation. Task success requires a task contract and valid acceptance evidence, not merely successful tool calls or an absence of workflow findings.
 
 ## 6. MVP Phases (Near-term)
 
@@ -183,14 +176,16 @@ The `CaptureStrategy` protocol is the shared entry point for all future capture 
 
 ```text
 CaptureStrategy
-├── McpCaptureStrategy          (Phase 2b)
-├── ClaudeCodeHooksStrategy     (Phase 3)
+├── McpCaptureStrategy          (Phase 2b, implemented)
+├── ClaudeCodeHooksStrategy     (reserved; hooks capture already exists)
 ├── TranscriptImportStrategy    (future)
 ├── SdkDecoratorStrategy        (Phase 6)
 └── McpProxyStrategy            (Phase 6)
 ```
 
 Each strategy's detailed capture mechanism is defined when that strategy is implemented.
+
+`ClaudeCodeHooksStrategy` remains an open reserved adapter. Phase 3 already uses Claude Code's documented hooks product (`PreToolUse`, `PostToolUse`, `PostToolUseFailure`, `PermissionRequest`) to write LumiAgent-owned `events.jsonl`, then reconstructs an `AgentRun` through `ClaudeCodeTraceConverter` and `TraceWriter`. The reserved strategy is a later facade over that same hooks path — not a replacement for it, and not a requirement to reopen Phase 3. Official Claude Code hooks are still a documented product surface and have grown beyond the current four tool-lifecycle events; later work may subscribe to additional events such as `UserPromptSubmit`, `Stop`, `SessionStart`, and `SessionEnd` without changing Trace Core.
 
 Acceptance criteria:
 
@@ -241,27 +236,35 @@ Acceptance criteria:
 - Hook setup exposes whether the current session is `active`, `needs_reload`, or `not_in_claude_code`, and documents the `/hooks` reload path for `needs_reload` sessions.
 - The trace can be viewed in the CLI viewer.
 
-### Phase 4: Evaluation / Diagnosis Engine
+### Phase 4: Evaluation / Diagnosis Engine — P4-P complete; remaining batches unimplemented
 
-Goal: establish the evaluation and diagnosis engine as a Diagnosis Agent built on LumiAgent's own agent infrastructure (ReActEngine, ToolRegistry, RAGPipeline, MemoryManager).
+Goal: establish an executable loop for task evaluation, evidence investigation, diagnosis, and improvement verification. P4-P evidence readiness and legacy isolation have passed local acceptance; the evaluation, diagnosis, and experiment engines remain unimplemented.
 
-Deliverables:
+The [enhanced Phase 4 specification](specs/evaluation-diagnosis-engine.md) is the detailed requirements reference (Chinese).
 
-- Diagnosis Agent with specialized system prompt and reasoning strategy
-- trace analysis tool set: `read_span_tree`, `inspect_span`, `extract_evidence`, `query_knowledge`, `compare_arguments`, `check_workflow_pattern`, `compare_traces`
-- rule engine layer as fast pre-check tools (deterministic, no LLM)
-- LLM reasoning layer via ReAct loop for multi-step analysis
-- initial evaluation rule set loaded into RAGPipeline
-- `KnowledgeProvider` interface for future expert knowledge base expansion
-- diagnosis report schema
+See the [Phase 4 implementation roadmap](superpowers/plans/2026-09-15-phase4-implementation-roadmap.md) for five paired stage designs and task-by-task plans. P4-P has been reviewed, implemented, and locally verified; the remaining batches are unexecuted. Create reports only after actual implementation and verification.
 
-Acceptance criteria:
+| Batch | Deliverables |
+|---|---|
+| P4-P | Completed: evidence-reference, call-correlation, and ordering fixes; capture capabilities; legacy eval isolation |
+| P4-A1 | Task and Trial contracts, real-agent runner, independent verifier, first 6 tasks |
+| P4-A2 | Skill-based evaluation, evidence audit, 24 tasks, structured Evaluation and CLI |
+| P4-B1 | Diagnosis, 48 human-reviewed trajectories, simple baselines, and self-tracing |
+| P4-B2 | Minimal Experiment, human-approved interventions, controlled reruns, and comparison |
 
-- Diagnosis Agent accepts a trace.json, analyzes via ReAct loop, produces Evaluation and Diagnosis records with score, reason, evidence_span_ids, and suggested_fix.
-- At least three failure types can be diagnosed: insufficient context, tool misuse (including MCP argument errors), and insufficient verification.
-- The Diagnosis Agent's own execution can be trace-captured (dogfooding).
-- Results include score, reason, evidence span, and suggested fix.
-- At least one example runs end-to-end: real trace from Phase 3 → Diagnosis Agent → structured diagnosis report.
+Core acceptance requirements:
+
+- Support offline trace audits and real task evaluation in resettable environments.
+- Report outcomes, workflows, hard constraints, and efficiency separately; unknown is not success.
+- All published evidence references resolve, and execution order and tool request/result relationships are verifiable.
+- Coding, MCP, and combined tasks include real sources and real-agent execution.
+- Diagnoses support multiple causes, counter-evidence, and abstention; quality thresholds are frozen before holdout evaluation.
+- Complete at least two controlled experiments at different improvement levels, covering Coding and MCP/combined scenarios; report results faithfully.
+- Trace evaluators, verifiers, and diagnoses separately from the assessed Agent's actions and costs.
+
+Use the existing Claude Code hooks path for the first loop; a new in-house Coding Agent is not a prerequisite. Reuse ReActEngine, ToolRegistry, or other infrastructure only where interfaces and quality justify it. RAGPipeline, MemoryManager, and the old EvaluationSuite are not prerequisites. Retain an optional KnowledgeProvider; a complete knowledge base remains future work.
+
+The old package is now `lumiagent.legacy_eval`, reached through `lumi legacy-eval`. Reserved `lumi eval` only prints migration guidance and exits 2 without starting an Agent; trace evaluation is still unimplemented. See the [P4-P technical report](reports/phase4-evidence-readiness-technical-report.zh-CN.md).
 
 ### Phase 5: Replay / Visualization Preparation
 
@@ -275,7 +278,7 @@ Deliverables:
 - diagnosis summary data model
 - CLI viewer upgrade to consume view models (basic version created in Phase 2b)
 - trace diff view: `lumiagent diff trace1.json trace2.json` for comparing successful and failed runs
-- Experiment container model: groups multiple Runs for comparative evaluation
+- Experiment comparison view model: reuse Phase 4 minimal experiment records to present tasks, configurations, and repeated trials
 
 Acceptance criteria:
 
@@ -295,7 +298,7 @@ Add optional fields to `AgentRun`:
 - `parent_run_id: Optional[str]` — the parent run that triggered this run
 - `triggered_by_span_id: Optional[str]` — the span in the parent run that triggered this run
 
-Phase 3-5 do not use these fields, but schema and serialization must support them.
+Preserve schema and serialization compatibility. Phase 4 initially links assessed agents, verifiers, and diagnoses through report-level fields. Do not treat the assessed run as the triggering parent or depend on changing the existing validation semantics of these fields.
 
 ### 7.2 Span-Level Serialization
 
@@ -326,13 +329,29 @@ Annotations create a feedback flywheel:
 - Feed into the expert knowledge base (Phase 8) as training material.
 - Enable supervised evaluation over time.
 
-Phase 3-5 do not implement annotation workflows, but the model should exist in the Core alongside Evaluation and Diagnosis.
+Phase 4 uses versioned label files and human review for diagnosis calibration and may reuse Annotation. A complete annotation UI and feedback platform remain out of scope.
 
 ### 7.5 Privacy Sanitization Pipeline
 
 Define a sanitization interface as an optional step in the `CaptureStrategy` pipeline. Traces from real agents may contain source code, API keys, credentials, or other sensitive data.
 
-The sanitization layer strips or masks sensitive content before storage or sharing. Phase 2b-5 do not implement full sanitization, but the pipeline hook point should exist so that `CaptureStrategy` implementations can opt in.
+The sanitization layer strips or masks sensitive content before storage or sharing. Phase 4 must reuse and complete fixture sanitization, outbound-data checks, sensitive-asset isolation, and evidence-gap reporting. A generic configurable sanitization platform remains outside Phase 2b-5.
+
+### 7.6 Reserved ClaudeCodeHooksStrategy
+
+Keep `ClaudeCodeHooksStrategy` as an open `CaptureStrategy` adapter over the existing Claude Code hooks capture path. Phase 3 already proved hooks can capture a real session; the missing piece is only a strategy facade, not a new capture source.
+
+Reserved shape:
+
+```text
+setup / live Claude Code session
+  -> hooks write events.jsonl
+  -> ClaudeCodeHooksStrategy.capture()
+  -> ClaudeCodeTraceConverter + TraceWriter
+  -> AgentRun
+```
+
+Phase 4-5 do not need to implement this class. Do not treat the hooks path as closed, and do not replace hooks with transcript-only capture.
 
 ## 8. Future Phases
 
@@ -401,8 +420,8 @@ The goal is not a superficial coverage number. Tests must prove that LumiAgent c
 - Coding Agent and MCP support are the first application layer and must not pollute the general Core.
 - Keep room for future ingestion through SDKs, hooks, MCP proxies, CLI wrappers, and transcript importers.
 - Capture layer decoupled from model layer: how traces are produced (hooks / SDK / proxy / importer) must not affect the Core data model.
-- Evaluation results produced by Agent: diagnosis and evaluation are generated through Diagnosis Agent structured reasoning, not hardcoded rules alone.
-- Self-observable: LumiAgent's own Diagnosis Agent execution must be trace-capturable (dogfooding).
+- Separate evaluation and diagnosis responsibilities: combine deterministic verification, specialized tools, and constrained agent analysis. Evidence must be auditable; missing information must not become a forced score or attribution.
+- Self-observable: trace verifiers, evaluators, and diagnoses independently (dogfooding), without contaminating the assessed Agent evidence.
 
 ## 12. Feature Selection Rules
 

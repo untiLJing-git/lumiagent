@@ -186,7 +186,10 @@ Phase 3 does not include:
 - realtime trace streaming server;
 - database or cloud writer;
 - production-grade TraceWriter concurrency or storage;
-- generic LLM observability dashboard behavior.
+- generic LLM observability dashboard behavior;
+- implementing `ClaudeCodeHooksStrategy` as a `CaptureStrategy` class.
+
+The Claude Code hooks product path stays open. Phase 3 delivers hooks write + converter reconstruction. `ClaudeCodeHooksStrategy` is reserved as a later facade over that same path and must not be treated as cancelled.
 
 ## 4. Architecture
 

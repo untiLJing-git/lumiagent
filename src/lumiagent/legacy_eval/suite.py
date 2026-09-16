@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Optional
 
 from lumiagent.config import EvalConfig
-from lumiagent.evaluation.evaluators import (
+from lumiagent.legacy_eval.evaluators import (
     BaseEvaluator,
     LatencyEvaluator,
     RAGEvaluator,
@@ -15,7 +15,7 @@ from lumiagent.evaluation.evaluators import (
     SafetyEvaluator,
     ToolUsageEvaluator,
 )
-from lumiagent.evaluation.metrics import EvalCase, EvalReport, EvalResult, MetricCategory
+from lumiagent.legacy_eval.metrics import EvalCase, EvalReport, EvalResult, MetricCategory
 from lumiagent.logging import get_logger
 
 logger = get_logger(__name__)

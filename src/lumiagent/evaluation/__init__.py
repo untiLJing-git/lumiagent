@@ -1,4 +1,4 @@
-"""Agent evaluation framework."""
-from lumiagent.evaluation.suite import EvaluationSuite
+"""Trace evaluation namespace; the Phase 4a engine is not implemented yet.
 
-__all__ = ["EvaluationSuite"]
+The deprecated chat evaluation suite is isolated in lumiagent.legacy_eval.
+"""

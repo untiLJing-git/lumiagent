@@ -1,5 +1,7 @@
 # Agent Evaluation and Optimization Loop Design
 
+> **Phase 4 requirements update — 2026-09-15:** This document is retained as a historical design. For Phase 4 planning, use the [enhanced specification](../../specs/evaluation-diagnosis-engine.md) (draft, pending review). In-house Coding Agent first, mandatory reuse of EvaluationSuite/legacy runtime components, and deferring all Experiment/rerun work to Phase 5 are superseded where stated below. Phase 1–3 historical records are unchanged.
+
 Date: 2026-05-27
 
 ## 1. Purpose

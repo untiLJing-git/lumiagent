@@ -264,8 +264,15 @@ The MCP Tool Chain layer is an adapter evidence layer: it records tool discovery
 - [x] MCP Tool Chain evidence model
 - [x] MCP Capture + Display chain (unified `CaptureStrategy` entry point)
 - [x] Coding Agent trace model + Claude Code hooks capture + CLI viewer
-- [ ] Evaluation / Diagnosis Agent (built on LumiAgent's own agent infrastructure)
+- [x] P4-P: evidence readiness, source ordering, and legacy eval isolation
+- [ ] Evaluation / Diagnosis system (evidence fixes → task verification → skill-based evaluation → diagnosis → improvement reruns)
 - [ ] Replay / Visualization data preparation
+
+P4-P has been reviewed, implemented, and locally verified; task execution, evaluation, diagnosis, and experiment engines are still pending. See the [Phase 4 specification](docs/specs/evaluation-diagnosis-engine.md) (Chinese). Minimal Trial/Experiment records and rerun verification belong to Phase 4; Phase 5 provides presentation data interfaces.
+
+The [Phase 4 implementation roadmap](docs/superpowers/plans/2026-09-15-phase4-implementation-roadmap.md) links five paired stage designs and plans. P4-P is executed; the other four batches are unstarted. See the [P4-P technical report](docs/reports/phase4-evidence-readiness-technical-report.zh-CN.md).
+
+P4-P verification: 225 tests passed, with ruff and mypy passing. Reserved `lumi eval` prints migration guidance and exits 2; `lumi legacy-eval` retains the deprecated chat scorer and its known limitations. Historical traces without current evidence display unknown in `show --checks`, rather than inheriting stored pass labels.
 
 ### Future Phases
 

@@ -1,28 +1,122 @@
-"""Convert Claude Code events into Coding Agent AgentRun traces."""
+"""Convert hooks into a single immutable-identity action graph and audited prechecks."""
+
 from __future__ import annotations
 
+import json
 from typing import TYPE_CHECKING, Any
 
-from lumiagent.adapters.claude_code.events import ClaudeCodeHookEvent
-from lumiagent.adapters.coding.conventions import (
-    CODING_ARTIFACT_ACTION_EVIDENCE,
-    CODING_ARTIFACT_SEMANTIC_EVIDENCE,
-    CODING_ARTIFACT_WORKFLOW_CHECKS,
-    CODING_CONTEXT_GATHERING,
-    CODING_DOMAIN,
-    CODING_USER_PROMPT,
-    CODING_VERIFICATION,
-    CODING_WORKFLOW_CHECK,
-    coding_metadata,
+from lumiagent.adapters.claude_code.correlation import (
+    CorrelatedAction,
+    CorrelationResult,
+    call_key,
+    correlate_events,
 )
-from lumiagent.adapters.coding.events import CodingSemanticEvidence
+from lumiagent.adapters.coding.conventions import coding_metadata
+from lumiagent.adapters.coding.events import (
+    Availability,
+    CaptureCapabilities,
+    CodingSemanticEvidence,
+)
+from lumiagent.adapters.coding.evidence import append_workflow_checks
 from lumiagent.adapters.coding.normalizer import normalize_hook_event
-from lumiagent.adapters.coding.validator import validate_coding_workflow
-from lumiagent.tracing import ArtifactKind, RunStatus, SpanKind, SpanStatus
+from lumiagent.adapters.coding.ordering import SourcePosition, parse_source_time
+from lumiagent.tracing import AgentRun, ArtifactKind, RunStatus, SpanKind, SpanStatus
 from lumiagent.tracing.builder_writer import BuilderTraceWriter
 
 if TYPE_CHECKING:
-    from lumiagent.tracing.models import AgentRun
+    from lumiagent.adapters.claude_code.events import ClaudeCodeHookEvent
+
+
+def _position(action: CorrelatedAction) -> SourcePosition:
+    request, result = action.request, action.result
+    # A terminal-only record locates an observation, not an inferred full action interval.
+    start = request or result or action.event
+    end = result or (action.event if request is None else None)
+    key = call_key(action.event)
+    return SourcePosition(
+        session_id=action.event.session_id,
+        scope_id=key[2] if key else action.event.scope_id,
+        sequence_start=start.source_sequence,
+        sequence_end=end.source_sequence if end else None,
+        started_at=start.timestamp,
+        ended_at=end.timestamp if end else None,
+    )
+
+
+def _availability(flags: list[bool]) -> Availability:
+    if not flags or not any(flags):
+        return "unavailable"
+    return "available" if all(flags) else "partial"
+
+
+def _valid_source_times(position: SourcePosition) -> bool:
+    start = parse_source_time(position.started_at)
+    end = parse_source_time(position.ended_at)
+    return start is not None and end is not None and start <= end
+
+
+def _capabilities(
+    result: CorrelationResult, coverage: CaptureCapabilities | None
+) -> CaptureCapabilities:
+    caps = CaptureCapabilities(
+        workflow_coverage=coverage.workflow_coverage if coverage else "unknown",
+        coverage_basis=coverage.coverage_basis if coverage else None,
+        gaps=list(coverage.gaps) if coverage else [],
+    )
+    actions = [a for a in result.actions if a.status != "not_applicable"]
+    caps.source_identity = _availability([a.event.source_event_id is not None for a in actions])
+    caps.call_identity = _availability([a.status == "paired" for a in actions])
+    positions = [_position(a) for a in actions]
+    caps.source_order = _availability(
+        [
+            p.sequence_start is not None
+            and p.sequence_end is not None
+            and p.sequence_end >= p.sequence_start
+            for p in positions
+        ]
+    )
+    caps.source_time = _availability(
+        [
+            _valid_source_times(p) and a.status == "paired"
+            for p, a in zip(positions, actions, strict=True)
+        ]
+    )
+    payload_flags: list[bool] = []
+    for action in actions:
+        request_payload = action.request.payload if action.request else {}
+        result_payload = action.result.payload if action.result else {}
+        payload_flags.extend(
+            [
+                any(
+                    isinstance(request_payload.get(key), dict)
+                    for key in ("tool_input", "arguments")
+                ),
+                any(key in result_payload for key in ("tool_response", "result")),
+            ]
+        )
+    caps.action_payloads = _availability(payload_flags)
+    for action in actions:
+        payload = action.event.payload
+        raw = payload.get("tool_response", payload.get("result"))
+        if payload.get("output_truncated") is True or (
+            isinstance(raw, dict) and raw.get("output_truncated") is True
+        ):
+            caps.gaps.append("tool_result_truncated")
+            caps.action_payloads = "partial"
+        if "[REDACTED]" in json.dumps(payload):
+            caps.gaps.append("possible_redaction_loss")
+            caps.action_payloads = "partial"
+    caps.gaps.extend(result.issues)
+    if result.issues:
+        caps.workflow_coverage = "partial"
+    if caps.workflow_coverage != "complete":
+        caps.gaps.append("workflow_completeness_not_established")
+    if caps.source_order != "available":
+        caps.gaps.append("source_order_missing_or_partial")
+    if caps.source_time != "available":
+        caps.gaps.append("source_duration_unavailable_for_some_actions")
+    caps.gaps = sorted(set(caps.gaps))
+    return caps
 
 
 class ClaudeCodeTraceConverter:
@@ -32,158 +126,139 @@ class ClaudeCodeTraceConverter:
         session_id: str,
         events: list[ClaudeCodeHookEvent],
         semantic_items: list[dict[str, Any]] | None = None,
+        coverage: CaptureCapabilities | None = None,
     ) -> AgentRun:
-        run = self._build_run(
-            session_id=session_id,
-            events=events,
-            semantic_items=semantic_items or [],
-            workflow_checks=None,
+        if any(event.session_id != session_id for event in events):
+            raise ValueError("Cannot merge events from different sessions")
+        correlated = correlate_events(events)
+        caps = _capabilities(correlated, coverage)
+        semantic_items = semantic_items or []
+        caps.task_input = (
+            "available"
+            if any(item.get("convention") == "user_prompt" for item in semantic_items)
+            else "unavailable"
         )
-        checks = validate_coding_workflow(run)
-        return self._build_run(
-            session_id=session_id,
-            events=events,
-            semantic_items=semantic_items or [],
-            workflow_checks=checks.model_dump(mode="json"),
+        caps.final_response = (
+            "available"
+            if any(item.get("convention") == "final_response" for item in semantic_items)
+            else "unavailable"
         )
-
-    def _build_run(
-        self,
-        *,
-        session_id: str,
-        events: list[ClaudeCodeHookEvent],
-        semantic_items: list[dict[str, Any]],
-        workflow_checks: dict[str, Any] | None,
-    ) -> AgentRun:
         writer = BuilderTraceWriter()
         writer.start_run(
             name=f"Claude Code session {session_id}",
-            metadata={"domain": CODING_DOMAIN, "source": "claude_code"},
+            metadata={
+                "domain": "coding_agent",
+                "source": "claude_code",
+                "timestamp_basis": "ingestion",
+                "capture_capabilities": caps.model_dump(mode="json"),
+                "correlation": {
+                    "issues": correlated.issues,
+                    "duplicate_count": correlated.duplicate_count,
+                },
+            },
         )
         root_id = writer.start_span(
             "Coding Agent Run",
-            kind=SpanKind.CUSTOM,
-            metadata=coding_metadata("coding_agent_run", source="claude_code"),
+            metadata=coding_metadata(
+                "coding_agent_run", source="claude_code", extra={"timestamp_basis": "ingestion"}
+            ),
         )
-        parent_ids: dict[str, str] = {}
-        parent_statuses: dict[str, list[SpanStatus]] = {}
+        parents: dict[str, str] = {}
+        statuses: dict[str, list[SpanStatus]] = {}
         root_statuses: list[SpanStatus] = []
-        self._write_semantic_items(writer, root_id, semantic_items or [])
-        for event in _pair_tool_events(sorted(events, key=lambda item: item.sequence)):
+        for action in correlated.actions:
+            event = action.event
             normalized = normalize_hook_event(event)
             parent_id = root_id
-            if normalized.parent_convention == CODING_CONTEXT_GATHERING:
-                parent_id = parent_ids.setdefault(
-                    CODING_CONTEXT_GATHERING,
-                    writer.start_span(
-                        "Context Gathering",
+            group = normalized.parent_convention
+            if group is not None:
+                if group not in parents:
+                    parents[group] = writer.start_span(
+                        group.replace("_", " ").title(),
                         parent_span_id=root_id,
                         metadata=coding_metadata(
-                            CODING_CONTEXT_GATHERING,
+                            group,
                             source="claude_code_hook",
+                            extra={"timestamp_basis": "ingestion", "semantic_group": True},
                         ),
-                    ),
-                )
-            elif normalized.parent_convention == CODING_VERIFICATION:
-                parent_id = parent_ids.setdefault(
-                    CODING_VERIFICATION,
-                    writer.start_span(
-                        "Verification",
-                        parent_span_id=root_id,
-                        metadata=coding_metadata(
-                            CODING_VERIFICATION,
-                            source="claude_code_hook",
-                        ),
-                    ),
-                )
+                    )
+                    statuses[group] = []
+                parent_id = parents[group]
+            position = _position(action)
+            key = call_key(event)
+            extra: dict[str, Any] = {
+                "source_order": position.model_dump(mode="json"),
+                "timestamp_basis": "ingestion",
+                "correlation_status": action.status,
+                "capture_ids": action.capture_ids,
+                "observation_only": action.status != "paired",
+                "ingestion_index": action.input_index,
+                "call_id": key[3] if key else None,
+                "working_directory": event.working_directory,
+            }
             span_id = writer.start_span(
                 normalized.name,
                 kind=SpanKind.TOOL,
                 parent_span_id=parent_id,
-                input_value=(
-                    normalized.action_evidence.arguments
-                    if normalized.action_evidence is not None
-                    else None
-                ),
+                input_value=normalized.action_evidence.arguments
+                if normalized.action_evidence
+                else None,
                 metadata=coding_metadata(
                     normalized.convention,
                     source="claude_code_hook",
-                    source_ids=normalized.source_event_ids,
+                    source_ids=action.source_event_ids,
                     evidence_types=["action_evidence"],
                     classification_reason=str(normalized.metadata.get("classification_reason", "")),
+                    extra=extra,
                 ),
             )
-            if normalized.action_evidence is not None:
+            evidence = normalized.action_evidence
+            if evidence is not None:
                 writer.add_artifact(
                     span_id,
                     name="Action Evidence",
                     kind=ArtifactKind.JSON,
-                    content=normalized.action_evidence.model_dump(mode="json"),
-                    metadata={"type": CODING_ARTIFACT_ACTION_EVIDENCE},
+                    content=evidence.model_dump(mode="json"),
+                    metadata={"type": "coding_action_evidence"},
                 )
-            span_status = _span_status(normalized.status)
-            writer.end_span(
-                span_id,
-                status=span_status,
-                output=normalized.action_evidence.result if normalized.action_evidence else None,
-            )
-            if normalized.parent_convention in parent_ids:
-                parent_statuses.setdefault(normalized.parent_convention, []).append(span_status)
+            status = {
+                "success": SpanStatus.SUCCESS,
+                "error": SpanStatus.ERROR,
+                "running": SpanStatus.RUNNING,
+            }.get(normalized.status, SpanStatus.SKIPPED)
+            writer.end_span(span_id, status=status, output=evidence.result if evidence else None)
+            if group is not None:
+                statuses[group].append(status)
             else:
-                root_statuses.append(span_status)
-        for parent_convention, parent_id in parent_ids.items():
-            parent_status = _aggregate_span_status(parent_statuses.get(parent_convention, []))
-            writer.end_span(parent_id, status=parent_status)
-            root_statuses.append(parent_status)
-        if workflow_checks is not None:
-            check_id = writer.start_span(
-                "Workflow Check",
-                kind=SpanKind.CUSTOM,
-                parent_span_id=root_id,
-                metadata=coding_metadata(
-                    CODING_WORKFLOW_CHECK,
-                    source="workflow_validator",
-                    evidence_types=["workflow_finding"],
-                ),
-            )
-            writer.add_artifact(
-                check_id,
-                name="Workflow Checks",
-                kind=ArtifactKind.JSON,
-                content=workflow_checks,
-                metadata={"type": CODING_ARTIFACT_WORKFLOW_CHECKS},
-            )
-            check_status = (
-                SpanStatus.ERROR if workflow_checks["status"] == "error" else SpanStatus.SUCCESS
-            )
-            writer.end_span(check_id, status=check_status)
-            root_statuses.append(check_status)
-        root_status = _aggregate_span_status(root_statuses)
-        writer.end_span(root_id, status=root_status)
-        return writer.flush(status=_run_status(root_status))
-
-    def _write_semantic_items(
-        self,
-        writer: BuilderTraceWriter,
-        root_id: str,
-        semantic_items: list[dict[str, Any]],
-    ) -> None:
+                root_statuses.append(status)
+        for group, parent_id in parents.items():
+            status = _aggregate(statuses[group])
+            writer.end_span(parent_id, status=status)
+            root_statuses.append(status)
+        # Semantics retain source positions. Appending is storage order, not a temporal claim.
         for item in semantic_items:
-            evidence_input = {
-                key: value for key, value in item.items() if key not in {"item_id", "timestamp"}
-            }
-            evidence = CodingSemanticEvidence.model_validate(evidence_input)
+            semantic = CodingSemanticEvidence.model_validate(
+                {key: value for key, value in item.items() if key not in {"item_id", "timestamp"}}
+            )
+            position = SourcePosition(
+                session_id=session_id,
+                scope_id="transcript",
+                started_at=item.get("timestamp"),
+                ended_at=item.get("timestamp"),
+            )
             span_id = writer.start_span(
-                _semantic_name(evidence.convention),
-                kind=SpanKind.CUSTOM,
+                semantic.convention.replace("_", " ").title(),
                 parent_span_id=root_id,
                 metadata=coding_metadata(
-                    evidence.convention,
+                    semantic.convention,
                     source="transcript_enrichment",
                     evidence_types=["semantic_evidence"],
                     extra={
                         "source_item_ids": [str(item.get("item_id", ""))],
-                        "confidence": evidence.confidence,
+                        "confidence": semantic.confidence,
+                        "source_order": position.model_dump(mode="json"),
+                        "timestamp_basis": "ingestion",
+                        "observation_only": True,
                     },
                 ),
             )
@@ -191,90 +266,27 @@ class ClaudeCodeTraceConverter:
                 span_id,
                 name="Semantic Evidence",
                 kind=ArtifactKind.JSON,
-                content=evidence.model_dump(mode="json"),
-                metadata={"type": CODING_ARTIFACT_SEMANTIC_EVIDENCE},
+                content=semantic.model_dump(mode="json"),
+                metadata={"type": "coding_semantic_evidence"},
             )
             writer.end_span(span_id, status=SpanStatus.SUCCESS)
+        status = _aggregate(root_statuses)
+        writer.end_span(root_id, status=status)
+        run_status = {
+            SpanStatus.ERROR: RunStatus.ERROR,
+            SpanStatus.RUNNING: RunStatus.RUNNING,
+            SpanStatus.SUCCESS: RunStatus.SUCCESS,
+        }.get(status, RunStatus.PENDING)
+        run = writer.flush(status=run_status)
+        append_workflow_checks(run)
+        return run
 
 
-def _pair_tool_events(events: list[ClaudeCodeHookEvent]) -> list[ClaudeCodeHookEvent]:
-    paired: list[ClaudeCodeHookEvent] = []
-    pending: ClaudeCodeHookEvent | None = None
-    for event in events:
-        if event.phase == "tool_request":
-            if pending is not None:
-                paired.append(pending)
-            pending = event
-            continue
-        if event.phase == "permission_request":
-            paired.append(event)
-            continue
-        if pending is not None and _can_pair(pending, event):
-            paired.append(_merge_tool_events(pending, event))
-            pending = None
-            continue
-        if pending is not None:
-            paired.append(pending)
-            pending = None
-        paired.append(event)
-    if pending is not None:
-        paired.append(pending)
-    return paired
-
-
-def _can_pair(request: ClaudeCodeHookEvent, result: ClaudeCodeHookEvent) -> bool:
-    return result.phase in {"tool_result", "error"} and request.tool_name == result.tool_name
-
-
-def _merge_tool_events(
-    request: ClaudeCodeHookEvent,
-    result: ClaudeCodeHookEvent,
-) -> ClaudeCodeHookEvent:
-    payload = {**request.payload, **result.payload}
-    payload["_source_event_ids"] = [request.event_id, result.event_id]
-    if "tool_input" not in payload and "tool_input" in request.payload:
-        payload["tool_input"] = request.payload["tool_input"]
-    safety = result.safety if result.safety != {"redaction_state": "raw"} else request.safety
-    return ClaudeCodeHookEvent(
-        event_id=result.event_id,
-        session_id=result.session_id,
-        sequence=result.sequence,
-        timestamp=result.timestamp or request.timestamp,
-        source=result.source,
-        hook_name=result.hook_name,
-        tool_name=result.tool_name,
-        phase=result.phase,
-        working_directory=result.working_directory or request.working_directory,
-        payload=payload,
-        safety=safety,
-    )
-def _span_status(status: str) -> SpanStatus:
-    if status == "error":
+def _aggregate(statuses: list[SpanStatus]) -> SpanStatus:
+    if SpanStatus.ERROR in statuses:
         return SpanStatus.ERROR
-    if status == "running":
+    if SpanStatus.RUNNING in statuses:
         return SpanStatus.RUNNING
-    if status == "unknown":
+    if not statuses or SpanStatus.SKIPPED in statuses:
         return SpanStatus.SKIPPED
     return SpanStatus.SUCCESS
-
-
-def _aggregate_span_status(statuses: list[SpanStatus]) -> SpanStatus:
-    if any(status == SpanStatus.ERROR for status in statuses):
-        return SpanStatus.ERROR
-    if any(status == SpanStatus.RUNNING for status in statuses):
-        return SpanStatus.RUNNING
-    return SpanStatus.SUCCESS
-
-
-def _run_status(root_status: SpanStatus) -> RunStatus:
-    if root_status == SpanStatus.ERROR:
-        return RunStatus.ERROR
-    if root_status == SpanStatus.RUNNING:
-        return RunStatus.RUNNING
-    return RunStatus.SUCCESS
-
-
-def _semantic_name(convention: str) -> str:
-    if convention == CODING_USER_PROMPT:
-        return "User Prompt"
-    return convention.replace("_", " ").title()

@@ -1,0 +1,12 @@
+flowchart TD
+    H["Claude Code hooks v1 / v2"] --> C["Correlation: IDs, scopes, ambiguity"]
+    C --> N["Normalization + source positions"]
+    N --> W["TraceWriter: one action graph"]
+    W --> R["AgentRun with capture capabilities"]
+    R --> P["Versioned conservative workflow checks"]
+    P --> A["Evidence audit: refs, digest, current rules"]
+    A --> V["CLI: quality, limitations, historical status"]
+    R --> F["Refresh on copy; retain history"]
+    F --> A
+    E["Reserved lumi eval"] --> M["Migration notice; exit 2"]
+    L["lumi legacy-eval"] --> O["Isolated legacy_eval package"]
