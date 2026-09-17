@@ -1,0 +1,101 @@
+[
+  {
+    "path": "3d_design/blender_task_0003.json",
+    "category": "blender",
+    "servers": [
+      "blender"
+    ],
+    "reason": "pagination-keyword",
+    "question_excerpt": "Clear the current Blender scene and remove all PolyHaven materials.\nCreate a Text object named 'Title', set its content to 'Blender MCP', its font size (size) to 1.5, its extrusion depth (extrude) to 0.1, its bevel depth (bevel_depth) to 0."
+  },
+  {
+    "path": "repository_management/github_task_0006.json",
+    "category": "general",
+    "servers": [
+      "github"
+    ],
+    "reason": "github-issue-enumeration",
+    "question_excerpt": "As a Facebook ecosystem analyzer, I need you to conduct a comprehensive analysis of Facebook's React-related repositories. Please search for all repositories owned by 'facebook' that contain 'react' in their name. For each repository discov"
+  },
+  {
+    "path": "repository_management/github_task_0007.json",
+    "category": "general",
+    "servers": [
+      "github"
+    ],
+    "reason": "github-issue-enumeration",
+    "question_excerpt": "Hi! I'm learning how to use GitHub and I want to practice exploring repositories and working with issues. Can you help me with a research project? I'd like to search for repositories owned by 'google' that have 'generative-ai' in their name"
+  },
+  {
+    "path": "repository_management/github_task_0008.json",
+    "category": "general",
+    "servers": [
+      "github"
+    ],
+    "reason": "github-issue-enumeration",
+    "question_excerpt": "As an open-source enthusiast and agent developer, I'm deeply inspired by the collaborative spirit of the QwenLM community and their groundbreaking work on autonomous agents. I want to conduct a thorough analysis of their Qwen-Agent reposito"
+  },
+  {
+    "path": "repository_management/github_task_0009.json",
+    "category": "general",
+    "servers": [
+      "github"
+    ],
+    "reason": "github-issue-enumeration",
+    "question_excerpt": "Hey there! I'm working on a project to analyze Microsoft's repositories and need your help. Could you search for all repositories owned by 'microsoft' that contain 'Air' in their name? For each repository you find, I need to pull the count "
+  },
+  {
+    "path": "repository_management/github_task_0010.json",
+    "category": "general",
+    "servers": [
+      "github"
+    ],
+    "reason": "github-issue-enumeration",
+    "question_excerpt": "I need to analyze Microsoft's Air-related repositories for open issues that lack proper labeling. Please search for all repositories under the 'microsoft' organization that contain 'Air' in their name. For each repository found, count the n"
+  },
+  {
+    "path": "repository_management/github_task_0012.json",
+    "category": "general",
+    "servers": [
+      "github"
+    ],
+    "reason": "github-issue-enumeration",
+    "question_excerpt": "There are two repositories: QwenLM's Qwen2.5-VL and deepseek-ai's DeepSeek-VL2. Fork the repository with the fewest open issues, maintaining the same name as the source repository. If Qwen2.5-VL is forked, add a reference link at the bottom"
+  },
+  {
+    "path": "repository_management/github_task_0023.json",
+    "category": "general",
+    "servers": [
+      "github"
+    ],
+    "reason": "github-issue-enumeration",
+    "question_excerpt": "Hi! I need help with a research project. Could you please search for repositories owned by 'huggingface' with 'diffusers' in the name? For each repository you find, I'd like to know how many open issues are labeled with 'bug'. Then, could y"
+  },
+  {
+    "path": "repository_management/github_task_0024.json",
+    "category": "general",
+    "servers": [
+      "github"
+    ],
+    "reason": "github-issue-enumeration",
+    "question_excerpt": "Hi! I'm absolutely thrilled to be working on a research project involving BLIP. It's such an incredible and groundbreaking work from Salesforce! As a huge fan of their vision-language models, I'm really excited to dive deeper into the commu"
+  },
+  {
+    "path": "repository_management/github_task_0025.json",
+    "category": "general",
+    "servers": [
+      "github"
+    ],
+    "reason": "github-issue-enumeration",
+    "question_excerpt": "There are two repositories: Salesforce's LAVIS and Salesforce's BLIP. Fork the repository with the fewest open issues, maintaining the same name as the source repository. If LAVIS is forked, add a reference link at the bottom of the README."
+  },
+  {
+    "path": "repository_management/github_task_0026.json",
+    "category": "general",
+    "servers": [
+      "github"
+    ],
+    "reason": "github-issue-enumeration",
+    "question_excerpt": "Hi! I'm absolutely thrilled to be working with two of the most incredible and groundbreaking LLM projects! There are two amazing repositories that have completely revolutionized the field: npxucan's WizardLM and tatsu-lab's stanford_alpaca."
+  }
+]

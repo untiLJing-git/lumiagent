@@ -1,0 +1,485 @@
+[
+  {
+    "task_id": "file_splitting",
+    "path": "easy/file_context/file_splitting",
+    "family": "filesystem",
+    "difficulty": "L1",
+    "tags": [
+      "content transformation",
+      "file automation"
+    ],
+    "title": "File Splitting",
+    "summary": "File Splitting Task"
+  },
+  {
+    "task_id": "pattern_matching",
+    "path": "easy/file_context/pattern_matching",
+    "family": "filesystem",
+    "difficulty": "L1",
+    "tags": [
+      "pattern analysis",
+      "search and filtering"
+    ],
+    "title": "Pattern Matching",
+    "summary": "File Filtering Task: Find Files with Common Substring"
+  },
+  {
+    "task_id": "uppercase",
+    "path": "easy/file_context/uppercase",
+    "family": "filesystem",
+    "difficulty": "L1",
+    "tags": [
+      "content transformation",
+      "batch processing"
+    ],
+    "title": "Uppercase",
+    "summary": "File Context Task: Convert Files to Uppercase"
+  },
+  {
+    "task_id": "largest_rename",
+    "path": "easy/file_property/largest_rename",
+    "family": "filesystem",
+    "difficulty": "L1",
+    "tags": [
+      "file organization",
+      "attribute inspection"
+    ],
+    "title": "Largest File Rename",
+    "summary": "Largest File Rename Task"
+  },
+  {
+    "task_id": "txt_merging",
+    "path": "easy/file_property/txt_merging",
+    "family": "filesystem",
+    "difficulty": "L1",
+    "tags": [
+      "content consolidation",
+      "file automation"
+    ],
+    "title": "Text File Merging",
+    "summary": "Text File Merging Task"
+  },
+  {
+    "task_id": "structure_analysis",
+    "path": "easy/folder_structure/structure_analysis",
+    "family": "filesystem",
+    "difficulty": "L1",
+    "tags": [
+      "data extraction",
+      "filesystem traversal"
+    ],
+    "title": "Structure Analysis",
+    "summary": "Directory Structure Analysis Task"
+  },
+  {
+    "task_id": "file_reorganize",
+    "path": "easy/legal_document/file_reorganize",
+    "family": "filesystem",
+    "difficulty": "L1",
+    "tags": [
+      "file organization",
+      "version management"
+    ],
+    "title": "File Reorganize",
+    "summary": "Legal Document File Reorganization Task"
+  },
+  {
+    "task_id": "papers_counting",
+    "path": "easy/papers/papers_counting",
+    "family": "filesystem",
+    "difficulty": "L1",
+    "tags": [
+      "data extraction",
+      "reporting"
+    ],
+    "title": "Papers Counting",
+    "summary": "File Context Task: Count HTML Files"
+  },
+  {
+    "task_id": "duplicate_name",
+    "path": "easy/student_database/duplicate_name",
+    "family": "filesystem",
+    "difficulty": "L1",
+    "tags": [
+      "pattern analysis",
+      "data validation"
+    ],
+    "title": "Duplicate Name",
+    "summary": "Please help me identify any duplicate name from the list of all the 150 students. Do not use python code. You only need to find **any one** duplicate name. Then generate a `namesake.txt` file to record the result in the following format, with only three lines. Note: when recording the name, replace underscores with spaces."
+  },
+  {
+    "task_id": "recommender_name",
+    "path": "easy/student_database/recommender_name",
+    "family": "filesystem",
+    "difficulty": "L1",
+    "tags": [
+      "data extraction",
+      "document search"
+    ],
+    "title": "Recommender Name",
+    "summary": "Please find the recommendation letter for Patricia Jones and identify who wrote it. Generate a `recommender.txt` file with only the author's name."
+  },
+  {
+    "task_id": "music_report",
+    "path": "standard/desktop/music_report",
+    "family": "filesystem",
+    "difficulty": "L3",
+    "tags": [
+      "data extraction",
+      "pattern analysis"
+    ],
+    "title": "Music Report",
+    "summary": "Please use FileSystem tools to finish the following task:"
+  },
+  {
+    "task_id": "project_management",
+    "path": "standard/desktop/project_management",
+    "family": "filesystem",
+    "difficulty": "L3",
+    "tags": [
+      "file organization"
+    ],
+    "title": "Project Management",
+    "summary": "Please use FileSystem tools to finish the following task:"
+  },
+  {
+    "task_id": "timeline_extraction",
+    "path": "standard/desktop/timeline_extraction",
+    "family": "filesystem",
+    "difficulty": "L3",
+    "tags": [
+      "data extraction",
+      "pattern analysis"
+    ],
+    "title": "Timeline Extraction",
+    "summary": "Please use FileSystem tools to finish the following task:"
+  },
+  {
+    "task_id": "budget_computation",
+    "path": "standard/desktop_template/budget_computation",
+    "family": "filesystem",
+    "difficulty": "L3",
+    "tags": [
+      "data extraction",
+      "pattern analysis"
+    ],
+    "title": "Budget Computation",
+    "summary": "Please use FileSystem tools to finish the following task:"
+  },
+  {
+    "task_id": "contact_information",
+    "path": "standard/desktop_template/contact_information",
+    "family": "filesystem",
+    "difficulty": "L3",
+    "tags": [
+      "data extraction",
+      "cross-referencing"
+    ],
+    "title": "Contact Information",
+    "summary": "Please use FileSystem tools to finish the following task:"
+  },
+  {
+    "task_id": "file_arrangement",
+    "path": "standard/desktop_template/file_arrangement",
+    "family": "filesystem",
+    "difficulty": "L3",
+    "tags": [
+      "file organization"
+    ],
+    "title": "File Arrangement",
+    "summary": "Please use FileSystem tools to finish the following task:"
+  },
+  {
+    "task_id": "duplicates_searching",
+    "path": "standard/file_context/duplicates_searching",
+    "family": "filesystem",
+    "difficulty": "L3",
+    "tags": [
+      "pattern analysis",
+      "file organization"
+    ],
+    "title": "Duplicates Searching",
+    "summary": "Please use FileSystem tools to finish the following task:"
+  },
+  {
+    "task_id": "file_merging",
+    "path": "standard/file_context/file_merging",
+    "family": "filesystem",
+    "difficulty": "L3",
+    "tags": [
+      "content transformation",
+      "file organization"
+    ],
+    "title": "File Merging",
+    "summary": "Please use FileSystem tools to finish the following task:"
+  },
+  {
+    "task_id": "file_splitting",
+    "path": "standard/file_context/file_splitting",
+    "family": "filesystem",
+    "difficulty": "L3",
+    "tags": [
+      "content transformation"
+    ],
+    "title": "File Splitting",
+    "summary": "Please use FileSystem tools to finish the following task:"
+  },
+  {
+    "task_id": "pattern_matching",
+    "path": "standard/file_context/pattern_matching",
+    "family": "filesystem",
+    "difficulty": "L3",
+    "tags": [
+      "pattern analysis",
+      "cross-referencing"
+    ],
+    "title": "Pattern Matching",
+    "summary": "Please use FileSystem tools to finish the following task:"
+  },
+  {
+    "task_id": "uppercase",
+    "path": "standard/file_context/uppercase",
+    "family": "filesystem",
+    "difficulty": "L3",
+    "tags": [
+      "content transformation",
+      "data extraction"
+    ],
+    "title": "Uppercase",
+    "summary": "Please use FileSystem tools to finish the following task:"
+  },
+  {
+    "task_id": "size_classification",
+    "path": "standard/file_property/size_classification",
+    "family": "filesystem",
+    "difficulty": "L3",
+    "tags": [
+      "file organization",
+      "pattern analysis"
+    ],
+    "title": "Size Classification",
+    "summary": "Please use FileSystem tools to finish the following task:"
+  },
+  {
+    "task_id": "time_classification",
+    "path": "standard/file_property/time_classification",
+    "family": "filesystem",
+    "difficulty": "L3",
+    "tags": [
+      "file organization",
+      "data extraction",
+      "pattern analysis"
+    ],
+    "title": "Time Classification",
+    "summary": "Please use FileSystem tools to finish the following task:"
+  },
+  {
+    "task_id": "structure_analysis",
+    "path": "standard/folder_structure/structure_analysis",
+    "family": "filesystem",
+    "difficulty": "L3",
+    "tags": [
+      "pattern analysis",
+      "data extraction"
+    ],
+    "title": "Structure Analysis",
+    "summary": "Please use FileSystem tools to finish the following task:"
+  },
+  {
+    "task_id": "structure_mirror",
+    "path": "standard/folder_structure/structure_mirror",
+    "family": "filesystem",
+    "difficulty": "L3",
+    "tags": [
+      "file organization",
+      "content transformation"
+    ],
+    "title": "Structure Mirror",
+    "summary": "Please use FileSystem tools to finish the following task:"
+  },
+  {
+    "task_id": "dispute_review",
+    "path": "standard/legal_document/dispute_review",
+    "family": "filesystem",
+    "difficulty": "L3",
+    "tags": [
+      "data extraction",
+      "cross-referencing",
+      "pattern analysis"
+    ],
+    "title": "Dispute Review",
+    "summary": "Please use FileSystem tools to finish the following task:"
+  },
+  {
+    "task_id": "individual_comments",
+    "path": "standard/legal_document/individual_comments",
+    "family": "filesystem",
+    "difficulty": "L3",
+    "tags": [
+      "data extraction",
+      "cross-referencing",
+      "pattern analysis"
+    ],
+    "title": "Individual Comments",
+    "summary": "Please use FileSystem tools to finish the following task:"
+  },
+  {
+    "task_id": "solution_tracing",
+    "path": "standard/legal_document/solution_tracing",
+    "family": "filesystem",
+    "difficulty": "L3",
+    "tags": [
+      "cross-referencing",
+      "pattern analysis"
+    ],
+    "title": "Solution Tracing",
+    "summary": "Please use FileSystem tools to finish the following task:"
+  },
+  {
+    "task_id": "author_folders",
+    "path": "standard/papers/author_folders",
+    "family": "filesystem",
+    "difficulty": "L3",
+    "tags": [
+      "data extraction",
+      "file organization",
+      "pattern analysis"
+    ],
+    "title": "Author Folders",
+    "summary": "Please use FileSystem tools to finish the following task:"
+  },
+  {
+    "task_id": "find_math_paper",
+    "path": "standard/papers/find_math_paper",
+    "family": "filesystem",
+    "difficulty": "L3",
+    "tags": [
+      "pattern analysis",
+      "data extraction"
+    ],
+    "title": "Find Math Paper",
+    "summary": "Please use FileSystem tools to finish the following task:"
+  },
+  {
+    "task_id": "organize_legacy_papers",
+    "path": "standard/papers/organize_legacy_papers",
+    "family": "filesystem",
+    "difficulty": "L3",
+    "tags": [
+      "file organization",
+      "data extraction",
+      "cross-referencing"
+    ],
+    "title": "Organize Legacy Papers",
+    "summary": "Please use FileSystem tools to finish the following task:"
+  },
+  {
+    "task_id": "duplicate_name",
+    "path": "standard/student_database/duplicate_name",
+    "family": "filesystem",
+    "difficulty": "L3",
+    "tags": [
+      "pattern analysis",
+      "data extraction"
+    ],
+    "title": "Duplicate Name",
+    "summary": "Please use FileSystem tools to finish the following task:"
+  },
+  {
+    "task_id": "english_talent",
+    "path": "standard/student_database/english_talent",
+    "family": "filesystem",
+    "difficulty": "L3",
+    "tags": [
+      "data extraction",
+      "cross-referencing",
+      "pattern analysis"
+    ],
+    "title": "English Talent",
+    "summary": "Please use FileSystem tools to finish the following task:"
+  },
+  {
+    "task_id": "gradebased_score",
+    "path": "standard/student_database/gradebased_score",
+    "family": "filesystem",
+    "difficulty": "L3",
+    "tags": [
+      "data extraction",
+      "content transformation",
+      "pattern analysis"
+    ],
+    "title": "Gradebased Score",
+    "summary": "Please use FileSystem tools to finish the following task:"
+  },
+  {
+    "task_id": "code_locating",
+    "path": "standard/threestudio/code_locating",
+    "family": "filesystem",
+    "difficulty": "L3",
+    "tags": [
+      "code exploration"
+    ],
+    "title": "Code Locating",
+    "summary": "Please use FileSystem tools to finish the following task:"
+  },
+  {
+    "task_id": "output_analysis",
+    "path": "standard/threestudio/output_analysis",
+    "family": "filesystem",
+    "difficulty": "L3",
+    "tags": [
+      "code exploration",
+      "pattern analysis"
+    ],
+    "title": "Output Analysis",
+    "summary": "Please use FileSystem tools to finish the following task:"
+  },
+  {
+    "task_id": "requirements_completion",
+    "path": "standard/threestudio/requirements_completion",
+    "family": "filesystem",
+    "difficulty": "L3",
+    "tags": [
+      "code exploration",
+      "cross-referencing"
+    ],
+    "title": "Requirements Completion",
+    "summary": "Please use FileSystem tools to finish the following task:"
+  },
+  {
+    "task_id": "dataset_comparison",
+    "path": "standard/votenet/dataset_comparison",
+    "family": "filesystem",
+    "difficulty": "L3",
+    "tags": [
+      "cross-referencing",
+      "data extraction",
+      "pattern analysis"
+    ],
+    "title": "Dataset Comparison",
+    "summary": "Please use FileSystem tools to finish the following task:"
+  },
+  {
+    "task_id": "debugging",
+    "path": "standard/votenet/debugging",
+    "family": "filesystem",
+    "difficulty": "L3",
+    "tags": [
+      "code exploration"
+    ],
+    "title": "Debugging",
+    "summary": "Please use FileSystem tools to finish the following task:"
+  },
+  {
+    "task_id": "requirements_writing",
+    "path": "standard/votenet/requirements_writing",
+    "family": "filesystem",
+    "difficulty": "L3",
+    "tags": [
+      "code exploration",
+      "cross-referencing"
+    ],
+    "title": "Requirements Writing",
+    "summary": "Please use FileSystem tools to finish the following task:"
+  }
+]

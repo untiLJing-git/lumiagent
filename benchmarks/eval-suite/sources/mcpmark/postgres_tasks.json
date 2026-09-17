@@ -1,0 +1,386 @@
+[
+  {
+    "task_id": "customer_data_migration_basic",
+    "path": "easy/chinook/customer_data_migration_basic",
+    "family": "postgres",
+    "difficulty": "L1",
+    "tags": [
+      "data migration",
+      "transactional operations"
+    ],
+    "title": "Customer Data Migration Basic",
+    "summary": "Migrate customer data from an acquired company to PostgreSQL using efficient bulk operations."
+  },
+  {
+    "task_id": "update_employee_info",
+    "path": "easy/chinook/update_employee_info",
+    "family": "postgres",
+    "difficulty": "L1",
+    "tags": [
+      "data updates",
+      "organizational change"
+    ],
+    "title": "Update Employee Info",
+    "summary": "Update employee information and reorganize the reporting structure in the Chinook database to reflect organizational changes."
+  },
+  {
+    "task_id": "create_payment_index",
+    "path": "easy/dvdrental/create_payment_index",
+    "family": "postgres",
+    "difficulty": "L1",
+    "tags": [
+      "performance optimization",
+      "indexing"
+    ],
+    "title": "Create Payment Index",
+    "summary": "Create an index to optimize customer payment queries in the DVD rental database."
+  },
+  {
+    "task_id": "department_summary_view",
+    "path": "easy/employees/department_summary_view",
+    "family": "postgres",
+    "difficulty": "L1",
+    "tags": [
+      "reporting and analytics",
+      "materialized views"
+    ],
+    "title": "Department Summary View",
+    "summary": "Create an executive department summary view to provide quick insights into departmental metrics for leadership dashboards. This view will consolidate key department statistics in one easily accessible place."
+  },
+  {
+    "task_id": "employee_gender_statistics",
+    "path": "easy/employees/employee_gender_statistics",
+    "family": "postgres",
+    "difficulty": "L1",
+    "tags": [
+      "reporting and analytics",
+      "data aggregation"
+    ],
+    "title": "Employee Gender Statistics",
+    "summary": "Create a gender statistics summary table for the HR team's annual workforce composition report. This is a simple analysis to understand the gender distribution in our employee database."
+  },
+  {
+    "task_id": "employee_projects_basic",
+    "path": "easy/employees/employee_projects_basic",
+    "family": "postgres",
+    "difficulty": "L1",
+    "tags": [
+      "schema design",
+      "data loading"
+    ],
+    "title": "Employee Projects Basic",
+    "summary": "Create and manage a basic employee projects table to track company projects. The IT team needs you to build the database table structure and populate it with initial project data."
+  },
+  {
+    "task_id": "hiring_year_summary",
+    "path": "easy/employees/hiring_year_summary",
+    "family": "postgres",
+    "difficulty": "L1",
+    "tags": [
+      "reporting and analytics",
+      "retention analysis"
+    ],
+    "title": "Hiring Year Summary",
+    "summary": "Create a hiring year summary table to help HR track employee retention trends over the years. This analysis shows how many employees were hired each year and how many are still with the company."
+  },
+  {
+    "task_id": "basic_security_setup",
+    "path": "easy/lego/basic_security_setup",
+    "family": "postgres",
+    "difficulty": "L1",
+    "tags": [
+      "security",
+      "access control"
+    ],
+    "title": "Basic Security Setup",
+    "summary": "Set up basic database security with role-based access control and Row-Level Security (RLS) for the LEGO database."
+  },
+  {
+    "task_id": "fix_data_inconsistencies",
+    "path": "easy/lego/fix_data_inconsistencies",
+    "family": "postgres",
+    "difficulty": "L1",
+    "tags": [
+      "data integrity enforcement",
+      "data reconciliation"
+    ],
+    "title": "Fix Data Inconsistencies",
+    "summary": "Fix data inconsistencies in the LEGO database where the reported part count in the `lego_sets` table does not match the actual sum of non-spare parts in the latest inventory version."
+  },
+  {
+    "task_id": "create_performance_indexes",
+    "path": "easy/sports/create_performance_indexes",
+    "family": "postgres",
+    "difficulty": "L1",
+    "tags": [
+      "performance optimization",
+      "indexing"
+    ],
+    "title": "Create Performance Indexes",
+    "summary": "Create indexes to optimize participant and statistics queries in the sports database."
+  },
+  {
+    "task_id": "customer_data_migration",
+    "path": "standard/chinook/customer_data_migration",
+    "family": "postgres",
+    "difficulty": "L3",
+    "tags": [
+      "data migration",
+      "transactional operations"
+    ],
+    "title": "Customer Data Migration",
+    "summary": "Migrate customer data from an acquired company to PostgreSQL using efficient bulk operations."
+  },
+  {
+    "task_id": "employee_hierarchy_management",
+    "path": "standard/chinook/employee_hierarchy_management",
+    "family": "postgres",
+    "difficulty": "L3",
+    "tags": [
+      "data migration",
+      "schema design",
+      "transactional operations"
+    ],
+    "title": "Employee Hierarchy Management",
+    "summary": "Manage employee hierarchy and customer assignments through systematic CRUD operations."
+  },
+  {
+    "task_id": "sales_and_music_charts",
+    "path": "standard/chinook/sales_and_music_charts",
+    "family": "postgres",
+    "difficulty": "L3",
+    "tags": [
+      "reporting and analytics",
+      "statistical aggregation",
+      "schema design"
+    ],
+    "title": "Sales and Music Charts",
+    "summary": "Create a monthly sales dashboard and top music charts system for Chinook's management team to track business performance and identify trending music content."
+  },
+  {
+    "task_id": "customer_analysis_fix",
+    "path": "standard/dvdrental/customer_analysis_fix",
+    "family": "postgres",
+    "difficulty": "L3",
+    "tags": [
+      "performance optimization",
+      "data integrity enforcement"
+    ],
+    "title": "Customer Analysis Fix",
+    "summary": "Fix the customer analysis query that is producing incorrect results."
+  },
+  {
+    "task_id": "customer_analytics_optimization",
+    "path": "standard/dvdrental/customer_analytics_optimization",
+    "family": "postgres",
+    "difficulty": "L3",
+    "tags": [
+      "performance optimization"
+    ],
+    "title": "Customer Analytics Optimization",
+    "summary": "Optimize slow customer analytics query in the DVD rental database."
+  },
+  {
+    "task_id": "film_inventory_management",
+    "path": "standard/dvdrental/film_inventory_management",
+    "family": "postgres",
+    "difficulty": "L3",
+    "tags": [
+      "data migration",
+      "transactional operations",
+      "schema design"
+    ],
+    "title": "Film Inventory Management",
+    "summary": "Manage film inventory operations in the DVD rental database."
+  },
+  {
+    "task_id": "employee_demographics_report",
+    "path": "standard/employees/employee_demographics_report",
+    "family": "postgres",
+    "difficulty": "L3",
+    "tags": [
+      "reporting and analytics",
+      "statistical aggregation"
+    ],
+    "title": "Employee Demographics Report",
+    "summary": "Generate a comprehensive employee demographics and basic statistics report for the annual company overview. The HR team needs simple, clear statistical summaries about our workforce composition to include in the annual report and diversity initiatives."
+  },
+  {
+    "task_id": "employee_performance_analysis",
+    "path": "standard/employees/employee_performance_analysis",
+    "family": "postgres",
+    "difficulty": "L3",
+    "tags": [
+      "reporting and analytics",
+      "statistical aggregation",
+      "schema design"
+    ],
+    "title": "Employee Performance Analysis",
+    "summary": "Create a comprehensive employee performance evaluation system that analyzes career progression patterns and salary equity across our organization. The executive team needs data-driven insights for upcoming promotion decisions and salary adjustment planning."
+  },
+  {
+    "task_id": "employee_project_tracking",
+    "path": "standard/employees/employee_project_tracking",
+    "family": "postgres",
+    "difficulty": "L3",
+    "tags": [
+      "schema design",
+      "data migration",
+      "data integrity enforcement"
+    ],
+    "title": "Employee Project Tracking",
+    "summary": "Create and manage a comprehensive employee project tracking system using database schema design and data manipulation operations. The IT team needs you to build the database structure from scratch and populate it with specific initial data to support project management workflows."
+  },
+  {
+    "task_id": "employee_retention_analysis",
+    "path": "standard/employees/employee_retention_analysis",
+    "family": "postgres",
+    "difficulty": "L3",
+    "tags": [
+      "reporting and analytics",
+      "statistical aggregation",
+      "audit and compliance"
+    ],
+    "title": "Employee Retention Analysis",
+    "summary": "Analyze employee retention patterns and identify factors contributing to turnover across the organization. The HR leadership team needs comprehensive insights to develop targeted retention strategies and reduce costly employee attrition."
+  },
+  {
+    "task_id": "executive_dashboard_automation",
+    "path": "standard/employees/executive_dashboard_automation",
+    "family": "postgres",
+    "difficulty": "L3",
+    "tags": [
+      "reporting and analytics",
+      "stored procedures and functions",
+      "schema design"
+    ],
+    "title": "Executive Dashboard Automation",
+    "summary": "Design a comprehensive reporting and automation system for executive dashboard and real-time monitoring. The executive team needs automated reports, data views, and trigger-based notifications to track key business metrics without manual intervention."
+  },
+  {
+    "task_id": "management_structure_analysis",
+    "path": "standard/employees/management_structure_analysis",
+    "family": "postgres",
+    "difficulty": "L3",
+    "tags": [
+      "reporting and analytics",
+      "statistical aggregation"
+    ],
+    "title": "Management Structure Analysis",
+    "summary": "Conduct a comprehensive management structure analysis to evaluate leadership effectiveness and organizational hierarchy. The executive team needs insights into management tenure, span of control, and leadership transitions to optimize the management structure and succession planning."
+  },
+  {
+    "task_id": "consistency_enforcement",
+    "path": "standard/lego/consistency_enforcement",
+    "family": "postgres",
+    "difficulty": "L3",
+    "tags": [
+      "data integrity enforcement",
+      "stored procedures and functions",
+      "transactional operations"
+    ],
+    "title": "Consistency Enforcement",
+    "summary": "Implement a data consistency enforcement system for the LEGO database. The system must ensure that the reported part count in the `lego_sets` table matches the actual sum of non-spare parts in the latest inventory version. This involves a three-step process: identifying existing inconsistencies, fixing them, and creating a trigger-based constraint system to prevent future issues."
+  },
+  {
+    "task_id": "database_security_policies",
+    "path": "standard/lego/database_security_policies",
+    "family": "postgres",
+    "difficulty": "L3",
+    "tags": [
+      "security and access control",
+      "stored procedures and functions"
+    ],
+    "title": "Database Security Policies",
+    "summary": "Implement a comprehensive database security system with Row-Level Security (RLS) policies and role-based access control for the LEGO database. The system must ensure theme-based data isolation and prevent unauthorized access across different LEGO themes."
+  },
+  {
+    "task_id": "transactional_inventory_transfer",
+    "path": "standard/lego/transactional_inventory_transfer",
+    "family": "postgres",
+    "difficulty": "L3",
+    "tags": [
+      "transactional operations",
+      "stored procedures and functions",
+      "audit and compliance"
+    ],
+    "title": "Transactional Inventory Transfer",
+    "summary": "Create a PostgreSQL function to handle inventory part transfers between LEGO sets with enhanced validation and audit capabilities. The LEGO warehouse management system needs to support transferring parts while maintaining data integrity and tracking transfer history."
+  },
+  {
+    "task_id": "rls_business_access",
+    "path": "standard/security/rls_business_access",
+    "family": "postgres",
+    "difficulty": "L3",
+    "tags": [
+      "security and access control",
+      "stored procedures and functions",
+      "schema design"
+    ],
+    "title": "RLS Business Access",
+    "summary": "Implement Row Level Security (RLS) policies for a social media platform with Users, Posts, Comments, and Channels."
+  },
+  {
+    "task_id": "user_permission_audit",
+    "path": "standard/security/user_permission_audit",
+    "family": "postgres",
+    "difficulty": "L3",
+    "tags": [
+      "security and access control",
+      "audit and compliance"
+    ],
+    "title": "User Permission Audit",
+    "summary": "Conduct a comprehensive security audit to identify PostgreSQL users with insufficient or dangling permissions in a business database environment."
+  },
+  {
+    "task_id": "baseball_player_analysis",
+    "path": "standard/sports/baseball_player_analysis",
+    "family": "postgres",
+    "difficulty": "L3",
+    "tags": [
+      "reporting and analytics",
+      "statistical aggregation",
+      "schema design"
+    ],
+    "title": "Baseball Player Analysis",
+    "summary": "Create comprehensive baseball player performance analysis in the sports database."
+  },
+  {
+    "task_id": "participant_report_optimization",
+    "path": "standard/sports/participant_report_optimization",
+    "family": "postgres",
+    "difficulty": "L3",
+    "tags": [
+      "performance optimization",
+      "schema design"
+    ],
+    "title": "Participant Report Optimization",
+    "summary": "Query Performance Optimization"
+  },
+  {
+    "task_id": "team_roster_management",
+    "path": "standard/sports/team_roster_management",
+    "family": "postgres",
+    "difficulty": "L3",
+    "tags": [
+      "schema design",
+      "data migration",
+      "statistical aggregation"
+    ],
+    "title": "Team Roster Management",
+    "summary": "Team Roster Management Operations"
+  },
+  {
+    "task_id": "dba_vector_analysis",
+    "path": "standard/vectors/dba_vector_analysis",
+    "family": "postgres",
+    "difficulty": "L3",
+    "tags": [
+      "performance optimization",
+      "audit and compliance",
+      "statistical aggregation"
+    ],
+    "title": "DBA Vector Analysis",
+    "summary": "PostgreSQL Vector Database Analysis"
+  }
+]

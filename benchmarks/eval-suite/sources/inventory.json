@@ -1,0 +1,51 @@
+{
+  "collected_at": "2026-09-15T08:02:42Z",
+  "raw_root": ".lumiagent/sources",
+  "downloads": {
+    "swe_bench_verified.parquet": {
+      "bytes": 6304616,
+      "sha256": "030cfd7f2a704c4c0226e7f104c725a3b41230b1d3517f9c915ad7ea5be3fa25"
+    },
+    "swe_bench_pro.parquet": {
+      "bytes": 7816820,
+      "sha256": "c8cd7115496ad4e9a8b21d088cef576a65bf821bb542b24336f13f714cef13f8"
+    },
+    "multi_swe_bench_mini.jsonl": {
+      "bytes": 315067581,
+      "sha256": "6644b9c9ebaf5e5b37cb9d81c4dce688c101f07436aed9d50fc55c85b164c3b2"
+    },
+    "swe_bench_live_lite.parquet": {
+      "bytes": 14442471,
+      "sha256": "7ee0a75c41bfc954fd441b67ce738fc5c1cbae00721c4e30e7db4d893057c9ab"
+    },
+    "swe_bench_live_verified.parquet": {
+      "bytes": 24696977,
+      "sha256": "080e36e46198bf9c177a6b077624d4028baf6ff04d661c332cc1fe1e5dfa50b2"
+    }
+  },
+  "clones": {
+    "mcpmark": {
+      "commit": "cd45b7f57923b9b3985467f5139927575f83141c"
+    },
+    "mcp-universe": {
+      "commit": "48b453021694d9823d308627fb7f6b7edd29541a"
+    },
+    "mcp-bench": {
+      "commit": "7a8eaeae83a842a2949080acc5473f65e1569daf"
+    }
+  },
+  "public_counts": {
+    "swe_bench_verified": 500,
+    "swe_bench_pro_pointers": 731,
+    "swe_bench_live_lite": 300,
+    "swe_bench_live_verified": 500,
+    "multi_swe_bench_mini": 400,
+    "mcpmark_postgres": 31,
+    "mcpmark_filesystem": 40,
+    "mcp_universe_tasks": 232,
+    "mcp_universe_pagination_patterns": 11,
+    "mcp_bench_tasks": 104,
+    "deepswe_tasks": 113,
+    "terminal_bench_2_1_tasks": 90
+  }
+}

@@ -1,0 +1,66 @@
+{
+  "status": "instances_selected_not_task_assets",
+  "selected_at": "2026-09-15T08:02:42Z",
+  "split_note": "A1 six tasks are development-set candidates; holdout grouping waits for the 24-task expansion.",
+  "tasks": {
+    "coding_bug_001": {
+      "suite": "SWE-bench Verified",
+      "instance_id": "pallets__flask-5014",
+      "repo": "pallets/flask",
+      "repo_license": "BSD-3-Clause",
+      "difficulty": "<15 min fix",
+      "n_patch_files": 1,
+      "n_fail_to_pass": 1
+    },
+    "coding_interface_001": {
+      "suite": "Multi-SWE-bench mini",
+      "instance_id": "mockito__mockito-3129",
+      "repo": "mockito/mockito",
+      "repo_license": "MIT",
+      "n_patch_files": 3,
+      "title": "Make MockUtil.getMockMaker() public Mockito API"
+    },
+    "mcp_pagination_001": {
+      "suite": "MCP-Universe pattern + local frozen seed",
+      "pattern_tasks": [
+        "repository_management/github_task_0006.json",
+        "repository_management/github_task_0007.json",
+        "repository_management/github_task_0008.json",
+        "repository_management/github_task_0009.json",
+        "repository_management/github_task_0010.json",
+        "repository_management/github_task_0012.json"
+      ],
+      "a2_pagination_refs": [
+        "paper_search_biomcp_000",
+        "paper_search_biomcp_001",
+        "scientific_computing_biomcp_math_mcp_000",
+        "openapi_explorer_000",
+        "biomcp_001"
+      ],
+      "local_seed": "not_built_yet",
+      "note": "Do not call live web/GitHub APIs. Freeze a local pageable catalog in A1. MCP-Bench pagination tasks are A2 references only."
+    },
+    "mcp_update_001": {
+      "suite": "MCPMark PostgreSQL",
+      "task_id": "update_employee_info",
+      "path": "easy/chinook/update_employee_info",
+      "sample_db": "chinook",
+      "upstream_license": "Apache-2.0"
+    },
+    "combined_context_001": {
+      "suite": "Filesystem MCP + SWE-style issue",
+      "mcp_server": "@modelcontextprotocol/server-filesystem",
+      "issue_instance_id": "psf__requests-1921",
+      "issue_repo": "psf/requests",
+      "repo_license": "Apache-2.0",
+      "note": "Issue text is Agent-visible via filesystem MCP; hidden tests stay off the workspace."
+    },
+    "combined_readonly_001": {
+      "suite": "MCPMark Filesystem (read-only adaptation)",
+      "task_id": "structure_analysis",
+      "path": "easy/folder_structure/structure_analysis",
+      "upstream_license": "Apache-2.0",
+      "note": "Mount source tree read-only. Writing existing files is a hard-constraint failure."
+    }
+  }
+}
