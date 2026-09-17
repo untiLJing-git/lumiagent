@@ -206,7 +206,7 @@ Trace Core stays framework-agnostic. Claude Code, MCP, SDKs, CLI wrappers, and t
 
 ![LumiAgent runtime architecture](./docs/assets/archify/runtime-architecture.svg)
 
-[Interactive viewer](docs/assets/archify/runtime-architecture.html) · [All diagrams](docs/assets/archify/index.html)
+[Interactive viewer](https://untiljing-git.github.io/lumiagent/assets/archify/runtime-architecture.html) · [All diagrams](https://untiljing-git.github.io/lumiagent/assets/archify/index.html)
 
 The intended layering is `CaptureStrategy → Trace Core → view models (Phase 5) → visualization`. MCP and Coding Agent details live in adapter conventions, not as extra Core fields.
 
@@ -217,31 +217,31 @@ The intended layering is `CaptureStrategy → Trace Core → view models (Phase 
 
 ![Trace Core model](./docs/assets/archify/trace-core-model.svg)
 
-[Interactive viewer](docs/assets/archify/trace-core-model.html) · Docs source: [`trace-core-model.mmd`](docs/diagrams/trace-core-model.mmd)
+[Interactive viewer](https://untiljing-git.github.io/lumiagent/assets/archify/trace-core-model.html) · Docs source: [`trace-core-model.mmd`](docs/diagrams/trace-core-model.mmd)
 
 **Visualization intent**
 
 ![Visualization intent](./docs/assets/archify/visualization-intent.svg)
 
-[Interactive viewer](docs/assets/archify/visualization-intent.html) · Docs source: [`trace-core-visualization-intent.mmd`](docs/diagrams/trace-core-visualization-intent.mmd)
+[Interactive viewer](https://untiljing-git.github.io/lumiagent/assets/archify/visualization-intent.html) · Docs source: [`trace-core-visualization-intent.mmd`](docs/diagrams/trace-core-visualization-intent.mmd)
 
 **MCP evidence layer**
 
 ![MCP evidence layer](./docs/assets/archify/mcp-evidence-layer.svg)
 
-[Interactive viewer](docs/assets/archify/mcp-evidence-layer.html) · Docs source: [`mcp-tool-chain-evidence-layer.mmd`](docs/diagrams/mcp-tool-chain-evidence-layer.mmd)
+[Interactive viewer](https://untiljing-git.github.io/lumiagent/assets/archify/mcp-evidence-layer.html) · Docs source: [`mcp-tool-chain-evidence-layer.mmd`](docs/diagrams/mcp-tool-chain-evidence-layer.mmd)
 
 **MCP capture + display**
 
 ![MCP capture + display](./docs/assets/archify/mcp-capture-display.svg)
 
-[Interactive viewer](docs/assets/archify/mcp-capture-display.html) · Docs source: [`mcp-capture-display-chain.mmd`](docs/diagrams/mcp-capture-display-chain.mmd)
+[Interactive viewer](https://untiljing-git.github.io/lumiagent/assets/archify/mcp-capture-display.html) · Docs source: [`mcp-capture-display-chain.mmd`](docs/diagrams/mcp-capture-display-chain.mmd)
 
 **Coding Agent capture flow**
 
 ![Coding Agent capture flow](./docs/assets/archify/coding-agent-capture.svg)
 
-[Interactive viewer](docs/assets/archify/coding-agent-capture.html) · Docs source: [`coding-agent-capture-flow.mmd`](docs/diagrams/coding-agent-capture-flow.mmd)
+[Interactive viewer](https://untiljing-git.github.io/lumiagent/assets/archify/coding-agent-capture.html) · Docs source: [`coding-agent-capture-flow.mmd`](docs/diagrams/coding-agent-capture-flow.mmd)
 
 </details>
 

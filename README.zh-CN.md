@@ -206,7 +206,7 @@ Trace Core 刻意与具体 Agent 框架解耦。Claude Code、MCP、SDK、CLI wr
 
 ![LumiAgent 运行时架构](./docs/assets/archify/runtime-architecture.svg)
 
-[交互查看](docs/assets/archify/runtime-architecture.html) · [全部架构图](docs/assets/archify/index.html)
+[交互查看](https://untiljing-git.github.io/lumiagent/assets/archify/runtime-architecture.html) · [全部架构图](https://untiljing-git.github.io/lumiagent/assets/archify/index.html)
 
 分层约定是 `CaptureStrategy → Trace Core → view models（Phase 5）→ 可视化`。MCP 与 Coding Agent 细节放在 adapter conventions 中，不向 Core 增加专用字段。
 
@@ -217,31 +217,31 @@ Trace Core 刻意与具体 Agent 框架解耦。Claude Code、MCP、SDK、CLI wr
 
 ![Trace Core 模型](./docs/assets/archify/trace-core-model.svg)
 
-[交互查看](docs/assets/archify/trace-core-model.html) · 文档源：[`trace-core-model.mmd`](docs/diagrams/trace-core-model.mmd)
+[交互查看](https://untiljing-git.github.io/lumiagent/assets/archify/trace-core-model.html) · 文档源：[`trace-core-model.mmd`](docs/diagrams/trace-core-model.mmd)
 
 **可视化意图**
 
 ![可视化意图](./docs/assets/archify/visualization-intent.svg)
 
-[交互查看](docs/assets/archify/visualization-intent.html) · 文档源：[`trace-core-visualization-intent.mmd`](docs/diagrams/trace-core-visualization-intent.mmd)
+[交互查看](https://untiljing-git.github.io/lumiagent/assets/archify/visualization-intent.html) · 文档源：[`trace-core-visualization-intent.mmd`](docs/diagrams/trace-core-visualization-intent.mmd)
 
 **MCP 证据层**
 
 ![MCP 证据层](./docs/assets/archify/mcp-evidence-layer.svg)
 
-[交互查看](docs/assets/archify/mcp-evidence-layer.html) · 文档源：[`mcp-tool-chain-evidence-layer.mmd`](docs/diagrams/mcp-tool-chain-evidence-layer.mmd)
+[交互查看](https://untiljing-git.github.io/lumiagent/assets/archify/mcp-evidence-layer.html) · 文档源：[`mcp-tool-chain-evidence-layer.mmd`](docs/diagrams/mcp-tool-chain-evidence-layer.mmd)
 
 **MCP 采集 + 展示**
 
 ![MCP 采集 + 展示](./docs/assets/archify/mcp-capture-display.svg)
 
-[交互查看](docs/assets/archify/mcp-capture-display.html) · 文档源：[`mcp-capture-display-chain.mmd`](docs/diagrams/mcp-capture-display-chain.mmd)
+[交互查看](https://untiljing-git.github.io/lumiagent/assets/archify/mcp-capture-display.html) · 文档源：[`mcp-capture-display-chain.mmd`](docs/diagrams/mcp-capture-display-chain.mmd)
 
 **Coding Agent 采集流**
 
 ![Coding Agent 采集流](./docs/assets/archify/coding-agent-capture.svg)
 
-[交互查看](docs/assets/archify/coding-agent-capture.html) · 文档源：[`coding-agent-capture-flow.mmd`](docs/diagrams/coding-agent-capture-flow.mmd)
+[交互查看](https://untiljing-git.github.io/lumiagent/assets/archify/coding-agent-capture.html) · 文档源：[`coding-agent-capture-flow.mmd`](docs/diagrams/coding-agent-capture-flow.mmd)
 
 </details>
 
