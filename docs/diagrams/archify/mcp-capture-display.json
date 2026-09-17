@@ -1,0 +1,84 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "MCP Capture + Display",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "capture-path",
+        "label": "Capture path",
+        "focus": ["capture", "strategy", "stdio", "server", "mapper", "run"],
+        "note": "lumiagent capture mcp drives stdio, then maps the result into AgentRun."
+      },
+      {
+        "id": "adapter-boundary",
+        "label": "Adapter boundary",
+        "focus": ["strategy", "stdio", "selector", "mapper", "core"],
+        "note": "MCP semantics stay in the adapter; Core stays framework-agnostic."
+      },
+      {
+        "id": "display-path",
+        "label": "Display path",
+        "focus": ["run", "show"],
+        "note": "lumiagent show reads the same AgentRun as the CLI evidence summary."
+      }
+    ]
+  },
+  "lanes": [
+    { "id": "cli", "label": "CLI" },
+    { "id": "adapter", "label": "MCP adapter" },
+    { "id": "mcp", "label": "MCP server" },
+    { "id": "core", "label": "Trace Core" }
+  ],
+  "phases": [
+    { "id": "intake", "label": "Capture", "fromCol": 0, "toCol": 1 },
+    { "id": "execute", "label": "Call + map", "fromCol": 2, "toCol": 4, "variant": "emphasis" },
+    { "id": "review", "label": "Display", "fromCol": 5, "toCol": 5, "variant": "dashed" }
+  ],
+  "groups": [
+    { "id": "adapter-work", "label": "Adapter stays outside Core", "lane": "adapter", "fromCol": 1, "toCol": 4, "variant": "emphasis" }
+  ],
+  "mainPath": ["capture", "strategy", "stdio", "server", "mapper", "run", "show"],
+  "nodes": [
+    { "id": "capture", "lane": "cli", "col": 0, "type": "frontend", "label": "capture mcp", "sublabel": "lumiagent", "width": 140 },
+    { "id": "strategy", "lane": "adapter", "col": 1, "type": "backend", "label": "McpCaptureStrategy", "sublabel": "config + runtime", "width": 150 },
+    { "id": "stdio", "lane": "adapter", "col": 2, "type": "messagebus", "label": "Stdio runtime", "sublabel": "McpClientRuntime", "width": 140 },
+    { "id": "server", "lane": "mcp", "col": 2, "type": "external", "label": "MCP Server", "sublabel": "tools + schemas", "width": 140 },
+    { "id": "selector", "lane": "adapter", "col": 3, "type": "security", "label": "Tool selector", "sublabel": "explicit allow-list", "width": 140 },
+    { "id": "mapper", "lane": "adapter", "col": 4, "type": "backend", "label": "McpTraceMapper", "sublabel": "spans + artifacts", "width": 150 },
+    { "id": "run", "lane": "core", "col": 5, "type": "database", "label": "AgentRun", "sublabel": "Span Tree", "width": 140 },
+    { "id": "core", "lane": "core", "col": 1, "type": "database", "label": "Trace Core", "sublabel": "framework-agnostic", "width": 140 },
+    { "id": "show", "lane": "cli", "col": 5, "type": "frontend", "label": "lumiagent show", "sublabel": "evidence summary", "width": 140 }
+  ],
+  "edges": [
+    { "id": "capture-strategy", "from": "capture", "to": "strategy", "variant": "emphasis" },
+    { "id": "strategy-stdio", "from": "strategy", "to": "stdio", "variant": "emphasis" },
+    { "id": "stdio-server", "from": "stdio", "to": "server", "variant": "emphasis" },
+    { "id": "strategy-selector", "from": "strategy", "to": "selector", "label": "select tool" },
+    { "id": "selector-mapper", "from": "selector", "to": "mapper" },
+    { "id": "server-mapper", "from": "server", "to": "mapper", "variant": "emphasis", "label": "result" },
+    { "id": "mapper-run", "from": "mapper", "to": "run", "variant": "emphasis" },
+    { "id": "run-show", "from": "run", "to": "show", "variant": "emphasis" },
+    { "id": "core-run", "from": "core", "to": "run", "variant": "dashed", "label": "models" }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Capture stays an adapter",
+      "items": [
+        "StdioMcpClientRuntime and ExplicitToolSelector never leak into Core",
+        "McpTraceMapper writes AgentRun, spans, artifacts, and diagnosis hooks"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Same run for display",
+      "items": [
+        "trace JSON is the handoff",
+        "lumiagent show prints the CLI evidence summary from that AgentRun"
+      ]
+    }
+  ]
+}

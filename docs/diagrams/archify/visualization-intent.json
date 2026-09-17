@@ -1,0 +1,80 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Visualization Intent",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "capture-core",
+        "label": "Capture to Core",
+        "focus": ["capture-strategy", "agent-run", "span-tree", "evidence"],
+        "note": "CaptureStrategy writes Core data; adapters do not own the UI."
+      },
+      {
+        "id": "view-models",
+        "label": "View models",
+        "focus": ["agent-run", "span-tree", "evidence", "summary-vm", "tree-vm", "diagnosis-vm"],
+        "note": "Phase 5 view models project Core into summary, tree, and diagnosis shapes."
+      },
+      {
+        "id": "surfaces",
+        "label": "Surfaces",
+        "focus": ["summary-vm", "tree-vm", "diagnosis-vm", "cli-viewer", "web-ui"],
+        "note": "CLI is the current surface; Web UI later reads the same view models."
+      }
+    ]
+  },
+  "layout": {
+    "mode": "grid",
+    "origin": [48, 56],
+    "cols": 5,
+    "gapX": 56,
+    "gapY": 56,
+    "cellW": 160,
+    "cellH": 72
+  },
+  "components": [
+    { "id": "capture-strategy", "type": "backend", "label": "CaptureStrategy", "sublabel": "MCP / hooks / import", "row": 0, "col": 0 },
+    { "id": "agent-run", "type": "database", "label": "AgentRun", "sublabel": "status / timing", "row": 0, "col": 1 },
+    { "id": "span-tree", "type": "database", "label": "Span Tree", "sublabel": "nested steps", "row": 0, "col": 2 },
+    { "id": "evidence", "type": "database", "label": "Evidence", "sublabel": "events / artifacts", "row": 0, "col": 3 },
+    { "id": "cli-viewer", "type": "frontend", "label": "CLI viewer", "sublabel": "ready", "row": 0, "col": 4 },
+    { "id": "summary-vm", "type": "frontend", "label": "Summary VM", "sublabel": "run overview", "row": 1, "col": 1 },
+    { "id": "tree-vm", "type": "frontend", "label": "Tree / timeline VM", "sublabel": "span navigation", "row": 1, "col": 2 },
+    { "id": "diagnosis-vm", "type": "frontend", "label": "Diagnosis VM", "sublabel": "Phase 5", "row": 1, "col": 3 },
+    { "id": "web-ui", "type": "cloud", "label": "Web UI", "sublabel": "later", "row": 1, "col": 4 }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "Trace Core", "wraps": ["agent-run", "span-tree", "evidence"] },
+    { "kind": "region", "label": "View models", "wraps": ["summary-vm", "tree-vm", "diagnosis-vm"] },
+    { "kind": "region", "label": "Surfaces", "wraps": ["cli-viewer", "web-ui"] }
+  ],
+  "connections": [
+    { "id": "strategy-run", "from": "capture-strategy", "to": "agent-run", "variant": "emphasis" },
+    { "id": "run-summary", "from": "agent-run", "to": "summary-vm", "variant": "emphasis" },
+    { "id": "tree-vm-link", "from": "span-tree", "to": "tree-vm", "variant": "emphasis" },
+    { "id": "evidence-diagnosis", "from": "evidence", "to": "diagnosis-vm" },
+    { "id": "cli-web", "from": "cli-viewer", "to": "web-ui", "variant": "dashed" },
+    { "id": "diagnosis-web", "from": "diagnosis-vm", "to": "web-ui", "variant": "dashed" }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Data before UI",
+      "items": [
+        "Capture writes Core; view models project it",
+        "Promote adapter metadata into Core only when it is generic and repeated"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "One model, two surfaces",
+      "items": [
+        "CLI already reads summary, tree, and checks",
+        "Web UI later reuses the same view models"
+      ]
+    }
+  ]
+}

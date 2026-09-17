@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 420" role="img" aria-labelledby="title desc" color-scheme="light dark">
+  <title id="title">LumiAgent</title>
+  <desc id="desc">LumiAgent product loop: run, capture, diagnose, review, improve, and compare reruns.</desc>
+  <style type="text/css"><![CDATA[
+  .bg { fill: url(#bgL); }
+  .glow { fill: url(#glowL); }
+  .glowG { fill: url(#glowGL); }
+  .grid { fill: url(#gridL); opacity: 0.7; }
+  .frame { fill: none; stroke: #94A3B8; stroke-width: 1.75; }
+  .logo { fill: #F5F3FF; stroke: #7C3AED; }
+  .title { fill: #0F172A; }
+  .sub { fill: #475569; }
+  .chip1 { fill: #EDE9FE; stroke: #7C3AED; }
+  .chip1t { fill: #5B21B6; }
+  .chip2 { fill: #DCFCE7; stroke: #15803D; }
+  .chip2t { fill: #166534; }
+  .chip3 { fill: #E0F2FE; stroke: #0284C7; }
+  .chip3t { fill: #075985; }
+  .box { fill: #FFFFFF; stroke: #CBD5E1; }
+  .boxRun { fill: #FFFFFF; stroke: #7C3AED; }
+  .boxGo { fill: #FFFFFF; stroke: #15803D; }
+  .boxT { fill: #0F172A; }
+  .num { fill: #64748B; }
+  .numRun { fill: #7C3AED; }
+  .numGo { fill: #15803D; }
+  .flow { stroke: #94A3B8; marker-end: url(#arrowL); }
+  .flowGo { stroke: #15803D; marker-end: url(#arrowGoL); }
+  .rerun { fill: #15803D; }
+  .lift { filter: url(#softL); }
+  @media (prefers-color-scheme: dark) {
+    .bg { fill: url(#bgD); }
+    .glow { fill: url(#glowD); }
+    .glowG { fill: url(#glowGD); }
+    .grid { fill: url(#gridD); opacity: 0.45; }
+    .frame { stroke: #C4B5FD; stroke-width: 2.75; }
+    .logo { fill: #1E1B4B; stroke: #A78BFA; }
+    .title { fill: #F8FAFC; }
+    .sub { fill: #94A3B8; }
+    .chip1 { fill: #1E1B4B; stroke: #A78BFA; }
+    .chip1t { fill: #DDD6FE; }
+    .chip2 { fill: #052E16; stroke: #34D399; }
+    .chip2t { fill: #86EFAC; }
+    .chip3 { fill: #082F49; stroke: #38BDF8; }
+    .chip3t { fill: #7DD3FC; }
+    .box { fill: #0F172A; stroke: #64748B; }
+    .boxRun { fill: #0F172A; stroke: #A78BFA; }
+    .boxGo { fill: #0F172A; stroke: #34D399; }
+    .boxT { fill: #F8FAFC; }
+    .num { fill: #94A3B8; }
+    .numRun { fill: #A78BFA; }
+    .numGo { fill: #34D399; }
+    .flow { stroke: #94A3B8; marker-end: url(#arrowD); }
+    .flowGo { stroke: #34D399; marker-end: url(#arrowGoD); }
+    .rerun { fill: #34D399; }
+    .lift { filter: url(#softD); }
+  }
+]]></style>
+  <defs>
+    <linearGradient id="bgL" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#F8FAFC"/>
+      <stop offset="55%" stop-color="#F1F5F9"/>
+      <stop offset="100%" stop-color="#EDE9FE"/>
+    </linearGradient>
+    <linearGradient id="bgD" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#1E293B"/>
+      <stop offset="55%" stop-color="#1E293B"/>
+      <stop offset="100%" stop-color="#3B0764"/>
+    </linearGradient>
+    <radialGradient id="glowL" cx="78%" cy="18%" r="46%">
+      <stop offset="0%" stop-color="#7C3AED" stop-opacity="0.10"/>
+      <stop offset="100%" stop-color="#F8FAFC" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glowD" cx="78%" cy="18%" r="46%">
+      <stop offset="0%" stop-color="#7C3AED" stop-opacity="0.32"/>
+      <stop offset="100%" stop-color="#1E293B" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glowGL" cx="18%" cy="88%" r="38%">
+      <stop offset="0%" stop-color="#22C55E" stop-opacity="0.08"/>
+      <stop offset="100%" stop-color="#F8FAFC" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glowGD" cx="18%" cy="88%" r="38%">
+      <stop offset="0%" stop-color="#22C55E" stop-opacity="0.14"/>
+      <stop offset="100%" stop-color="#1E293B" stop-opacity="0"/>
+    </radialGradient>
+    <pattern id="gridL" width="32" height="32" patternUnits="userSpaceOnUse">
+      <path d="M32 0H0V32" fill="none" stroke="#E2E8F0" stroke-width="1"/>
+    </pattern>
+    <pattern id="gridD" width="32" height="32" patternUnits="userSpaceOnUse">
+      <path d="M32 0H0V32" fill="none" stroke="#334155" stroke-width="1"/>
+    </pattern>
+    <filter id="softL" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="#94A3B8" flood-opacity="0.28"/>
+    </filter>
+    <filter id="softD" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="#020617" flood-opacity="0.45"/>
+    </filter>
+    <marker id="arrowL" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0 0L10 5L0 10z" fill="#94A3B8"/>
+    </marker>
+    <marker id="arrowD" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0 0L10 5L0 10z" fill="#94A3B8"/>
+    </marker>
+    <marker id="arrowGoL" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0 0L10 5L0 10z" fill="#15803D"/>
+    </marker>
+    <marker id="arrowGoD" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0 0L10 5L0 10z" fill="#34D399"/>
+    </marker>
+  </defs>
+  <rect class="bg" width="1280" height="420" rx="28"/>
+  <rect class="glow" width="1280" height="420" rx="28"/>
+  <rect class="glowG" width="1280" height="420" rx="28"/>
+  <rect class="grid" width="1280" height="420" rx="28"/>
+  <rect class="frame" x="2" y="2" width="1276" height="416" rx="26"/>
+  <g transform="translate(86 46)">
+    <rect class="logo" width="56" height="56" rx="16" stroke-width="1.5"/>
+    <rect x="18" y="8" width="20" height="10" rx="3" fill="#7C3AED"/>
+    <path d="M28 18V22" stroke="#8B5CF6" stroke-width="1.5"/>
+    <path d="M16 22H40" stroke="#8B5CF6" stroke-width="1.5"/>
+    <rect x="8" y="22" width="16" height="9" rx="2.5" fill="#8B5CF6"/>
+    <rect x="32" y="22" width="16" height="9" rx="2.5" fill="#8B5CF6"/>
+    <path d="M40 31V35" stroke="#22C55E" stroke-width="1.5"/>
+    <rect x="32" y="35" width="16" height="9" rx="2.5" fill="#22C55E"/>
+  </g>
+  <text class="title" x="160" y="82" font-family="Inter, ui-sans-serif, system-ui, Segoe UI, sans-serif" font-size="40" font-weight="700" letter-spacing="-0.04em">LumiAgent</text>
+  <text class="sub" x="160" y="112" font-family="Inter, ui-sans-serif, system-ui, Segoe UI, sans-serif" font-size="18">From a score to the next improvement</text>
+  <g font-family="Inter, ui-sans-serif, system-ui, Segoe UI, sans-serif" font-size="13" font-weight="600">
+    <rect class="chip1" x="160" y="128" width="92" height="28" rx="14"/>
+    <text class="chip1t" x="206" y="147" text-anchor="middle">Trace Core</text>
+    <rect class="chip2" x="260" y="128" width="128" height="28" rx="14"/>
+    <text class="chip2t" x="324" y="147" text-anchor="middle">MCP Tool Chain</text>
+    <rect class="chip3" x="396" y="128" width="122" height="28" rx="14"/>
+    <text class="chip3t" x="457" y="147" text-anchor="middle">Coding Agents</text>
+  </g>
+  <g font-family="Inter, ui-sans-serif, system-ui, Segoe UI, sans-serif">
+    <g class="lift">
+      <g>
+        <rect class="boxRun" x="168" y="196" width="220" height="64" rx="16" stroke-width="1.5"/>
+        <text class="numRun" x="188" y="222" font-size="11" font-weight="700">01</text>
+        <text class="boxT" x="278" y="236" text-anchor="middle" font-size="20" font-weight="600">Run</text>
+      </g>
+      <g>
+        <rect class="box" x="530" y="196" width="220" height="64" rx="16"/>
+        <text class="num" x="550" y="222" font-size="11" font-weight="700">02</text>
+        <text class="boxT" x="640" y="236" text-anchor="middle" font-size="20" font-weight="600">Capture</text>
+      </g>
+      <g>
+        <rect class="box" x="892" y="196" width="220" height="64" rx="16"/>
+        <text class="num" x="912" y="222" font-size="11" font-weight="700">03</text>
+        <text class="boxT" x="1002" y="236" text-anchor="middle" font-size="20" font-weight="600">Diagnose</text>
+      </g>
+      <g>
+        <rect class="boxGo" x="168" y="312" width="220" height="64" rx="16" stroke-width="1.5"/>
+        <text class="numGo" x="188" y="338" font-size="11" font-weight="700">06</text>
+        <text class="boxT" x="278" y="352" text-anchor="middle" font-size="20" font-weight="600">Compare</text>
+      </g>
+      <g>
+        <rect class="box" x="530" y="312" width="220" height="64" rx="16"/>
+        <text class="num" x="550" y="338" font-size="11" font-weight="700">05</text>
+        <text class="boxT" x="640" y="352" text-anchor="middle" font-size="20" font-weight="600">Improve</text>
+      </g>
+      <g>
+        <rect class="box" x="892" y="312" width="220" height="64" rx="16"/>
+        <text class="num" x="912" y="338" font-size="11" font-weight="700">04</text>
+        <text class="boxT" x="1002" y="352" text-anchor="middle" font-size="20" font-weight="600">Review</text>
+      </g>
+    </g>
+    <path class="flow" d="M388 228H530" fill="none" stroke-width="2"/>
+    <path class="flow" d="M750 228H892" fill="none" stroke-width="2"/>
+    <path class="flow" d="M1002 260V312" fill="none" stroke-width="2"/>
+    <path class="flow" d="M892 344H750" fill="none" stroke-width="2"/>
+    <path class="flow" d="M530 344H388" fill="none" stroke-width="2"/>
+    <path class="flowGo" d="M278 312V260" fill="none" stroke-width="2" stroke-dasharray="5 5"/>
+    <text class="rerun" x="214" y="292" font-size="12" font-weight="600">rerun</text>
+  </g>
+</svg>

@@ -1,132 +1,100 @@
 # LumiAgent
 
-[English](README.md)
+![LumiAgent 产品闭环](./docs/assets/readme-hero.zh.svg)
 
-**Agent 评测与优化闭环**
+<div align="center">
+  <p>
+    <a href="#安装"><img src="https://img.shields.io/badge/python-3.11%2B-22C55E?labelColor=0F172A" alt="Python 3.11+"></a>
+    <a href="#许可证"><img src="https://img.shields.io/badge/license-MIT-94A3B8?labelColor=0F172A" alt="MIT License"></a>
+    <a href="#当前状态"><img src="https://img.shields.io/badge/trace%20core-ready-7C3AED?labelColor=0F172A" alt="Trace Core ready"></a>
+  </p>
+  <p><a href="README.md">English</a> · <strong>简体中文</strong></p>
+  <p>
+    <a href="#先看一条轨迹">先试</a> ·
+    <a href="#安装">安装</a> ·
+    <a href="#使用">使用</a> ·
+    <a href="#为什么需要-lumiagent">为什么</a> ·
+    <a href="#架构">架构</a> ·
+    <a href="#当前状态">状态</a> ·
+    <a href="#文档">文档</a>
+  </p>
+</div>
 
-LumiAgent 将 Agent 评测从一个分数，推进为一条可执行的改进路径。
+**Agent 评测与优化闭环** — 把 pass/fail 分数，变成一条可以审阅、可以改进的路径。
 
-Benchmark 能回答 Agent 是否成功，LumiAgent 进一步回答：执行过程如何展开，失败在哪一步形成，诊断依据来自哪些证据，以及下一轮最值得优化什么。
+Benchmark 能回答 Agent 是否成功。LumiAgent 继续回答：执行过程如何展开，失败在哪一步形成，诊断依据来自哪些 span，以及下一轮最值得改什么。
 
-```text
-运行任务 → 采集轨迹 → 诊断失败 → 审阅证据 → 应用改进 → 对比复跑
+首个产品方向是 **Coding Agent** 与 **MCP 工具链**：记录真实执行，保留证据，辅助审阅，并支持优化后的复跑对比。
+
+| 如果你想… | 从这里开始 |
+| --- | --- |
+| 30 秒看清一条真实 Span Tree | [先看一条轨迹](#先看一条轨迹) |
+| 采集 Claude Code session | [采集 Claude Code session](#采集-claude-code-session) |
+| 采集一次 MCP 工具调用 | [采集一次 MCP 工具调用](#采集一次-mcp-工具调用) |
+| 用 Python 构造 trace | [用 Python 构造 trace](#用-python-构造-trace) |
+
+## 先看一条轨迹
+
+安装一次，即可查看仓库里已提交的 coding-agent trace，不需要先跑 Claude Code。
+
+```bash
+pip install -e ".[dev]"
+python -m lumiagent.cli show tests/adapters/claude_code/fixtures/real_session_sanitized_trace.json --checks
 ```
 
-首个产品方向聚焦 Coding Agent 与 MCP Tool Chain：LumiAgent 记录真实 Agent 执行轨迹，分析工具链与工作流失败，辅助人工审阅证据，并支持优化后的复跑对比。
+若 `lumi` 已在 `PATH` 上，它与 `python -m lumiagent.cli` 等价。
 
-## 为什么需要 LumiAgent
+![lumi show --checks 预览](./docs/assets/readme-cli-preview.svg)
 
-Agent 系统正在变得越来越依赖工具和工作流，但评测经常被压缩成最终的 pass/fail 分数。这个分数是必要的，但它无法解释：
+你应看到嵌套的 span tree：用户请求 → 上下文收集 → 改代码 → 验证 → workflow check。
 
-- Agent 如何收集上下文
-- Agent 为什么选择某个工具
-- 工具参数是否符合 schema
-- Agent 如何使用工具返回结果
-- 验证步骤是否充分
-- 诊断结论具体由哪些 span 提供证据
+`--checks` 按当前规则报告证据质量。历史 fixture 可能显示 `unknown`，这是 P4-P 证据就绪之后的预期行为，需要重新采集才会变成当前规则下的结果。
 
-LumiAgent 从结构化、可回放、可评测、可诊断的 trace 模型出发，在此之上构建 Agent 优化闭环。
+## 安装
 
-## 当前状态
+需要 Python **3.11+**。
 
-**第一阶段：Trace Core MVP — 已完成**
+```bash
+pip install -e ".[dev]"
+python -m lumiagent.cli --help
+```
 
-已实现能力：
+<details>
+<summary>如果没有以 editable mode 安装</summary>
 
-- 支持嵌套 Span Tree 的 Agent Run 模型
-- Span 事件与产物记录
-- 支持 evidence span 引用的 Evaluation 与 Diagnosis 记录
-- 稳定的 run、span、event、artifact、target、severity 枚举值
-- JSON/dict 序列化与反序列化
-- span ID、父子关系、target 引用、evidence span 引用的结构校验
-- 便捷构造 API：`TraceBuilder`
-- 通用 Agent 与 Coding Agent trace fixture
+先设置本地源码路径，再使用模块入口：
 
-**第二阶段 A：MCP Tool Chain Evidence Model — 已完成**
+```powershell
+$env:PYTHONPATH = "src"
+python -m lumiagent.cli --help
+```
 
-已实现能力：
+```bash
+PYTHONPATH=src python -m lumiagent.cli --help
+```
 
-- `src/lumiagent/adapters/mcp/` 下的 MCP adapter/convention 层
-- 稳定的 MCP span 与 artifact `metadata.type` 约定
-- 位于通用 Trace Core 之外的 `McpFailureType` taxonomy
-- 面向 schema snapshot、tool call、execution summary、failure evidence、result consumption 的轻量 MCP evidence schema
-- 用于 MCP tool-chain span、artifact、result 和 failure evidence 的 builder helpers
-- 成功和失败 MCP trace fixtures，覆盖 `argument_invalid`、`tool_execution_failed`、`result_misinterpreted`
+</details>
 
-产品价值：
+## 使用
 
-- 保留 Agent 如何发现工具、看到 schema、生成参数、执行 MCP 工具、消费结果的结构化证据。
-- 将 MCP 保持为 adapter evidence layer，使后续 Coding Agent Trace 与 Evaluation / Diagnosis 可以消费稳定证据，同时不污染 Core 模型。
+### 采集 Claude Code session
 
-**第二阶段 B：MCP Capture + Display Chain — 已完成**
-
-已实现能力：
-
-- 作为统一采集入口的通用 `CaptureStrategy` protocol
-- transport-agnostic `McpClientRuntime` protocol 与 stdio `StdioMcpClientRuntime`
-- 显式工具选择，并记录成功选择与 `tool_not_found` 失败证据
-- `McpCaptureStrategy` 编排连接、初始化、工具发现、工具选择、工具执行和 trace mapping
-- `McpTraceMapper` 将真实 MCP runtime 输出转换为合法 `AgentRun` trace
-- CLI 命令：`lumiagent capture mcp` 与 `lumiagent show`
-- CLI viewer 展示 span tree、工具选择、参数、结果、失败和 evidence span
-- 使用 `@modelcontextprotocol/server-filesystem` 的第三方 filesystem MCP 验证路径
-
-产品价值：
-
-- 打通首个真实第三方 MCP Server 的 capture-model-display 闭环。
-- 记录 MCP 工具链失败发生的位置：连接、初始化、发现、选择、参数生成、执行、超时、transport、结果结构或结果消费。
-- 将 stdio transport 细节留在 adapter runtime 中，同时为后续 HTTP/SSE runtime、Coding Agent hooks、replay 和 diagnosis 保持稳定 trace shape。
-
-**第三阶段：Coding Agent Trace Model — 已完成**
-
-已实现能力：
-
-- `src/lumiagent/adapters/coding/` 下的框架无关 Coding Agent conventions
-- 面向 coding workflow 的 action evidence 与 semantic evidence schema
-- 用于增量 hook-to-trace 构建的最小 `BuilderTraceWriter`
-- `src/lumiagent/adapters/claude_code/` 下的 Claude Code hooks 采集 adapter
-- `lumiagent setup claude-code` 与 `--verify` 提供 hook setup 和 activation 检查
-- `lumiagent trace <session-id>` 将 hook events 转换为 `AgentRun`
-- 可选的 best-effort Claude Code transcript enrichment
-- 针对验证缺失、失败命令恢复、权限拒绝和未解决错误的 deterministic workflow checks
-- Coding Agent CLI viewer 输出 semantic summary、span tree 和 `--checks`
-- synthetic coding fixtures 与 sanitized real Claude Code session fixture
-
-产品价值：
-
-- 采集 Coding Agent 如何从用户请求进入上下文收集、代码修改、验证、失败恢复和最终回复。
-- 将稳定 Coding Agent 语义与 Claude Code 专属 hook payload 分离。
-- 生成可人工审阅的 workflow evidence，同时不越界到 Phase 4 evaluation / diagnosis。
-
-规格与报告：
-
-- [`docs/specs/trace-core-mvp.md`](docs/specs/trace-core-mvp.md)
-- [`docs/specs/mcp-tool-chain-model.md`](docs/specs/mcp-tool-chain-model.md)
-- [`docs/specs/mcp-capture-display-chain.md`](docs/specs/mcp-capture-display-chain.md)
-- [`docs/specs/coding-agent-trace-model.md`](docs/specs/coding-agent-trace-model.md)
-- [`docs/reports/trace-core-mvp-technical-report.zh-CN.md`](docs/reports/trace-core-mvp-technical-report.zh-CN.md)
-- [`docs/reports/mcp-tool-chain-model-technical-report.zh-CN.md`](docs/reports/mcp-tool-chain-model-technical-report.zh-CN.md)
-- [`docs/reports/mcp-capture-display-chain-technical-report.zh-CN.md`](docs/reports/mcp-capture-display-chain-technical-report.zh-CN.md)
-- [`docs/reports/coding-agent-trace-model-technical-report.zh-CN.md`](docs/reports/coding-agent-trace-model-technical-report.zh-CN.md)
-
-## 快速示例
-
-### 采集并查看 Claude Code coding session
-
-为当前项目配置 Claude Code hooks：
+为当前项目配置 hooks：
 
 ```powershell
 $env:PYTHONPATH = "src"
 python -m lumiagent.cli setup claude-code
 ```
 
-setup 命令会输出当前 Claude Code session 的 hooks activation 状态：
+命令会打印当前 session 的 hook 激活状态：
 
-- `active`：当前 session 已写入 hook events。
-- `needs_reload`：settings 已配置，但当前运行中的 session 需要打开 `/hooks` 热加载或重启。
-- `not_in_claude_code`：不在 Claude Code 中运行，无法检查运行时 activation。
+| 状态 | 含义 |
+| --- | --- |
+| `active` | 当前 session 已写入 hook events。 |
+| `needs_reload` | settings 已配置，需要 `/hooks` 热加载或重启 session。 |
+| `not_in_claude_code` | 不在 Claude Code 中，无法检查运行时激活状态。 |
 
-hooks 激活并触发过工具调用后，转换并查看 session trace：
+hooks 激活并至少发生过一次工具调用后：
 
 ```powershell
 $env:PYTHONPATH = "src"
@@ -135,23 +103,10 @@ python -m lumiagent.cli trace <session-id> -o .lumiagent/traces/<session-id>-raw
 python -m lumiagent.cli show .lumiagent/traces/<session-id>-raw.json --checks
 ```
 
-输出形态示例：
+<details>
+<summary>可选：transcript enrichment</summary>
 
-```text
-Run: Claude Code session <session-id>
-Status: success
-Semantic Summary
-Span Tree
-- Coding Agent Run  type=coding_agent_run
-  - Context Gathering  type=context_gathering
-  - Edit code  type=code_edit
-  - Verification  type=verification
-  - Workflow Check  type=workflow_check
-Workflow Checks
-  status: pass
-```
-
-可选的 transcript enrichment 可以补充用户请求、任务理解、最终回复等 semantic evidence：
+best-effort 导入 Claude Code transcript，可补充用户请求、任务理解、最终回复等 semantic evidence：
 
 ```powershell
 $env:PYTHONPATH = "src"
@@ -160,7 +115,56 @@ python -m lumiagent.cli trace <session-id> `
   -o .lumiagent/traces/<session-id>-transcript-raw.json
 ```
 
-### 用代码构造 trace
+</details>
+
+### 采集一次 MCP 工具调用
+
+```bash
+PYTHONPATH=src python -m lumiagent.cli capture mcp \
+  --transport stdio \
+  --server-command "npx" \
+  --server-arg "-y" \
+  --server-arg "@modelcontextprotocol/server-filesystem" \
+  --server-arg "$PWD" \
+  --tool "read_file" \
+  --arguments '{"path":"README.md"}' \
+  -o ".lumiagent/traces/filesystem-read-success.json"
+
+PYTHONPATH=src python -m lumiagent.cli show ".lumiagent/traces/filesystem-read-success.json"
+```
+
+预期形态：
+
+```text
+Run: MCP capture npx.read_file
+Status: success
+- MCP Tool Chain
+  - MCP Initialization
+  - MCP Tool Discovery
+  - MCP Tool Selection
+  - MCP Tool Execution: read_file
+```
+
+<details>
+<summary>稳定失败路径：工具不存在</summary>
+
+```bash
+PYTHONPATH=src python -m lumiagent.cli capture mcp \
+  --transport stdio \
+  --server-command "npx" \
+  --server-arg "-y" \
+  --server-arg "@modelcontextprotocol/server-filesystem" \
+  --server-arg "$PWD" \
+  --tool "read_me" \
+  --arguments '{"path":"README.md"}' \
+  -o ".lumiagent/traces/filesystem-tool-not-found.json"
+
+PYTHONPATH=src python -m lumiagent.cli show ".lumiagent/traces/filesystem-tool-not-found.json"
+```
+
+</details>
+
+### 用 Python 构造 trace
 
 ```python
 from lumiagent.tracing import SpanKind, TraceBuilder, to_json
@@ -181,239 +185,179 @@ run = builder.build(output={"status": "done"})
 print(to_json(run))
 ```
 
-### 采集并查看真实 MCP 工具调用
+## 为什么需要 LumiAgent
 
-```bash
-PYTHONPATH=src python -m lumiagent.cli capture mcp \
-  --transport stdio \
-  --server-command "npx" \
-  --server-arg "-y" \
-  --server-arg "@modelcontextprotocol/server-filesystem" \
-  --server-arg "$PWD" \
-  --tool "read_file" \
-  --arguments '{"path":"README.md"}' \
-  -o ".lumiagent/traces/filesystem-read-success.json"
+Agent 系统越来越依赖工具和工作流，但评测经常被压成最终分数。分数是必要的，它仍然无法回答：
 
-PYTHONPATH=src python -m lumiagent.cli show ".lumiagent/traces/filesystem-read-success.json"
-```
+| 问题 | 分数 | LumiAgent |
+| --- | --- | --- |
+| 这次 run 成功了吗？ | 能 | 能，并且能指出失败发生在哪个 span |
+| 上下文是怎么收集的？ | 不能 | Span Tree + artifacts |
+| 为什么选这个工具、这些参数？ | 不能 | 选择、schema 与参数证据 |
+| 工具结果有没有被正确使用？ | 不能 | 结果消费证据 |
+| 验证够不够？ | 不能 | Workflow checks |
+| 下一轮该改什么？ | 不能 | 带 evidence span 的诊断 |
 
-输出形态示例：
-
-```text
-Run: MCP capture npx.read_file
-Status: success
-- MCP Tool Chain
-  - MCP Initialization
-  - MCP Tool Discovery
-  - MCP Tool Selection
-  - MCP Tool Execution: read_file
-Tool Selection
-  requested: read_file
-  selected: read_file
-```
-
-也可以通过请求不存在的工具稳定生成失败 trace：
-
-```bash
-PYTHONPATH=src python -m lumiagent.cli capture mcp \
-  --transport stdio \
-  --server-command "npx" \
-  --server-arg "-y" \
-  --server-arg "@modelcontextprotocol/server-filesystem" \
-  --server-arg "$PWD" \
-  --tool "read_me" \
-  --arguments '{"path":"README.md"}' \
-  -o ".lumiagent/traces/filesystem-tool-not-found.json"
-
-PYTHONPATH=src python -m lumiagent.cli show ".lumiagent/traces/filesystem-tool-not-found.json"
-```
+LumiAgent 从结构化、可回放、可评测的 trace 出发，再围绕它构建优化闭环。
 
 ## 架构
 
-![Trace Core Model](docs/assets/trace-core-model.svg)
+Trace Core 刻意与具体 Agent 框架解耦。Claude Code、MCP、SDK、CLI wrapper、transcript importer 都作为适配层坐在 Core 之上。
 
-Mermaid 源文件：[`docs/diagrams/trace-core-model.mmd`](docs/diagrams/trace-core-model.mmd)
+![LumiAgent 运行时架构](./docs/assets/archify/runtime-architecture.svg)
 
-![Trace Core Visualization Intent](docs/assets/trace-core-visualization-intent.svg)
+[交互查看](docs/assets/archify/runtime-architecture.html) · [全部架构图](docs/assets/archify/index.html)
 
-Mermaid 源文件：[`docs/diagrams/trace-core-visualization-intent.mmd`](docs/diagrams/trace-core-visualization-intent.mmd)
+分层约定是 `CaptureStrategy → Trace Core → view models（Phase 5）→ 可视化`。MCP 与 Coding Agent 细节放在 adapter conventions 中，不向 Core 增加专用字段。
 
-![MCP Tool Chain Evidence Layer](docs/assets/mcp-tool-chain-evidence-layer.svg)
+<details>
+<summary>阶段架构图</summary>
 
-Mermaid 源文件：[`docs/diagrams/mcp-tool-chain-evidence-layer.mmd`](docs/diagrams/mcp-tool-chain-evidence-layer.mmd)
+**Trace Core 模型**
 
-![MCP Capture Display Chain](docs/assets/mcp-capture-display-chain.svg)
+![Trace Core 模型](./docs/assets/archify/trace-core-model.svg)
 
-Mermaid 源文件：[`docs/diagrams/mcp-capture-display-chain.mmd`](docs/diagrams/mcp-capture-display-chain.mmd)
+[交互查看](docs/assets/archify/trace-core-model.html) · 文档源：[`trace-core-model.mmd`](docs/diagrams/trace-core-model.mmd)
 
-![Coding Agent Capture Flow](docs/assets/coding-agent-capture-flow.svg)
+**可视化意图**
 
-Mermaid 源文件：[`docs/diagrams/coding-agent-capture-flow.mmd`](docs/diagrams/coding-agent-capture-flow.mmd)
+![可视化意图](./docs/assets/archify/visualization-intent.svg)
 
-Trace Core 刻意保持与具体 Agent 框架解耦。Coding Agent 支持、MCP Tool Chain 捕获、SDK hooks、CLI wrappers 和 transcript importers 都应作为核心模型之上的适配层实现。
+[交互查看](docs/assets/archify/visualization-intent.html) · 文档源：[`trace-core-visualization-intent.mmd`](docs/diagrams/trace-core-visualization-intent.mmd)
 
-Trace Core 数据也通过清晰分层服务未来可视化：`CaptureStrategy → Trace Core → view models（Phase 5）→ 可视化界面`。CLI Viewer 从 Stage 2b 起就消费这层数据，Web UI 在后续阶段跟进；Run Summary、Timeline、Span Tree、Span Detail、Artifact Viewer、Evaluation/Diagnosis Panel、Trace Diff 和 Experiment 对比都应优先从稳定 Core primitives 或 view models 推导，只有通用、稳定、跨视图重复需要的字段才提升进 Core。
+**MCP 证据层**
 
-MCP Tool Chain 层是 adapter evidence layer：它记录工具发现、schema snapshot、参数生成、权限、执行结果、失败证据、结果消费和真实 stdio capture，同时不向 Trace Core 添加 MCP 专用字段。
+![MCP 证据层](./docs/assets/archify/mcp-evidence-layer.svg)
 
-## 路线图
+[交互查看](docs/assets/archify/mcp-evidence-layer.html) · 文档源：[`mcp-tool-chain-evidence-layer.mmd`](docs/diagrams/mcp-tool-chain-evidence-layer.mmd)
 
-### MVP 阶段（近期）
+**MCP 采集 + 展示**
+
+![MCP 采集 + 展示](./docs/assets/archify/mcp-capture-display.svg)
+
+[交互查看](docs/assets/archify/mcp-capture-display.html) · 文档源：[`mcp-capture-display-chain.mmd`](docs/diagrams/mcp-capture-display-chain.mmd)
+
+**Coding Agent 采集流**
+
+![Coding Agent 采集流](./docs/assets/archify/coding-agent-capture.svg)
+
+[交互查看](docs/assets/archify/coding-agent-capture.html) · 文档源：[`coding-agent-capture-flow.mmd`](docs/diagrams/coding-agent-capture-flow.mmd)
+
+</details>
+
+## 当前状态
+
+| 能力 | 状态 |
+| --- | --- |
+| Trace Schema / Span Tree Core | 已就绪 |
+| MCP 工具链证据 + stdio 采集 + `show` | 已就绪 |
+| Coding Agent 模型 + Claude Code hooks + CLI viewer | 已就绪 |
+| P4-P 证据就绪、源时序、legacy eval 隔离 | 已就绪 |
+| Evaluation / diagnosis engine | 下一步 |
+| Replay / 可视化数据 | 规划中 |
+
+MVP 清单：
 
 - [x] Trace Schema / Span Tree Core
 - [x] MCP Tool Chain evidence model
-- [x] MCP 采集 + 展示链（统一 `CaptureStrategy` 入口）
-- [x] Coding Agent trace model + Claude Code hooks 采集 + CLI Viewer
+- [x] MCP 采集 + 展示（`CaptureStrategy`）
+- [x] Coding Agent trace + Claude Code hooks + CLI viewer
 - [x] P4-P：证据就绪、源时序与 legacy eval 隔离
-- [ ] Evaluation / Diagnosis 系统（证据修复 → 任务验证 → 技能化评测 → 诊断 → 改进复跑）
+- [ ] Evaluation / diagnosis（证据修复 → 任务验证 → 技能化评测 → 诊断 → 改进复跑）
 - [ ] Replay / Visualization 数据准备
 
-P4-P 已完成人工评审、实现与本地验收；任务执行、正式评测、诊断和实验仍待实施。详见 [Phase 4 规格](docs/specs/evaluation-diagnosis-engine.md)。最小 Trial/Experiment 与复跑验证属于 Phase 4，Phase 5 负责展示数据接口。
+P4-P 已实现并完成本地验收。任务执行、正式评测、诊断和实验引擎仍待实施。详见 [Phase 4 规格](docs/specs/evaluation-diagnosis-engine.md) 与 [实施路线图](docs/superpowers/plans/2026-09-15-phase4-implementation-roadmap.md)。`lumi eval` 仅提示迁移并退出 2；遗留聊天评分使用 `lumi legacy-eval`。
 
-[Phase 4 总实施计划](docs/superpowers/plans/2026-09-15-phase4-implementation-roadmap.md) 提供五组阶段设计与实施计划入口。P4-P 计划已执行，其余四批未启动。见 [P4-P 技术报告](docs/reports/phase4-evidence-readiness-technical-report.zh-CN.md)。
+<details>
+<summary>已交付阶段说明</summary>
 
-P4-P 验证：225 项测试通过，ruff/mypy 通过。`lumi eval` 现仅提示迁移并退出 2；遗留聊天评分使用 `lumi legacy-eval`，已有缺陷未修复。旧 trace 缺少新证据时，`show --checks` 显示 unknown，而非直接沿用历史 pass。
+**Trace Core** — 嵌套 Span Tree、事件、产物、带 evidence span 引用的 Evaluation / Diagnosis、稳定枚举、JSON 往返、结构校验、`TraceBuilder`。
 
-### 未来阶段
+**MCP evidence** — `src/lumiagent/adapters/mcp/` 下的 adapter 约定、`McpFailureType` taxonomy，以及 schema snapshot、tool call、execution、failure、result consumption 的 schema。
 
-- [ ] 采集 SDK + MCP Proxy
-- [ ] HTTP/SSE MCP runtime 支持
-- [ ] Web UI
-- [ ] 专家知识库 + 高级诊断
-- [ ] 多 Agent 可视化 + 性能优化
+**MCP capture** — `CaptureStrategy`、stdio runtime、显式工具选择（含 `tool_not_found`）、映射为 `AgentRun`、CLI `capture mcp` / `show`，并用 `@modelcontextprotocol/server-filesystem` 验证。
 
-当前 MVP 的非目标：
+**Coding Agent** — `src/lumiagent/adapters/coding/` 下的框架无关约定、Claude Code hook adapter、`setup claude-code`、`trace <session-id>`、可选 transcript enrichment、deterministic workflow checks。
 
-- 通用 LangSmith/Langfuse 克隆
-- Prompt 管理平台
-- 通用 RAG 评估平台
-- 完整多 Agent 编排框架
+</details>
 
-## 项目结构
+<details>
+<summary>后续方向 / 非目标</summary>
+
+后续：采集 SDK + MCP Proxy、HTTP/SSE MCP runtime、Web UI、专家知识库、多 Agent 可视化。
+
+当前 MVP 不做：通用 LangSmith/Langfuse 克隆、Prompt 管理平台、通用 RAG 评测产品、完整多 Agent 编排框架。
+
+</details>
+
+## 文档
+
+| 主题 | 规格 | 报告 |
+| --- | --- | --- |
+| Trace Core | [规格](docs/specs/trace-core-mvp.md) | [报告](docs/reports/trace-core-mvp-technical-report.zh-CN.md) |
+| MCP 证据 | [规格](docs/specs/mcp-tool-chain-model.md) | [报告](docs/reports/mcp-tool-chain-model-technical-report.zh-CN.md) |
+| MCP 采集 + 展示 | [规格](docs/specs/mcp-capture-display-chain.md) | [报告](docs/reports/mcp-capture-display-chain-technical-report.zh-CN.md) |
+| Coding Agent trace | [规格](docs/specs/coding-agent-trace-model.md) | [报告](docs/reports/coding-agent-trace-model-technical-report.zh-CN.md) |
+| Evaluation / diagnosis | [规格](docs/specs/evaluation-diagnosis-engine.md) | [P4-P 报告](docs/reports/phase4-evidence-readiness-technical-report.zh-CN.md) |
+| 架构图 | [双轨约定](docs/diagrams/README.md) | README 用 Archify SVG，docs 用 Mermaid |
+
+## 开发
 
 ```text
 src/lumiagent/
-├── capture/
-│   ├── __init__.py
-│   └── strategy.py
-├── adapters/
-│   ├── mcp/
-│   │   ├── capture.py
-│   │   ├── runtime.py
-│   │   ├── selector.py
-│   │   ├── mapper.py
-│   │   ├── viewer.py
-│   │   ├── builder.py
-│   │   ├── conventions.py
-│   │   ├── schemas.py
-│   │   └── taxonomy.py
-│   ├── coding/
-│   │   ├── conventions.py
-│   │   ├── events.py
-│   │   ├── normalizer.py
-│   │   ├── validator.py
-│   │   └── viewer.py
-│   └── claude_code/
-│       ├── hooks.py
-│       ├── setup.py
-│       ├── events.py
-│       ├── transcript.py
-│       ├── converter.py
-│       └── sanitizer.py
-├── cli.py
-└── tracing/
-    ├── __init__.py
-    ├── builder.py
-    ├── builder_writer.py
-    ├── enums.py
-    ├── models.py
-    ├── serializer.py
-    ├── validator.py
-    └── writer.py
-
-tests/
-├── capture/
-│   └── test_strategy.py
-├── adapters/
-│   ├── mcp/
-│   ├── coding/
-│   │   └── fixtures/
-│   └── claude_code/
-│       └── fixtures/
-├── test_cli.py
-├── test_cli_mcp.py
-├── test_cli_coding_trace.py
-├── test_cli_claude_code_setup.py
-└── tracing/
-    ├── fixtures/
-    ├── test_builder.py
-    ├── test_builder_writer.py
-    ├── test_models.py
-    ├── test_serializer.py
-    ├── test_validator.py
-    └── test_writer.py
-
-docs/
-├── assets/
-│   ├── trace-core-model.svg
-│   ├── trace-core-visualization-intent.svg
-│   ├── mcp-tool-chain-evidence-layer.svg
-│   ├── mcp-capture-display-chain.svg
-│   └── coding-agent-capture-flow.svg
-├── diagrams/
-│   ├── trace-core-model.mmd
-│   ├── trace-core-visualization-intent.mmd
-│   ├── mcp-tool-chain-evidence-layer.mmd
-│   ├── mcp-capture-display-chain.mmd
-│   └── coding-agent-capture-flow.mmd
-├── reports/
-│   ├── trace-core-mvp-technical-report.zh-CN.md
-│   ├── mcp-tool-chain-model-technical-report.zh-CN.md
-│   ├── mcp-capture-display-chain-technical-report.zh-CN.md
-│   └── coding-agent-trace-model-technical-report.zh-CN.md
-└── specs/
-    ├── trace-core-mvp.md
-    ├── mcp-tool-chain-model.md
-    ├── mcp-capture-display-chain.md
-    └── coding-agent-trace-model.md
+  tracing/      Span Tree 核心
+  capture/      CaptureStrategy
+  adapters/     MCP、Coding Agent、Claude Code
+  evaluation/   Phase 4 命名空间（引擎尚未交付）
+  cli.py        lumi / python -m lumiagent.cli
 ```
-
-## 安装
-
-```bash
-pip install -e ".[dev]"
-```
-
-要求 Python 3.11+。
-
-## 验证
 
 ```bash
 python -m pytest -v
-python -m ruff check src/lumiagent/tracing src/lumiagent/adapters src/lumiagent/capture tests/tracing tests/adapters tests/capture tests/test_cli_mcp.py
-python -m mypy src/lumiagent/tracing src/lumiagent/adapters src/lumiagent/capture
+python -m ruff check src/lumiagent/tracing src/lumiagent/adapters src/lumiagent/capture src/lumiagent/evaluation src/lumiagent/cli.py tests
+python -m mypy src/lumiagent/tracing src/lumiagent/adapters src/lumiagent/capture src/lumiagent/evaluation
 ```
 
-如果当前环境没有以 editable mode 安装本项目，可以使用本地源码路径运行：
-
-```powershell
-$env:PYTHONPATH = "src"
-python -m pytest -v
-python -m ruff check src/lumiagent/tracing src/lumiagent/adapters src/lumiagent/capture tests/tracing tests/adapters tests/capture tests/test_cli_mcp.py
-python -m mypy src/lumiagent/tracing src/lumiagent/adapters src/lumiagent/capture
-```
-
-## 技术栈
+如果没有以 editable mode 安装，请先设置 `PYTHONPATH=src`（PowerShell：`$env:PYTHONPATH = "src"`）。
 
 | 领域 | 技术 |
 | --- | --- |
 | 语言 | Python 3.11+ |
 | 数据模型 | Pydantic v2 |
 | CLI | Typer |
-| MCP Runtime | MCP Python SDK over stdio |
-| 测试 | pytest |
-| Lint | ruff |
-| 类型检查 | mypy |
+| MCP runtime | MCP Python SDK over stdio |
+| 测试 / lint / 类型 | pytest、ruff、mypy |
+
+<details>
+<summary>完整目录（源码、测试、文档）</summary>
+
+```text
+src/lumiagent/
+├── capture/
+├── adapters/
+│   ├── mcp/
+│   ├── coding/
+│   └── claude_code/
+├── cli.py
+└── tracing/
+
+tests/
+├── capture/
+├── adapters/
+├── tracing/
+├── test_cli.py
+├── test_cli_mcp.py
+├── test_cli_coding_trace.py
+└── test_cli_claude_code_setup.py
+
+docs/
+├── assets/
+├── diagrams/
+├── reports/
+└── specs/
+```
+
+</details>
 
 ## 许可证
 

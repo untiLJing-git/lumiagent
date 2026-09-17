@@ -12,6 +12,8 @@ Mermaid 源文件：[`docs/diagrams/legacy-layered-architecture.mmd`](diagrams/l
 
 Trace / Eval Core 是当前 MVP 的产品底座。Trace Core 保持框架无关，Coding Agent、MCP Tool Chain、Claude Code hooks、CLI wrappers、transcript importers 和未来 SDK/proxy 都应作为 Core 之上的 adapter 或 capture layer。
 
+当前运行时分层（Capture → Trace Core → Review）的 Mermaid 源文件：[`docs/diagrams/runtime-architecture.mmd`](diagrams/runtime-architecture.mmd)。README 使用同一事实的 Archify 图；浏览器交互查看器：[`docs/assets/archify/runtime-architecture.html`](assets/archify/runtime-architecture.html)。两套同步约定见 [`docs/diagrams/README.md`](diagrams/README.md)。
+
 Phase 3 的 Coding Agent capture flow：
 
 ![Coding Agent Capture Flow](assets/coding-agent-capture-flow.svg)

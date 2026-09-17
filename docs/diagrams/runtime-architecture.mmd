@@ -1,0 +1,23 @@
+flowchart TB
+  subgraph Sources["Capture"]
+    H[Claude Code hooks]
+    M[MCP stdio]
+    T[TraceBuilder]
+  end
+  subgraph Core["Trace Core"]
+    R[AgentRun]
+    S[Span Tree]
+    E[Events / Artifacts / Evidence]
+  end
+  subgraph Review["Review"]
+    C[CLI viewer]
+    N[Evaluation / diagnosis — next]
+    U[Web UI — later]
+  end
+  H --> R
+  M --> R
+  T --> R
+  R --> S --> E
+  S --> C
+  S --> N
+  S --> U

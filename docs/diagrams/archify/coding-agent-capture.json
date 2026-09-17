@@ -1,0 +1,82 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Coding Agent Capture",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "hook-path",
+        "label": "Hook capture",
+        "focus": ["setup", "hooks", "events"],
+        "note": "setup writes Claude Code hooks; the session appends events.jsonl."
+      },
+      {
+        "id": "adapter-path",
+        "label": "Adapter normalize",
+        "focus": ["events", "normalizer", "converter", "run"],
+        "note": "lumiagent trace normalizes Claude Code events into Core via the adapter."
+      },
+      {
+        "id": "review-path",
+        "label": "Checks and show",
+        "focus": ["run", "validator", "show"],
+        "note": "WorkflowValidator writes a check artifact; show --checks reads it."
+      }
+    ]
+  },
+  "lanes": [
+    { "id": "cli", "label": "CLI" },
+    { "id": "claude", "label": "Claude Code session" },
+    { "id": "adapter", "label": "Coding Agent adapter" },
+    { "id": "core", "label": "Trace Core" }
+  ],
+  "phases": [
+    { "id": "activate", "label": "Activate", "fromCol": 0, "toCol": 1 },
+    { "id": "record", "label": "Record + convert", "fromCol": 2, "toCol": 4, "variant": "emphasis" },
+    { "id": "review", "label": "Review", "fromCol": 5, "toCol": 5, "variant": "dashed" }
+  ],
+  "groups": [
+    { "id": "adapter-work", "label": "Claude Code stays outside Core", "lane": "adapter", "fromCol": 3, "toCol": 4, "variant": "emphasis" }
+  ],
+  "mainPath": ["setup", "hooks", "events", "normalizer", "converter", "run", "show"],
+  "nodes": [
+    { "id": "setup", "lane": "cli", "col": 0, "type": "frontend", "label": "setup claude-code", "sublabel": "lumiagent", "width": 150 },
+    { "id": "hooks", "lane": "claude", "col": 1, "type": "security", "label": "settings.json hooks", "sublabel": ".claude/", "width": 150 },
+    { "id": "events", "lane": "claude", "col": 2, "type": "messagebus", "label": "events.jsonl", "sublabel": ".lumiagent/sessions", "width": 150 },
+    { "id": "normalizer", "lane": "adapter", "col": 3, "type": "backend", "label": "EventNormalizer", "sublabel": "lumiagent trace", "width": 150 },
+    { "id": "converter", "lane": "adapter", "col": 4, "type": "backend", "label": "TraceConverter", "sublabel": "writes via TraceWriter", "width": 160 },
+    { "id": "run", "lane": "core", "col": 5, "type": "database", "label": "AgentRun", "sublabel": "Span Tree + evidence", "width": 150 },
+    { "id": "validator", "lane": "adapter", "col": 5, "type": "security", "label": "WorkflowValidator", "sublabel": "workflow_check", "width": 150 },
+    { "id": "show", "lane": "cli", "col": 5, "type": "frontend", "label": "show --checks", "sublabel": "lumiagent", "width": 140 }
+  ],
+  "edges": [
+    { "id": "setup-hooks", "from": "setup", "to": "hooks", "variant": "emphasis" },
+    { "id": "hooks-events", "from": "hooks", "to": "events", "variant": "emphasis" },
+    { "id": "events-normalizer", "from": "events", "to": "normalizer", "variant": "emphasis", "label": "lumiagent trace" },
+    { "id": "normalizer-converter", "from": "normalizer", "to": "converter", "variant": "emphasis" },
+    { "id": "converter-run", "from": "converter", "to": "run", "variant": "emphasis" },
+    { "id": "run-validator", "from": "run", "to": "validator", "label": "checks" },
+    { "id": "run-show", "from": "run", "to": "show", "variant": "emphasis" },
+    { "id": "validator-show", "from": "validator", "to": "show", "variant": "dashed" }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Stable action evidence",
+      "items": [
+        "Hooks record tool use, permission, and failure events",
+        "Transcript enrichment is best-effort and stays off the main path"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Adapter then Core",
+      "items": [
+        "lumiagent trace runs the normalizer and converter outside Core",
+        "show --checks reads AgentRun plus the workflow_check artifact"
+      ]
+    }
+  ]
+}

@@ -48,6 +48,11 @@ htmlcov/
 .lumiagent/sessions/
 .lumiagent/traces/*-raw.json
 
+# Archify delivery snapshots, visual-check sidecars, and local screenshots
+docs/assets/archify/*.visual-check.*
+docs/assets/archify/.archify-delivery-*/
+docs/assets/archify/_shots/
+
 # Local benchmark sources, runs, and throwaway Python deps
 .lumiagent/sources/
 .lumiagent/benchmarks/

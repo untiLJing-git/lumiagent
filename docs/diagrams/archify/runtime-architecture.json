@@ -1,0 +1,82 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "LumiAgent Runtime",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "capture-to-core",
+        "label": "Capture into Core",
+        "focus": ["claude-code", "mcp-stdio", "trace-builder", "agent-run", "span-tree", "evidence"],
+        "note": "Hooks, MCP stdio, and TraceBuilder land in one AgentRun and its Span Tree."
+      },
+      {
+        "id": "span-evidence",
+        "label": "Span Tree and evidence",
+        "focus": ["agent-run", "span-tree", "evidence"],
+        "note": "The run owns the Span Tree, then events, artifacts, and evidence links."
+      },
+      {
+        "id": "review-surfaces",
+        "label": "Review surfaces",
+        "focus": ["agent-run", "span-tree", "evidence", "cli-viewer", "eval-next", "web-ui"],
+        "note": "CLI is ready; evaluation and Web UI stay on the same Core data."
+      }
+    ]
+  },
+  "layout": {
+    "mode": "grid",
+    "origin": [48, 56],
+    "cols": 3,
+    "gapX": 88,
+    "gapY": 56,
+    "cellW": 168,
+    "cellH": 72
+  },
+  "components": [
+    { "id": "claude-code", "type": "external", "label": "Claude Code", "sublabel": "hooks", "row": 0, "col": 0 },
+    { "id": "agent-run", "type": "database", "label": "AgentRun", "sublabel": "one replayable run", "row": 0, "col": 1 },
+    { "id": "cli-viewer", "type": "frontend", "label": "CLI viewer", "sublabel": "lumi show", "row": 0, "col": 2 },
+    { "id": "mcp-stdio", "type": "external", "label": "MCP Server", "sublabel": "stdio", "row": 1, "col": 0 },
+    { "id": "span-tree", "type": "database", "label": "Span Tree", "sublabel": "nested steps", "row": 1, "col": 1 },
+    { "id": "eval-next", "type": "backend", "label": "Evaluation", "sublabel": "diagnosis — next", "row": 1, "col": 2 },
+    { "id": "trace-builder", "type": "backend", "label": "TraceBuilder", "sublabel": "SDK / import", "row": 2, "col": 0 },
+    { "id": "evidence", "type": "database", "label": "Evidence", "sublabel": "events / artifacts", "row": 2, "col": 1 },
+    { "id": "web-ui", "type": "frontend", "label": "Web UI", "sublabel": "later", "row": 2, "col": 2 }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "Capture adapters", "wraps": ["claude-code", "mcp-stdio", "trace-builder"] },
+    { "kind": "region", "label": "Trace Core", "wraps": ["agent-run", "span-tree", "evidence"] },
+    { "kind": "region", "label": "Review", "wraps": ["cli-viewer", "eval-next", "web-ui"] }
+  ],
+  "connections": [
+    { "id": "hooks-to-run", "from": "claude-code", "to": "agent-run", "variant": "emphasis" },
+    { "id": "mcp-to-tree", "from": "mcp-stdio", "to": "span-tree", "variant": "emphasis" },
+    { "id": "builder-to-evidence", "from": "trace-builder", "to": "evidence" },
+    { "id": "run-to-tree", "from": "agent-run", "to": "span-tree", "variant": "emphasis" },
+    { "id": "tree-to-evidence", "from": "span-tree", "to": "evidence", "variant": "emphasis" },
+    { "id": "run-to-cli", "from": "agent-run", "to": "cli-viewer", "variant": "emphasis" },
+    { "id": "tree-to-eval", "from": "span-tree", "to": "eval-next", "variant": "dashed" },
+    { "id": "evidence-to-web", "from": "evidence", "to": "web-ui", "variant": "dashed" }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Adapters stay outside Core",
+      "items": [
+        "Claude Code, MCP, SDKs, and importers write the same AgentRun",
+        "Framework-specific fields live in adapter conventions"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Trace is the product data",
+      "items": [
+        "Span Tree, events, artifacts, and evidence links are replayable",
+        "CLI, evaluation, and later UI read Core instead of inventing new models"
+      ]
+    }
+  ]
+}

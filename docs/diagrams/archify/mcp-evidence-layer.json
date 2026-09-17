@@ -1,0 +1,79 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "MCP Evidence Layer",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "tool-chain",
+        "label": "Tool-chain path",
+        "focus": ["agents", "chain", "discovery", "execution", "result"],
+        "note": "Agents share one mcp_tool_chain span from discovery through the result."
+      },
+      {
+        "id": "failure-path",
+        "label": "Failure evidence",
+        "focus": ["execution", "failure"],
+        "note": "McpFailureType and evidence fields hang off execution."
+      },
+      {
+        "id": "into-core",
+        "label": "Into Trace Core",
+        "focus": ["chain", "agent-run", "eval-later"],
+        "note": "The chain writes AgentRun; evaluation later reads the same evidence."
+      }
+    ]
+  },
+  "layout": {
+    "mode": "grid",
+    "origin": [48, 56],
+    "cols": 4,
+    "gapX": 72,
+    "gapY": 56,
+    "cellW": 168,
+    "cellH": 72
+  },
+  "components": [
+    { "id": "agents", "type": "external", "label": "Agent scenarios", "sublabel": "Coding + general", "row": 0, "col": 0 },
+    { "id": "chain", "type": "messagebus", "label": "mcp_tool_chain", "sublabel": "metadata.type", "row": 1, "col": 0 },
+    { "id": "discovery", "type": "cloud", "label": "Discovery", "sublabel": "schema snapshot", "row": 1, "col": 1 },
+    { "id": "execution", "type": "backend", "label": "Execution", "sublabel": "SpanKind.TOOL", "row": 1, "col": 2 },
+    { "id": "result", "type": "cloud", "label": "mcp_tool_result", "sublabel": "artifact", "row": 1, "col": 3 },
+    { "id": "failure", "type": "security", "label": "McpFailureType", "sublabel": "evidence fields", "row": 2, "col": 2 },
+    { "id": "agent-run", "type": "database", "label": "AgentRun", "sublabel": "Trace Core", "row": 2, "col": 0 },
+    { "id": "eval-later", "type": "backend", "label": "Evaluation", "sublabel": "later", "row": 2, "col": 1 }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "MCP adapter evidence", "wraps": ["chain", "discovery", "execution", "result", "failure"] },
+    { "kind": "region", "label": "Trace Core", "wraps": ["agent-run", "eval-later"] }
+  ],
+  "connections": [
+    { "id": "agents-chain", "from": "agents", "to": "chain", "variant": "emphasis" },
+    { "id": "chain-discovery", "from": "chain", "to": "discovery", "variant": "emphasis" },
+    { "id": "discovery-exec", "from": "discovery", "to": "execution", "variant": "emphasis" },
+    { "id": "exec-result", "from": "execution", "to": "result", "variant": "emphasis" },
+    { "id": "exec-failure", "from": "execution", "to": "failure", "variant": "security" },
+    { "id": "chain-run", "from": "chain", "to": "agent-run", "variant": "emphasis" },
+    { "id": "run-eval", "from": "agent-run", "to": "eval-later", "variant": "dashed" }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Evidence stays in the adapter",
+      "items": [
+        "mcp_tool_chain, discovery snapshots, and mcp_tool_result are conventions",
+        "Trace Core still stores Span, Event, Artifact, and AgentRun"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Failures are first-class",
+      "items": [
+        "McpFailureType hangs off execution, not a separate Core kind",
+        "Evaluation later reads the same evidence fields"
+      ]
+    }
+  ]
+}

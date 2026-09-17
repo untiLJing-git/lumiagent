@@ -1,0 +1,78 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Trace Core Model",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "span-nesting",
+        "label": "Span Tree",
+        "focus": ["agent-run", "span", "children"],
+        "note": "AgentRun owns the Span Tree; children[] nest under Span."
+      },
+      {
+        "id": "step-evidence",
+        "label": "Step evidence",
+        "focus": ["span", "events", "artifacts"],
+        "note": "A step records events and artifacts on the Span."
+      },
+      {
+        "id": "review-links",
+        "label": "Evaluation links",
+        "focus": ["agent-run", "evaluations", "diagnoses", "evidence-ids", "span"],
+        "note": "Evaluations and diagnoses point back through evidence_span_ids."
+      }
+    ]
+  },
+  "layout": {
+    "mode": "grid",
+    "origin": [48, 56],
+    "cols": 3,
+    "gapX": 88,
+    "gapY": 56,
+    "cellW": 176,
+    "cellH": 72
+  },
+  "components": [
+    { "id": "agent-run", "type": "database", "label": "AgentRun", "sublabel": "run record", "row": 0, "col": 0 },
+    { "id": "span", "type": "database", "label": "Span", "sublabel": "root_spans[]", "row": 0, "col": 1 },
+    { "id": "children", "type": "database", "label": "children[]", "sublabel": "nested spans", "row": 0, "col": 2 },
+    { "id": "evaluations", "type": "backend", "label": "evaluations[]", "sublabel": "scores", "row": 1, "col": 0 },
+    { "id": "events", "type": "messagebus", "label": "events[]", "sublabel": "on the span", "row": 1, "col": 1 },
+    { "id": "artifacts", "type": "cloud", "label": "artifacts[]", "sublabel": "on the span", "row": 1, "col": 2 },
+    { "id": "diagnoses", "type": "backend", "label": "diagnoses[]", "sublabel": "findings", "row": 2, "col": 0 },
+    { "id": "evidence-ids", "type": "security", "label": "evidence_span_ids", "sublabel": "review pointers", "row": 2, "col": 1 }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "Span Tree", "wraps": ["span", "children", "events", "artifacts"] }
+  ],
+  "connections": [
+    { "id": "run-span", "from": "agent-run", "to": "span", "variant": "emphasis" },
+    { "id": "span-children", "from": "span", "to": "children", "variant": "emphasis" },
+    { "id": "span-events", "from": "span", "to": "events", "variant": "emphasis" },
+    { "id": "span-artifacts", "from": "span", "to": "artifacts" },
+    { "id": "run-evals", "from": "agent-run", "to": "evaluations" },
+    { "id": "evals-diagnoses", "from": "evaluations", "to": "diagnoses" },
+    { "id": "diagnoses-evidence", "from": "diagnoses", "to": "evidence-ids", "variant": "dashed", "label": "reference" }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Nested execution",
+      "items": [
+        "AgentRun is the unit of replay",
+        "children[] nest under Span so the tree stays one model"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Review stays linked",
+      "items": [
+        "evaluations[] and diagnoses[] do not copy the tree",
+        "evidence_span_ids point at the spans that justify a finding"
+      ]
+    }
+  ]
+}
